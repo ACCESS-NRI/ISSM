@@ -677,6 +677,10 @@ AC_DEFUN([ISSM_OPTIONS],[
 	AC_MSG_RESULT([${HAVE_PYTHON}])
 	AM_CONDITIONAL([PYTHON], [test "x${HAVE_PYTHON}" == "xyes"])
 
+	if test "x${PYTHON_ROOT}" == "xno" && test "x${PYTHON3}" != "x"; then
+		PYTHON_ROOT=${PYTHON3}
+	fi
+
 	dnl Python specifics
 	if test "x${HAVE_PYTHON}" == "xyes"; then
 		if test "x${PYTHON_VERSION}" == "xno"; then
