@@ -678,7 +678,7 @@ AC_DEFUN([ISSM_OPTIONS],[
 	AM_CONDITIONAL([PYTHON], [test "x${HAVE_PYTHON}" == "xyes"])
 
 	if test "x${PYTHON_ROOT}" == "xno" && test "x${PYTHON3}" != "x"; then
-		PYTHON_ROOT=${PYTHON3}
+		PYTHON_ROOT=${PYTHON3_ROOT}
 	fi
 
 	dnl Python specifics
