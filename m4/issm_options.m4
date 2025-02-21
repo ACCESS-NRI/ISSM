@@ -724,6 +724,8 @@ AC_DEFUN([ISSM_OPTIONS],[
 			PYTHONINCL=-I${PYTHON3_ROOT}/include
 		elif test -f "${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION}/Python.h"; then
 			PYTHONINCL=-I${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION}
+		elif test -f "${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION%.*}/Python.h"; then
+			PYTHONINCL=-I${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION%.*}
 		elif test -f "${PYTHON3_ROOT}/include/python${PYTHON3_VERSION}m/Python.h"; then
 			PYTHONINCL=-I${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION}m
 		elif test -f "${PYTHON3_ROOT}/Headers/Python.h"; then
@@ -754,6 +756,8 @@ AC_DEFUN([ISSM_OPTIONS],[
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib/x86_64-linux-gnu -lpython${PYTHON3_VERSION}m"
 		elif ls ${PYTHON3_ROOT}/lib/x86_64-linux-gnu/libpython${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib/x86_64-linux-gnu -lpython${PYTHON3_VERSION}"
+		elif ls ${PYTHON3_ROOT}/lib/x86_64-linux-gnu/libpython${PYTHON3_VERSION%.*}.* 1> /dev/null 2>&1; then
+			PYTHONLIB="-L${PYTHON3_ROOT}/lib/x86_64-linux-gnu -lpython${PYTHON3_VERSION%.*}"
 		elif ls ${PYTHON3_ROOT}/lib/libpython${PYTHON3_VERSION}m.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib -lpython${PYTHON3_VERSION}m"
 		elif ls ${PYTHON3_ROOT}/lib/libpython${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
