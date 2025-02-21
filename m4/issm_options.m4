@@ -722,14 +722,14 @@ AC_DEFUN([ISSM_OPTIONS],[
 			PYTHONINCL=-I${PYTHON_ROOT}/Frameworks/Python.framework/Versions/${PYTHON_VERSION}/include/python${PYTHON_VERSION}
 		elif test -f "${PYTHON3_ROOT}/include/Python.h"; then
 			PYTHONINCL=-I${PYTHON3_ROOT}/include
-		elif test -f "${PYTHON3_ROOT}/include/python${PYTHON3_VERSION}/Python.h"; then
-			PYTHONINCL=-I${PYTHON3_ROOT}/include/python${PYTHON3_VERSION}
+		elif test -f "${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION}/Python.h"; then
+			PYTHONINCL=-I${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION}
 		elif test -f "${PYTHON3_ROOT}/include/python${PYTHON3_VERSION}m/Python.h"; then
-			PYTHONINCL=-I${PYTHON3_ROOT}/include/python${PYTHON3_VERSION}m
+			PYTHONINCL=-I${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION}m
 		elif test -f "${PYTHON3_ROOT}/Headers/Python.h"; then
-			PYTHONINCL=-I${PYTHON3_ROOT}/include/python${PYTHON3_VERSION}m
-		elif test -f "${PYTHON3_ROOT}/Frameworks/Python.framework/Versions/${PYTHON3_VERSION}/include/python${PYTHON3_VERSION}/Python.h"; then
-			PYTHONINCL=-I${PYTHON3_ROOT}/Frameworks/Python.framework/Versions/${PYTHON3_VERSION}/include/python${PYTHON3_VERSION}
+			PYTHONINCL=-I${PYTHON3_ROOT}/include/python/${PYTHON3_VERSION}m
+		elif test -f "${PYTHON3_ROOT}/Frameworks/Python.framework/Versions/${PYTHON3_VERSION}/include/python/${PYTHON3_VERSION}/Python.h"; then
+			PYTHONINCL=-I${PYTHON3_ROOT}/Frameworks/Python.framework/Versions/${PYTHON3_VERSION}/include/python/${PYTHON3_VERSION}
 		else
 			AC_MSG_ERROR([Python.h not found! Please locate this file and contact ISSM developers via forum or email.]);
 		fi
