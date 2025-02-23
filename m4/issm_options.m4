@@ -752,21 +752,21 @@ AC_DEFUN([ISSM_OPTIONS],[
 			PYTHONLIB="-L${PYTHON_ROOT}/lib64 -lpython${PYTHON_VERSION}"
 		elif ls ${PYTHON_ROOT}/Frameworks/Python.framework/Versions/${PYTHON_VERSION}/lib/libpython${PYTHON_VERSION}.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON_ROOT}/Frameworks/Python.framework/Versions/${PYTHON_VERSION}/lib -lpython${PYTHON_VERSION}"
-		elif ls ${PYTHON3_ROOT}/lib/x86_64-linux-gnu/libpython${PYTHON3_VERSION}m.* 1> /dev/null 2>&1; then
+		elif ls ${PYTHON3_ROOT}/lib/x86_64-linux-gnu/libpython/${PYTHON3_VERSION}m.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib/x86_64-linux-gnu -lpython${PYTHON3_VERSION}m"
-		elif ls ${PYTHON3_ROOT}/lib/x86_64-linux-gnu/libpython${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
+		elif ls ${PYTHON3_ROOT}/lib/x86_64-linux-gnu/libpython$/{PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib/x86_64-linux-gnu -lpython${PYTHON3_VERSION}"
 		elif ls ${PYTHON3_ROOT}/lib/x86_64-linux-gnu/libpython${PYTHON3_VERSION%.*}.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib/x86_64-linux-gnu -lpython${PYTHON3_VERSION%.*}"
-		elif ls ${PYTHON3_ROOT}/lib/libpython${PYTHON3_VERSION}m.* 1> /dev/null 2>&1; then
+		elif ls ${PYTHON3_ROOT}/lib/libpython/${PYTHON3_VERSION}m.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib -lpython${PYTHON3_VERSION}m"
-		elif ls ${PYTHON3_ROOT}/lib/libpython${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
+		elif ls ${PYTHON3_ROOT}/lib/libpython/${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib -lpython${PYTHON3_VERSION}"
-		elif ls ${PYTHON3_ROOT}/lib64/libpython${PYTHON3_VERSION}m.* 1> /dev/null 2>&1; then
+		elif ls ${PYTHON3_ROOT}/lib64/libpython/${PYTHON3_VERSION}m.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib64 -lpython${PYTHON3_VERSION}m"
-		elif ls ${PYTHON3_ROOT}/lib64/libpython${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
+		elif ls ${PYTHON3_ROOT}/lib64/libpython/${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/lib64 -lpython${PYTHON3_VERSION}"
-		elif ls ${PYTHON3_ROOT}/Frameworks/Python.framework/Versions/${PYTHON3_VERSION}/lib/libpython${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
+		elif ls ${PYTHON3_ROOT}/Frameworks/Python.framework/Versions/${PYTHON3_VERSION}/lib/libpython.${PYTHON3_VERSION}.* 1> /dev/null 2>&1; then
 			PYTHONLIB="-L${PYTHON3_ROOT}/Frameworks/Python.framework/Versions/${PYTHON3_VERSION}/lib -lpython${PYTHON3_VERSION}"
 		else
 			AC_MSG_ERROR([libpython not found! Please locate this file and contact ISSM developers via forum or email.]);
