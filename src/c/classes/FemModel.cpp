@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <float.h>/*  DBL_EPSILON  */
 #include "../cores/cores.h"
 #include "../shared/io/io.h"
 #include "./classes.h"
@@ -294,8 +295,9 @@ void FemModel::CheckPointAD(int step){/*{{{*/
 	int step_length = (step    == 0 ? 1 : int(log10(static_cast<double>(step))   +1));
 
 	/*Create restart file*/
-	char* restartfilename  = xNew<char>(strlen("AD_step_")+step_length+strlen("_rank_")+rank_length+strlen(".ckpt")+1);
-	sprintf(restartfilename,"%s%i%s%i%s","AD_step_",step,"_rank_",my_rank,".ckpt");
+	int restartfilename_len = strlen("AD_step_")+step_length+strlen("_rank_")+rank_length+strlen(".ckpt")+1;
+	char* restartfilename = xNew<char>(restartfilename_len);
+	snprintf(restartfilename, restartfilename_len, "%s%i%s%i%s","AD_step_",step,"_rank_",my_rank,".ckpt");
 	this->parameters->AddObject(new StringParam(RestartFileNameEnum,restartfilename));
 
 	/*Write files*/
@@ -647,15 +649,16 @@ void FemModel::RestartAD(int step){ /*{{{*/
 	int step_length = (step    == 0 ? 1 : int(log10(static_cast<double>(step))   +1));
 
 	/*Create restart file*/
-	char* restartfilename  = xNew<char>(strlen("AD_step_")+step_length+strlen("_rank_")+rank_length+strlen(".ckpt")+1);
-	sprintf(restartfilename,"%s%i%s%i%s","AD_step_",step,"_rank_",my_rank,".ckpt");
+	int   restartfilename_len = strlen("AD_step_")+step_length+strlen("_rank_")+rank_length+strlen(".ckpt")+1;
+	char* restartfilename  = xNew<char>(restartfilename_len);
+	snprintf(restartfilename, restartfilename_len,"%s%i%s%i%s","AD_step_",step,"_rank_",my_rank,".ckpt");
 	this->parameters->AddObject(new StringParam(RestartFileNameEnum,restartfilename));
 
 	/*Read files*/
 	this->Restart(1);
 
 	/*Delete checkpoint file to save disk space*/
-	_printf0_("    == deleting  file  "<<restartfilename<<"\n");
+	/*_printf0_("    == deleting  file  "<<restartfilename<<"\n");*/
 	std::remove(restartfilename);
 
 	/*Clean up and return*/
@@ -2758,8 +2761,9 @@ void FemModel::Responsex(IssmDouble* responses,int response_descriptor_enum){/*{
 		case MaterialsRheologyBbarEnum:          this->ElementResponsex(responses,MaterialsRheologyBbarEnum); break;
 		case VelEnum:                            this->ElementResponsex(responses,VelEnum); break;
 		case FrictionCoefficientEnum:            NodalValuex(responses, FrictionCoefficientEnum,elements,nodes, vertices, loads, materials, parameters); break;
+		case GroundinglineMassFluxEnum:          this->GroundinglineMassFluxx(responses, false);    break;
 		default:
-			if(response_descriptor_enum>=Outputdefinition1Enum && response_descriptor_enum <=Outputdefinition100Enum){
+			if(response_descriptor_enum>=Outputdefinition1Enum && response_descriptor_enum <=Outputdefinition2000Enum){
 				int ierr = OutputDefinitionsResponsex(responses, this,response_descriptor_enum);
 				if(ierr) _error_("could not evaluate response");
 			}
@@ -3222,6 +3226,11 @@ void FemModel::UpdateConstraintsx(void){ /*{{{*/
 
 	/*Now, update degrees of freedoms: */
 	NodesDofx(nodes,parameters);
+
+	/*Update FileInputs if need be*/
+	if(this->inputs->IsFileInputUpdate(time)){
+		_error_("not implemented yet");
+	}
 
 }/*}}}*/
 int  FemModel::UpdateVertexPositionsx(void){ /*{{{*/
@@ -4850,10 +4859,6 @@ void FemModel::EsaGeodetic3D(Vector<IssmDouble>* pUp, Vector<IssmDouble>* pNorth
 	xDelete<IssmDouble>(zz);
 }
 /*}}}*/
-
-
-
-
 #endif
 void FemModel::HydrologyEPLupdateDomainx(IssmDouble* pEplcount){ /*{{{*/
 

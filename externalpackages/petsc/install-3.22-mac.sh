@@ -28,15 +28,11 @@ mkdir -p ${PETSC_DIR}
 mv petsc-${VER}/* ${PETSC_DIR}
 rm -rf petsc-${VER}
 
-# Edit configuration script
-sed -i.bak '/warning: -commons use_dylibs is no longer supported, using error treatment instead/d' src/config/BuildSystem/config/setCompilers.py
-
 # Configure
 cd ${PETSC_DIR}
 ./configure \
 	--prefix="${PREFIX}" \
 	--PETSC_DIR="${PETSC_DIR}" \
-	--LDFLAGS="${LDFLAGS}" \
 	--with-debugging=0 \
 	--with-valgrind=0 \
 	--with-x=0 \
@@ -44,7 +40,7 @@ cd ${PETSC_DIR}
 	--with-pic=1 \
 	--download-fblaslapack=1 \
 	--download-metis=1 \
-	--download-mpich=https://www.mpich.org/static/downloads/4.3.0/mpich-4.3.0.tar.gz \
+	--download-mpich=1 \
 	--download-mumps=1 \
 	--download-parmetis=1 \
 	--download-scalapack=1 \
@@ -53,9 +49,3 @@ cd ${PETSC_DIR}
 # Compile and install
 make
 make install
-
-# Need to make sure classic linker is used (should be able to remove this once MPICH fixes it)
-if [[ ${LDFLAGS} =~ "-Wl,-ld_classic" ]]; then
-	sed -i'' -e 's/-Wl,-commons,use_dylibs//g' ${PREFIX}/bin/mpicc
-	sed -i'' -e 's/-Wl,-commons,use_dylibs//g' ${PREFIX}/bin/mpicxx
-fi
