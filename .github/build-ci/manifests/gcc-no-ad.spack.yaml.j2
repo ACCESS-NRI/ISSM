@@ -1,0 +1,10 @@
+spack:
+  specs:
+  - issm @git.{{ ref }} +wrappers ~ad
+  packages:
+    all:
+      require:
+      - '%{{ gcc_compiler }} target={{ target}}'
+  concretizer:
+    unify: false
+  view: false
