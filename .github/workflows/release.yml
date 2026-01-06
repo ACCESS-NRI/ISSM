@@ -1,7 +1,4 @@
 on:
-  push:
-    branches:
-        - lb/dev
   pull_request:
 #   push:
 #     tags:
