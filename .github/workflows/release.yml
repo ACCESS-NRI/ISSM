@@ -1,24 +1,41 @@
 on:
-  pull_request:
-#   push:
-#     tags:
-#       - '*'
-#     branches:
-#       - access-release
+#   pull_request:
+  push:
+    tags:
+      - '*'
+    branches:
+      - lb-dev
 
 jobs:
-  common-ci:
+  build-issm-artifact:
     uses: ./.github/workflows/ubuntu-python.yml
     with:
       python_version: '3.12'
       test_cases: '[]'
       os: ubuntu-latest
 
-  release:
-    needs: common-ci
+  create-release:
+    needs: build-issm-artifact
     runs-on: ubuntu-latest
+
+    permissions:
+        contents: write
+
     steps:
+      - name: Checkout copy of repository
+        uses: actions/checkout@v4
+
       - name: Download artifacts from ubuntu-python.yml
         uses: actions/download-artifact@v5
         with:
-          name: ISSM-Linux-basic-python
+          name: ISSM-ubuntu-latest-basic-python
+          path: dist
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v5
+        with:
+          draft: true
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          files: |
+            dist/**
