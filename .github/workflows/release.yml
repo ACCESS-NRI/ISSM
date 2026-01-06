@@ -11,7 +11,7 @@ on:
 
 jobs:
   common-ci:
-    uses: ./.github/workflows/ubuntu-python.yml
+    uses: ./.github/workflows/common-workflow.yml
 
   release:
     needs: common-ci
