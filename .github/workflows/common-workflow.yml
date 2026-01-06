@@ -153,6 +153,7 @@ jobs:
   test:
     runs-on: ${{ inputs.os }}
     needs: build
+    if: ${{ inputs.test_cases != '[]' }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.build.outputs.test_matrix) }}
