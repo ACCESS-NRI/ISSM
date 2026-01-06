@@ -2,6 +2,15 @@ name: Ubuntu Python
 
 on:
   workflow_call:
+    inputs:
+      test_cases:
+        required: false
+        type: string
+        default: '["101:399", "401:899"]'
+      python_version:
+        required: false
+        type: string
+        default: '3.12'
   push:
     branches: [ "main" ]
     paths:
@@ -37,7 +46,7 @@ jobs:
       os: ubuntu-latest
       build_type: basic-python
       interface: python
-      python_version: 3.12
+      python_version: ${{ inputs.python_version }}
       build_command: |
         source $ISSM_DIR/etc/environment.sh
         autoreconf -ivf
@@ -67,7 +76,7 @@ jobs:
         cd $ISSM_DIR/externalpackages/m1qn3    && ./install-linux.sh
         cd $ISSM_DIR/externalpackages/petsc    && ./install-3.22-linux.sh
         cd $ISSM_DIR/externalpackages/semic    && ./install.sh
-      test_cases: '["101:399", "401:899"]'
+      test_cases: ${{ inputs.test_cases }}
       additional_options: " "
     secrets: inherit
     name: build-test-ubuntu-python

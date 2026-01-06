@@ -12,6 +12,9 @@ on:
 jobs:
   common-ci:
     uses: ./.github/workflows/ubuntu-python.yml
+    with:
+      python_version: '3.9'
+      test_cases: '["101"]'
 
   release:
     needs: common-ci
