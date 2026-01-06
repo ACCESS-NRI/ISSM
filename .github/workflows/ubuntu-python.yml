@@ -11,6 +11,10 @@ on:
         required: false
         type: string
         default: '3.12'
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
   push:
     branches: [ "main" ]
     paths:
@@ -43,7 +47,7 @@ jobs:
   build-test:
     uses: ./.github/workflows/common-workflow.yml 
     with:
-      os: ubuntu-latest
+      os: ${{ inputs.os }}
       build_type: basic-python
       interface: python
       python_version: ${{ inputs.python_version }}
