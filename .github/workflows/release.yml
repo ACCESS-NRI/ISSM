@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+        - lb/dev
+  pull_request:
+#   push:
+#     tags:
+#       - '*'
+#     branches:
+#       - access-release
+
+jobs:
+  common-ci:
+    uses: ./.github/workflows/ubuntu-python.yml
+
+  release:
+    needs: common-ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts from ubuntu-python.yml
+        uses: actions/download-artifact@v5
+        with:
+          name: ISSM-Linux-basic-python
