@@ -1,5 +1,4 @@
 on:
-#   pull_request:
   push:
     tags:
       - '*'
@@ -29,13 +28,11 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: ISSM-ubuntu-latest-basic-python
-          path: dist
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v5
         with:
-          draft: true
+          draft: false
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          files: |
-            dist/**
+          files: ISSM_artifact-ubuntu-latest-basic-python.tar
