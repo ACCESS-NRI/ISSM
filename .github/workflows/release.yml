@@ -32,7 +32,7 @@ jobs:
           path: dist
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v5
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           tag_name: ${{ github.ref_name }}
