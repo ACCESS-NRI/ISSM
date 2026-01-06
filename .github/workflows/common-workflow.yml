@@ -6,6 +6,7 @@ on:
       os:
         required: true
         type: string
+        default: ubuntu-latest
       build_type:
         required: true
         type: string
@@ -91,7 +92,7 @@ jobs:
           path: |
             ${{ env.ISSM_DIR }}/externalpackages/
             !${{ env.ISSM_DIR }}/externalpackages/petsc/src/
-          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          key: ${{ inputs.os }}-build-${{ env.cache-name }}
 
       - name: Prepare external packages
         if: ${{ steps.cache-externalpackages.outputs.cache-hit != 'true' }}
@@ -138,13 +139,13 @@ jobs:
         run: make -j4 install
 
       - name: Compress ISSM artifact
-        run: tar --exclude='./externalpackages/petsc/src' -cvf ISSM_artifact-${{ runner.os }}-${{ inputs.build_type }}.tar -C ${{ env.ISSM_DIR }}/ .
+        run: tar --exclude='./externalpackages/petsc/src' -cvf ISSM_artifact-${{ inputs.os }}-${{ inputs.build_type }}.tar -C ${{ env.ISSM_DIR }}/ .
 
       - name: Upload ISSM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ISSM-${{ runner.os }}-${{ inputs.build_type }}
-          path: ISSM_artifact-${{ runner.os }}-${{ inputs.build_type }}.tar
+          name: ISSM-${{ inputs.os }}-${{ inputs.build_type }}
+          path: ISSM_artifact-${{ inputs.os }}-${{ inputs.build_type }}.tar
           compression-level: 1
       - id: createTestMatrix
         run: |
@@ -161,12 +162,12 @@ jobs:
       - name: Download ISSM artifact
         uses: actions/download-artifact@v4
         with:
-          name: ISSM-${{ runner.os }}-${{ inputs.build_type }}
+          name: ISSM-${{ inputs.os }}-${{ inputs.build_type }}
           path: ${{ env.ISSM_DIR }}
 
       - name: Unpack ISSM artifact
         run: |
-          tar -xvf ISSM_artifact-${{ runner.os }}-${{ inputs.build_type }}.tar
+          tar -xvf ISSM_artifact-${{ inputs.os }}-${{ inputs.build_type }}.tar
           source $ISSM_DIR/etc/environment.sh
         working-directory: ${{ env.ISSM_DIR }}
         shell: 'bash'
