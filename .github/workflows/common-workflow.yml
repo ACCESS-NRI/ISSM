@@ -91,7 +91,7 @@ jobs:
           path: |
             ${{ env.ISSM_DIR }}/externalpackages/
             !${{ env.ISSM_DIR }}/externalpackages/petsc/src/
-          key: ${{ inputs.os }}-build-${{ env.cache-name }}
+          key: ${{ inputs.os }}-build-${{ inputs.python_version }}-${{ env.cache-name }}
 
       - name: Prepare external packages
         if: ${{ steps.cache-externalpackages.outputs.cache-hit != 'true' }}
@@ -120,10 +120,9 @@ jobs:
           sudo apt update
           sudo apt install -y python3.10 python3.10-dev
 
-      - name: build python
+      - name: Check python version
         run: |
           python3.10 --version 
-          make
 
       - name: Install Python dependencies
         if: contains( inputs.interface, 'python')
