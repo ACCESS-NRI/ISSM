@@ -1,6 +1,7 @@
 name: Ubuntu Python 
 
 on:
+  workflow_call:
   push:
     branches: [ "main" ]
     paths:

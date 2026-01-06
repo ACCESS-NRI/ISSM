@@ -11,10 +11,9 @@ on:
 
 jobs:
   common-ci:
-    uses: ./.github/workflows/common-workflow.yml
+    uses: ./.github/workflows/ubuntu-python.yml
     with:
-      os: ubuntu-latest
-      build_type: basic-python
+      test_cases: '["101"]'
 
   release:
     needs: common-ci
