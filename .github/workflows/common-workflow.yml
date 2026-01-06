@@ -118,17 +118,22 @@ jobs:
           sudo apt install -y software-properties-common
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
-          sudo apt install -y python3.10 python3.10-dev
+          sudo apt install -y python3.10 python3.10-dev libpython3.10-dev python-is-python3
+
+          sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 110
+          sudo update-alternatives --set python3 /usr/bin/python3.10
 
       - name: Check python version
         run: |
-          python3.10 --version 
+          python --version
+          python3 --version
 
       - name: Install Python dependencies
         if: contains( inputs.interface, 'python')
         run: |
           python -m pip install --upgrade pip
-          sudo apt update && sudo apt install -y python3-tk
+          sudo apt update
+          sudo apt install -y python3.10-tk
           python -m pip install numpy scipy matplotlib nose netCDF4
 
       - name: Build ISSM
@@ -146,13 +151,13 @@ jobs:
         run: make -j4 install
 
       - name: Compress ISSM artifact
-        run: tar --exclude='./externalpackages/petsc/src' -cvf ISSM_artifact-${{ inputs.os }}-${{ inputs.build_type }}.tar -C ${{ env.ISSM_DIR }}/ .
+        run: tar --exclude='./externalpackages/petsc/src' -cvf ISSM_artifact-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.build_type }}.tar -C ${{ env.ISSM_DIR }}/ .
 
       - name: Upload ISSM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ISSM-${{ inputs.os }}-${{ inputs.build_type }}
-          path: ISSM_artifact-${{ inputs.os }}-${{ inputs.build_type }}.tar
+          name: ISSM-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.build_type }}
+          path: ISSM_artifact-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.build_type }}.tar
           compression-level: 1
       - id: createTestMatrix
         run: |
@@ -174,7 +179,7 @@ jobs:
 
       - name: Unpack ISSM artifact
         run: |
-          tar -xvf ISSM_artifact-${{ inputs.os }}-${{ inputs.build_type }}.tar
+          tar -xvf ISSM_artifact-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.build_type }}.tar
           source $ISSM_DIR/etc/environment.sh
         working-directory: ${{ env.ISSM_DIR }}
         shell: 'bash'
@@ -229,18 +234,22 @@ jobs:
           sudo apt install -y software-properties-common
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
-          sudo apt install -y python3.10 python3.10-dev
+          sudo apt install -y python3.10 python3.10-dev libpython3.10-dev python-is-python3
 
-      - name: build python
+          sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 110
+          sudo update-alternatives --set python3 /usr/bin/python3.10
+
+      - name: Check python version
         run: |
-          python3.10 --version 
-          make
+          python --version
+          python3 --version
 
       - name: Install Python dependencies
         if: contains( inputs.interface, 'python')
         run: |
           python -m pip install --upgrade pip
-          sudo apt update && sudo apt install -y python3-tk
+          sudo apt update
+          sudo apt install -y python3.10-tk
           python -m pip install numpy scipy matplotlib nose netCDF4
 
       - name: Run Python tests
