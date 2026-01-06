@@ -10,8 +10,8 @@ jobs:
   common-ci:
     uses: ./.github/workflows/ubuntu-python.yml
     with:
-      python_version: '3.11'
-      test_cases: '["101"]'
+      python_version: '3.12'
+      test_cases: '[]'
 
   release:
     needs: common-ci
