@@ -15,7 +15,6 @@ jobs:
     with:
       os: ubuntu-latest
       build_type: basic-python
-      test_cases: []
 
   release:
     needs: common-ci
