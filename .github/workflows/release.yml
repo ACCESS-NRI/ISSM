@@ -1,10 +1,10 @@
 on:
-#   pull_request:
-  push:
-    tags:
-      - '*'
-    branches:
-      - lb-dev
+  pull_request:
+  # push:
+  #   tags:
+  #     - '*'
+  #   branches:
+  #     - lb-dev
 
 jobs:
   build-issm-artifact:
