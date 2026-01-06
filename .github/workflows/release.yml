@@ -1,10 +1,10 @@
 on:
-  pull_request:
-  # push:
-  #   tags:
-  #     - '*'
-  #   branches:
-  #     - lb-dev
+#   pull_request:
+  push:
+    tags:
+      - '*'
+    branches:
+      - lb-dev
 
 jobs:
   build-issm-artifact:
@@ -32,7 +32,7 @@ jobs:
           path: dist
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v5
         with:
           draft: true
           tag_name: ${{ github.ref_name }}
