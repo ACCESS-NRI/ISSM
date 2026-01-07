@@ -3,18 +3,10 @@ on:
     tags:
       - '*'
     branches:
-      - lb-dev
+      - access-release
 
 jobs:
-  build-issm-artifact:
-    uses: ./.github/workflows/ubuntu-python.yml
-    with:
-      python_version: '3.12'
-      test_cases: '[]'
-      os: ubuntu-latest
-
   create-release:
-    needs: build-issm-artifact
     runs-on: ubuntu-latest
 
     permissions:
@@ -24,15 +16,9 @@ jobs:
       - name: Checkout copy of repository
         uses: actions/checkout@v4
 
-      - name: Download artifacts from ubuntu-python.yml
-        uses: actions/download-artifact@v5
-        with:
-          name: ISSM-ubuntu-latest-basic-python
-
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          draft: false
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          files: ISSM_artifact-ubuntu-latest-basic-python.tar
+          generate_release_notes: true
