@@ -1,0 +1,36 @@
+on:
+  push:
+    tags:
+      - '[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9]'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    permissions:
+        contents: write
+
+    steps:
+      - name: Checkout copy of repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if tag [commit] is on access-release
+        id: check_tag
+        run: |
+          git fetch origin access-release
+          TAG_COMMIT=$(git rev-list -n 1 "${GITHUB_REF}")
+          if git merge-base --is-ancestor "$TAG_COMMIT" origin/access-release; then
+            echo "tag-on-branch=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No release generated as the tag ${GITHUB_REF_NAME} references commit $TAG_COMMIT which is not reachable from branch access-release"
+          fi
+
+      - name: Create GitHub release
+        if: steps.check_tag.outputs.tag-on-branch == 'true'
+        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 #v2.3.3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
