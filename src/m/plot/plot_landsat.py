@@ -45,8 +45,8 @@ def plot_landsat(md,data,options,fig,axgrid,gridindex):
     isunit  = options.getfieldvalue('unit',1)
 
     #Get xlim, and ylim
-    xlim=options.getfieldvalue('xlim',np.array([min(x2d),max(x2d)]))/isunit
-    ylim=options.getfieldvalue('ylim',np.array([min(y2d),max(y2d)]))/isunit
+    xlim=np.array(options.getfieldvalue('xlim',[min(x2d),max(x2d)]))/isunit
+    ylim=np.array(options.getfieldvalue('ylim',[min(y2d),max(y2d)]))/isunit
 
     pwr = md.radaroverlay.pwr
     xm  = md.radaroverlay.x
@@ -113,8 +113,17 @@ def plot_landsat(md,data,options,fig,axgrid,gridindex):
         if np.ndim(pwr) != 3:
             raise Exception('Error: Check np.ndim(md.radaroverlay.pwr) should be equal to 3.')
 
+        if np.any(np.diff(xm) < 0):
+            print('WARNING: md.radaroverlay.x should be increasing order.')
+            xm = np.flip(xm)
+            pwr= np.flip(pwr,axis=0)
+        if np.any(np.diff(md.radaroverlay.y) < 0):
+            print('WARNING: md.radaroverlay.y should be increasing order.')
+            ym = np.flip(ym)
+            pwr= np.flip(pwr,axis=1)
+
         #Check image size
-        #shape of image should be (ny, nx, band)
+        #shape of image should be (nx, ny, band)
         nx = len(xm)
         ny = len(ym)
         if (np.shape(pwr)[0]==nx) & (np.shape(pwr)[1]==ny):
