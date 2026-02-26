@@ -223,6 +223,7 @@ const char* EnumToStringx(int en){
 		case FrictionGammaEnum : return "FrictionGamma";
 		case FrictionLawEnum : return "FrictionLaw";
 		case FrictionLinearizeEnum : return "FrictionLinearize";
+		case FrictionMaxCoefficientEnum : return "FrictionMaxCoefficient";
 		case FrictionPseudoplasticityExponentEnum : return "FrictionPseudoplasticityExponent";
 		case FrictionU0Enum : return "FrictionU0";
 		case FrictionThresholdSpeedEnum : return "FrictionThresholdSpeed";
@@ -435,6 +436,8 @@ const char* EnumToStringx(int en){
 		case OutputFileNameEnum : return "OutputFileName";
 		case OutputFilePointerEnum : return "OutputFilePointer";
 		case OutputdefinitionEnum : return "Outputdefinition";
+		case PddfacIceEnum : return "PddfacIce";
+		case PddfacSnowEnum : return "PddfacSnow";
 		case QmuErrNameEnum : return "QmuErrName";
 		case QmuInNameEnum : return "QmuInName";
 		case QmuIsdakotaEnum : return "QmuIsdakota";

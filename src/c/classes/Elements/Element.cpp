@@ -3695,6 +3695,7 @@ void       Element::PositiveDegreeDaySicopolis(bool isfirnwarming){/*{{{*/
 	IssmDouble* p_ampl=xNew<IssmDouble>(NUM_VERTICES);	// precip anomaly
 	IssmDouble* t_ampl=xNew<IssmDouble>(NUM_VERTICES);	// remperature anomaly
 	IssmDouble rho_water,rho_ice,desfac,rlaps;
+	IssmDouble pdd_fac_ice,pdd_fac_snow;
 	IssmDouble inv_twelve=1./12.;								//factor for monthly average
 	IssmDouble time,yts,time_yr;
 
@@ -3708,6 +3709,10 @@ void       Element::PositiveDegreeDaySicopolis(bool isfirnwarming){/*{{{*/
 	/*Get parameters for height corrections*/
 	desfac=this->FindParam(SmbDesfacEnum);
 	rlaps=this->FindParam(SmbRlapsEnum);
+
+	/*Get pdd melt factors*/
+	pdd_fac_ice=this->FindParam(PddfacIceEnum);
+	pdd_fac_snow=this->FindParam(PddfacSnowEnum);
 
 	/* Get time */
 	this->parameters->FindParam(&time,TimeEnum);
@@ -3747,7 +3752,7 @@ void       Element::PositiveDegreeDaySicopolis(bool isfirnwarming){/*{{{*/
 	for (int iv = 0; iv<NUM_VERTICES; iv++){
 		smb[iv]=PddSurfaceMassBalanceSicopolis(&monthlytemperatures[iv*12], &monthlyprec[iv*12],
 					&melt[iv], &accu[iv], &melt_star[iv], &t_ampl[iv], &p_ampl[iv], yts, s[iv],
-					desfac, s0t[iv], s0p[iv],rlaps,rho_water,rho_ice);
+					desfac, s0t[iv], s0p[iv],rlaps,rho_water,rho_ice,pdd_fac_ice,pdd_fac_snow);
 
 		/* make correction */
 		smb[iv] = smb[iv]+smbcorr[iv];
@@ -5659,17 +5664,24 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 		}
 		else pAir=pparam;
 
-		//Hold relative humidity constant and calculte new saturation vapor pressure
+		//Hold relative humidity constant, calculte new saturation vapor pressure,
+		// and new saturation specific humidity to scale precipitation
 		//https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html
 		//es over ice calculation
 		//Ding et al., 2019 after Bolton, 1980
 		//ea37 = rh37*100*6.112.*exp((17.67*(t237-273.15))./(t237-29.65));
-		rhparam=eaparam/6.112/exp((17.67*(taparam-273.15))/(taparam-29.65));
-		eAir=fmax(rhparam*6.112*exp((17.67*(Ta-273.15))/(Ta-29.65)),0.0);
+		//ea37s (hPa) = 6.1121*exp(22.587*(t-273.15)/(t-273.15+273.86)); (with respect to ice)
+		IssmDouble esparam, es, qsparam, qs;
+		esparam=6.112*exp((17.67*(taparam-273.15))/(taparam-29.65));
+		es=6.112*exp((17.67*(Ta-273.15))/(Ta-29.65));
+		rhparam=eaparam/esparam;
+		eAir=fmax(rhparam*es,0.0);
+		qs=fmax(0.622*es/(pAir/100 - 0.378*es),0);
+		qsparam=fmax(0.622*esparam/(pparam/100 - 0.378*esparam),0);
 
-		if (isprecipmap && (eaparam>0) && (eAir>0)){
-			P=prparam*eAir/eaparam;
-			C=C*eAir/eaparam;
+		if ((isprecipmap) && (qsparam>0)){ 
+			P=fmax(prparam*qs/qsparam,0.0);
+			C=fmax(C*qs/qsparam,0.0);
 		}
 		else P=prparam;
 

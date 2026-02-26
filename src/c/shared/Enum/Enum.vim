@@ -221,6 +221,7 @@ syn keyword cConstant FrictionFEnum
 syn keyword cConstant FrictionGammaEnum
 syn keyword cConstant FrictionLawEnum
 syn keyword cConstant FrictionLinearizeEnum
+syn keyword cConstant FrictionMaxCoefficientEnum
 syn keyword cConstant FrictionPseudoplasticityExponentEnum
 syn keyword cConstant FrictionU0Enum
 syn keyword cConstant FrictionThresholdSpeedEnum
@@ -433,6 +434,8 @@ syn keyword cConstant OutputBufferSizePointerEnum
 syn keyword cConstant OutputFileNameEnum
 syn keyword cConstant OutputFilePointerEnum
 syn keyword cConstant OutputdefinitionEnum
+syn keyword cConstant PddfacIceEnum
+syn keyword cConstant PddfacSnowEnum
 syn keyword cConstant QmuErrNameEnum
 syn keyword cConstant QmuInNameEnum
 syn keyword cConstant QmuIsdakotaEnum

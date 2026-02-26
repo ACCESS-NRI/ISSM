@@ -210,6 +210,7 @@
 	FrictionGammaEnum
 	FrictionLawEnum
 	FrictionLinearizeEnum
+	FrictionMaxCoefficientEnum
 	FrictionPseudoplasticityExponentEnum
 	FrictionU0Enum
 	FrictionThresholdSpeedEnum
@@ -422,6 +423,8 @@
 	OutputFileNameEnum
 	OutputFilePointerEnum
 	OutputdefinitionEnum
+	PddfacIceEnum
+	PddfacSnowEnum
 	QmuErrNameEnum
 	QmuInNameEnum
 	QmuIsdakotaEnum
@@ -3986,6 +3989,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==FrictionGammaEnum) return "FrictionGamma" end
 	if(enum==FrictionLawEnum) return "FrictionLaw" end
 	if(enum==FrictionLinearizeEnum) return "FrictionLinearize" end
+	if(enum==FrictionMaxCoefficientEnum) return "FrictionMaxCoefficient" end
 	if(enum==FrictionPseudoplasticityExponentEnum) return "FrictionPseudoplasticityExponent" end
 	if(enum==FrictionU0Enum) return "FrictionU0" end
 	if(enum==FrictionThresholdSpeedEnum) return "FrictionThresholdSpeed" end
@@ -4198,6 +4202,8 @@ function EnumToString(enum::IssmEnum)
 	if(enum==OutputFileNameEnum) return "OutputFileName" end
 	if(enum==OutputFilePointerEnum) return "OutputFilePointer" end
 	if(enum==OutputdefinitionEnum) return "Outputdefinition" end
+	if(enum==PddfacIceEnum) return "PddfacIce" end
+	if(enum==PddfacSnowEnum) return "PddfacSnow" end
 	if(enum==QmuErrNameEnum) return "QmuErrName" end
 	if(enum==QmuInNameEnum) return "QmuInName" end
 	if(enum==QmuIsdakotaEnum) return "QmuIsdakota" end
@@ -7762,6 +7768,7 @@ function StringToEnum(name::String)
 	if(name=="FrictionGamma") return FrictionGammaEnum  end
 	if(name=="FrictionLaw") return FrictionLawEnum  end
 	if(name=="FrictionLinearize") return FrictionLinearizeEnum  end
+	if(name=="FrictionMaxCoefficient") return FrictionMaxCoefficientEnum  end
 	if(name=="FrictionPseudoplasticityExponent") return FrictionPseudoplasticityExponentEnum  end
 	if(name=="FrictionU0") return FrictionU0Enum  end
 	if(name=="FrictionThresholdSpeed") return FrictionThresholdSpeedEnum  end
@@ -7974,6 +7981,8 @@ function StringToEnum(name::String)
 	if(name=="OutputFileName") return OutputFileNameEnum  end
 	if(name=="OutputFilePointer") return OutputFilePointerEnum  end
 	if(name=="Outputdefinition") return OutputdefinitionEnum  end
+	if(name=="PddfacIce") return PddfacIceEnum  end
+	if(name=="PddfacSnow") return PddfacSnowEnum  end
 	if(name=="QmuErrName") return QmuErrNameEnum  end
 	if(name=="QmuInName") return QmuInNameEnum  end
 	if(name=="QmuIsdakota") return QmuIsdakotaEnum  end

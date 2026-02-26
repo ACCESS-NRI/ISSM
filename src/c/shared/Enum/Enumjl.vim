@@ -214,6 +214,7 @@ syn keyword juliaConstC FrictionFEnum
 syn keyword juliaConstC FrictionGammaEnum
 syn keyword juliaConstC FrictionLawEnum
 syn keyword juliaConstC FrictionLinearizeEnum
+syn keyword juliaConstC FrictionMaxCoefficientEnum
 syn keyword juliaConstC FrictionPseudoplasticityExponentEnum
 syn keyword juliaConstC FrictionU0Enum
 syn keyword juliaConstC FrictionThresholdSpeedEnum
@@ -426,6 +427,8 @@ syn keyword juliaConstC OutputBufferSizePointerEnum
 syn keyword juliaConstC OutputFileNameEnum
 syn keyword juliaConstC OutputFilePointerEnum
 syn keyword juliaConstC OutputdefinitionEnum
+syn keyword juliaConstC PddfacIceEnum
+syn keyword juliaConstC PddfacSnowEnum
 syn keyword juliaConstC QmuErrNameEnum
 syn keyword juliaConstC QmuInNameEnum
 syn keyword juliaConstC QmuIsdakotaEnum
