@@ -2,6 +2,11 @@ spack:
   specs:
   - issm @git.{{ ref }} +wrappers ~ad
   packages:
+    # Workaround due to https://github.com/spack/spack-packages/pull/3644
+    re2c:
+      require:
+      - '@3.1'
+
     gcc:
       require:
       - '@{{ gcc_compiler_version }}'
