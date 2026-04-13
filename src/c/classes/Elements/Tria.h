@@ -53,6 +53,8 @@ class Tria: public Element,public ElementHook,public TriaRef{
 		/*}}}*/
 		/*Element virtual functions definitions: {{{*/
 		void        AverageOntoPartition(Vector<IssmDouble>* partition_contributions,Vector<IssmDouble>* partition_areas,IssmDouble* vertex_response,IssmDouble* qmu_part);
+
+		bool        Buttressing(IssmDouble* ptheta, IssmDouble* plength);
 		void			CalvingRateVonmises();
 		void			CalvingRateVonmisesAD();
 		void			CalvingRateTest();
@@ -156,6 +158,7 @@ class Tria: public Element,public ElementHook,public TriaRef{
 		IssmDouble  TotalCalvingMeltingFluxLevelset(bool scaled);
 		IssmDouble  TotalFloatingBmb(bool scaled);
 		IssmDouble  TotalGroundedBmb(bool scaled);
+		IssmDouble  TotalHydrologyBasalFlux(bool scaled);
 		IssmDouble  TotalSmb(bool scaled);
 		IssmDouble  TotalSmbMelt(bool scaled);
 		IssmDouble  TotalSmbRefreeze(bool scaled);

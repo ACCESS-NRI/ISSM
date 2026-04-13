@@ -31,6 +31,7 @@ BalancethicknessOmega
 BalancethicknessSpcthickness
 BalancethicknessThickeningRate
 BasalCrevasse
+BasalforcingsCoriolisF
 BasalforcingsDeepwaterMeltingRatearma
 BasalforcingsDeepwaterMeltingRateNoise
 BasalforcingsDeepwaterMeltingRateValuesAutoregression
@@ -50,6 +51,10 @@ BasalforcingsIsmip6BasinId
 BasalforcingsIsmip6Tf
 BasalforcingsIsmip6TfShelf
 BasalforcingsIsmip6MeltAnomaly
+BasalforcingsIsmip7Tf
+BasalforcingsIsmip7TfShelf
+BasalforcingsIsmip7Salinity
+BasalforcingsIsmip7SalinityShelf
 BasalforcingsMeltrateFactor
 BasalforcingsOceanSalinity
 BasalforcingsOceanTemp
@@ -175,6 +180,7 @@ FrontalForcingsBasinId
 FrontalForcingsSubglacialDischargearma
 FrontalForcingsSubglacialDischarge
 GeometryHydrostaticRatio
+GroundinglineIntrusionDistance
 NGia
 NGiaRate
 UGia
@@ -444,6 +450,7 @@ SmbHref
 SmbIsInitialized
 SmbMAdd
 SmbMappedforcingpoint
+SmbMappedforcingprecipscaling
 SmbMassBalance
 SmbMassBalanceSnow
 SmbMassBalanceIce
@@ -501,6 +508,9 @@ SmbSummerMelt
 SmbSummerAlbedo
 SmbSnowheight
 SmbT
+SmbT10
+SmbT30
+SmbT50
 SmbTa
 SmbTamp
 SmbTeValue
@@ -511,6 +521,7 @@ SmbTemperaturesPresentday
 SmbTemperaturesReconstructed
 SmbTini
 SmbTmean
+SmbTs
 SmbTz
 SmbValuesAutoregression
 SmbValuesMovingaverage
@@ -623,6 +634,7 @@ OldAccumulatedDeltaIceThickness
 OldAccumulatedDeltaTws
 
 %Scalar outputs
+AverageButtressing
 Divergence
 MaxDivergence
 IceMass
@@ -667,6 +679,7 @@ TotalFloatingBmb
 TotalFloatingBmbScaled
 TotalGroundedBmb
 TotalGroundedBmbScaled
+TotalHydrologyBasalFlux
 TotalSmb
 TotalSmbMelt
 TotalSmbRefreeze
