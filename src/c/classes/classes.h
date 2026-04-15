@@ -5,12 +5,6 @@
 #ifndef _ALL_CLASSES_H_
 #define _ALL_CLASSES_H_
 
-#ifdef HAVE_CONFIG_H
-	#include <config.h>
-#else
-	#error "Cannot compile with HAVE_CONFIG_H symbol! run configure first!"
-#endif
-
 /*Objects: */
 #include "./Contour.h"
 #include "./Vertices.h"
@@ -117,9 +111,6 @@
 #include "./Params/TransientArrayParam.h"
 #include "./Params/TransientGriddedFieldParam.h"
 #include "./Params/DataSetParam.h"
-#ifdef _HAVE_PyBind11_
-#include "./Params/EmulatorParam.h"
-#endif
 
 /*matrix: */
 #include "./matrix/matrixobjects.h"

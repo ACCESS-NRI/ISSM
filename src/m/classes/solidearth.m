@@ -105,7 +105,7 @@ classdef solidearth
 
 		end % }}}
 		function list=defaultoutputs(self,md) % {{{
-			list = {'Sealevel', 'Bed'};
+			list = {'Sealevel'};
 		end % }}}
 		function marshall(self,prefix,md,fid) % {{{
 

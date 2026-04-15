@@ -94,18 +94,7 @@ class fram(object):
         return self
     # }}}
 
-    def BuildQueueScript(self, md, filename):  # {{{
-
-        # Get variables from md
-        dirname         = md.private.runtimename
-        modelname       = md.miscellaneous.name
-        solution        = md.private.solution
-        io_gather       = md.settings.io_gather
-        isvalgrind      = md.debug.valgrind
-        isgprof         = md.debug.gprof
-        isdakota        = md.qmu.isdakota
-        isoceancoupling = md.transient.isoceancoupling
-
+    def BuildQueueScript(self, dirname, modelname, solution, io_gather, isvalgrind, isgprof, isdakota, isoceancoupling):  # {{{
         executable = 'issm.exe'
         if isdakota:
             version = IssmConfig('_DAKOTA_VERSION_')[0:2]
@@ -116,7 +105,7 @@ class fram(object):
             executable = 'issm_ocean.exe'
         # Write queuing script
         shortname = modelname[0:min(12, len(modelname))]
-        fid = open(filename, 'w')
+        fid = open(modelname + '.queue', 'w')
 
         fid.write('#!/bin/bash -l\n')
         fid.write('#SBATCH --job-name=%s \n' % shortname)
@@ -158,7 +147,6 @@ class fram(object):
         issmscpout(self.name, self.executionpath, self.login, self.port, [dirname + '.tar.gz'])
 
     # }}}
-
     def LaunchQueueJob(self, modelname, dirname, filelist, restart, batch):  # {{{
         #Execute Queue job
         if not isempty(restart):
@@ -167,7 +155,6 @@ class fram(object):
             launchcommand = 'cd %s && rm -rf ./%s && mkdir %s && cd %s && mv ../%s.tar.gz ./ && tar -zxf %s.tar.gz  && sbatch %s.queue' % (self.executionpath, dirname, dirname, dirname, dirname, dirname, modelname)
         issmssh(self.name, self.login, self.port, launchcommand)
     # }}}
-
     def Download(self, dirname, filelist):  # {{{
         # Copy files from cluster to current directory
         directory = '%s/%s/' % (self.executionpath, dirname)

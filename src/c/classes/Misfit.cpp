@@ -205,6 +205,7 @@ IssmDouble Misfit::Response(FemModel* femmodel){/*{{{*/
 				 misfit_t += pow(model[i]-observation[i],2)*weights[i];
 				 if (weights[i]!=0)count++;
 			 }
+			 misfit=sqrt(misfit_t/count);
 
 			 /*Add this time's contribution to curent misfit: */
 			 misfit=sqrt(misfit_t)/count;

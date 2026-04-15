@@ -86,30 +86,21 @@ class generic(object):
         return md
     # }}}
 
-    def BuildQueueScript(self, md, filename):  # {{{
-
-        # Get variables from md
-        dirname         = md.private.runtimename
-        modelname       = md.miscellaneous.name
-        solution        = md.private.solution
-        io_gather       = md.settings.io_gather
-        isvalgrind      = md.debug.valgrind
-        isgprof         = md.debug.gprof
-        isdakota        = md.qmu.isdakota
-        isoceancoupling = md.transient.isoceancoupling
-
+    def BuildQueueScript(self, dirname, modelname, solution, io_gather, isvalgrind, isgprof, isdakota, isoceancoupling):  # {{{
         # Which executable are we calling?
         executable = 'issm.exe'  # default
+
         if isdakota:
             version = IssmConfig('_DAKOTA_VERSION_')
             version = float(version[0])
-            if version >= 6: executable = 'issm_dakota.exe'
+            if version >= 6:
+                executable = 'issm_dakota.exe'
         if isoceancoupling:
             executable = 'issm_ocean.exe'
 
         # Write queuing script
         if not ispc():
-            fid = open(filename, 'w')
+            fid = open(modelname + '.queue', 'w')
             fid.write('#!/bin/sh\n')
             if not isvalgrind:
                 if self.interactive:
@@ -162,21 +153,10 @@ class generic(object):
             fid.close()
     # }}}
 
-    def BuildKrigingQueueScript(self, md, filename):  # {{{
-
-        # Get variables from md
-        dirname         = md.private.runtimename
-        modelname       = md.miscellaneous.name
-        solution        = md.private.solution
-        io_gather       = md.settings.io_gather
-        isvalgrind      = md.debug.valgrind
-        isgprof         = md.debug.gprof
-        isdakota        = md.qmu.isdakota
-        isoceancoupling = md.transient.isoceancoupling
-
+    def BuildKrigingQueueScript(self, modelname, solution, io_gather, isvalgrind, isgprof):  # {{{
         #write queuing script
         if not ispc():
-            fid = open(filename, 'w')
+            fid = open(modelname + '.queue', 'w')
             fid.write('#!/bin/sh\n')
             if not isvalgrind:
                 if self.interactive:

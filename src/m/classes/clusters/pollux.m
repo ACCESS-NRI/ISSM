@@ -45,24 +45,13 @@ classdef pollux
 			QueueRequirements(available_queues,queue_requirements_time,queue_requirements_np,cluster.queue,cluster.np,cluster.time)
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster,dirname,modelname,solution,io_gather,isvalgrind,isgprof,isdakota,isoceancoupling) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
-
-         %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(isvalgrind), disp('valgrind not supported by cluster, ignoring...'); end
+			if(isgprof),    disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queuing script 
-			fid=fopen(filename, 'w');
+			fid=fopen([modelname '.queue'],'w');
 			fprintf(fid,'#!/bin/sh\n');
 			fprintf(fid,'#PBS -l walltime=%i\n',cluster.time*60); %walltime is in seconds.
 			fprintf(fid,'#PBS -N %s\n',modelname);
@@ -77,6 +66,7 @@ classdef pollux
 			fprintf(fid,'export OMP_NUM_THREADS=1\n');
 			fprintf(fid,'dplace -s1 -c0-%i mpiexec -np %i %s/issm.exe %s %s %s',cluster.np-1,cluster.np,cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
 			fclose(fid);
+
 		end
 		%}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart) % {{{

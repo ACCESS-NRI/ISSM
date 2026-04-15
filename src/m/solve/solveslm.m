@@ -67,10 +67,10 @@ privateruntimenames{end+1}=slm.earth.private.runtimename;
 miscellaneousnames{end+1}=slm.earth.miscellaneous.name;
 nps{end+1}=slm.earth.cluster.np;
 
-filelist={[slm.miscellaneous.name '.queue']};
-BuildQueueScriptMultipleModels(cluster, slm, privateruntimenames, miscellaneousnames, nps, filelist{1});
+BuildQueueScriptMultipleModels(cluster,slm.private.runtimename,slm.miscellaneous.name,slm.private.solution,privateruntimenames,miscellaneousnames,nps);
 
 %Upload all required files, given that each individual solution for icecaps and earth model already did:
+filelist={[slm.miscellaneous.name '.queue']};
 UploadQueueJob(cluster,slm.miscellaneous.name,slm.private.runtimename,filelist);
 
 %launch queue job: 

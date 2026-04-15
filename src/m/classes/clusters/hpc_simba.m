@@ -60,24 +60,13 @@ classdef hpc_simba
 
 		end
 		%}}}
-		function BuildKrigingQueueScript(cluster, md, filename) % {{{
+		function BuildKrigingQueueScript(cluster,modelname,solution,io_gather,isvalgrind,isgprof) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
-
-         %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(isvalgrind), disp('valgrind not supported by cluster, ignoring...'); end
+			if(isgprof),    disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queuing script 
-			fid=fopen(filename, 'w');
+			fid=fopen([modelname '.queue'],'w');
 			fprintf(fid,'#!/bin/bash\n');
 			fprintf(fid,'#$ -N %s\n',modelname);
 			fprintf(fid,'#$ -q %s \n',cluster.queue);
@@ -90,30 +79,19 @@ classdef hpc_simba
 			fprintf(fid,'source $ISSM_DIR/etc/environment.sh\n');       %FIXME
 			fprintf(fid,'cd %s/%s\n\n',cluster.executionpath,modelname);
 			fprintf(fid,'mpiexec -np %i %s/kriging.exe %s %s\n',cluster.np,cluster.codepath,[cluster.executionpath '/' modelname],modelname);
-			if ~io_gather %concatenate the output files:
+			if ~io_gather, %concatenate the output files:
 				fprintf(fid,'cat %s.outbin.* > %s.outbin',modelname,modelname);
 			end
 			fclose(fid);
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster,dirname,modelname,solution,io_gather,isvalgrind,isgprof,isdakota,isoceancoupling) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
-
-         %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(isvalgrind), disp('valgrind not supported by cluster, ignoring...'); end
+			if(isgprof),    disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queuing script 
-			fid=fopen(filename, 'w');
+			fid=fopen([modelname '.queue'],'w');
 			if 0
 				fprintf(fid,'#!/bin/bash\n');
 				fprintf(fid,'#$ -N %s\n',modelname);
@@ -129,7 +107,8 @@ classdef hpc_simba
 				fprintf(fid,'#PBS -N %s\n',modelname);
 				%fprintf(fid,'#PBS -l nodes=simba01:ppn=%d\n',...
 				%	ceil(cluster.np/cluster.cpuspernode), cluster.np);
-				fprintf(fid,'#PBS -l nodes=simba01:ppn=%d\n', cluster.np);
+				fprintf(fid,'#PBS -l nodes=simba01:ppn=%d\n',...
+					cluster.np);
 				fprintf(fid,'#PBS -o %s.outlog \n',modelname);
 				fprintf(fid,'#PBS -e %s.errlog \n\n',modelname);
 				fprintf(fid,'\n');
@@ -147,15 +126,17 @@ classdef hpc_simba
 			fclose(fid);
 
 			%in interactive mode, create a run file, and errlog and outlog file
-			if cluster.interactive
+			if cluster.interactive,
 				fid=fopen([modelname '.run'],'w');
 				fprintf(fid,'mpiexec -np %i %s/issm.exe %s %s %s\n',cluster.np,cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
 				if ~io_gather, %concatenate the output files:
 					fprintf(fid,'cat %s.outbin.* > %s.outbin',modelname,modelname);
 				end
 				fclose(fid);
-				fid=fopen([modelname '.errlog'],'w'); fclose(fid);
-				fid=fopen([modelname '.outlog'],'w'); fclose(fid);
+				fid=fopen([modelname '.errlog'],'w');
+				fclose(fid);
+				fid=fopen([modelname '.outlog'],'w');
+				fclose(fid);
 			end
 		end %}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{

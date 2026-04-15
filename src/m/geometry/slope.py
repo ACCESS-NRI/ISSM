@@ -2,13 +2,14 @@ import numpy as np
 from GetNodalFunctionsCoeff import GetNodalFunctionsCoeff
 from project3d import project3d
 
+
 def slope(md, *args):
     """
-    SLOPE - compute the gradient of any field
+    SLOPE - compute the surface slope
 
     Usage:
-            dfdx, dfdy, ds = slope(md)
-            dfdx, dfdy, ds = slope(md, md.results.TransientSolution(1).Surface)
+            sx, sy, s = slope(md)
+            sx, sy, s = slope(md, md.results.TransientSolution(1).Surface)
     """
 
     #load some variables (it is much faster if the variables are loaded from md once for all)
@@ -22,9 +23,9 @@ def slope(md, *args):
         y = md.mesh.y2d
 
     if len(args) == 0:
-        f = md.geometry.surface
+        surf = md.geometry.surface
     elif len(args) == 1:
-        f = args[0]
+        surf = args[0]
     else:
         raise RuntimeError("slope.py usage error")
 
@@ -32,13 +33,14 @@ def slope(md, *args):
     alpha, beta = GetNodalFunctionsCoeff(index, x, y)[0:2]
 
     summation = np.array([[1], [1], [1]])
-    dfdx = np.dot(f[index - 1] * alpha, summation).reshape(-1, )
-    dfdy = np.dot(f[index - 1] * beta, summation).reshape(-1, )
+    sx = np.dot(surf[index - 1] * alpha, summation).reshape(-1, )
+    sy = np.dot(surf[index - 1] * beta, summation).reshape(-1, )
+
+    s = np.sqrt(sx**2 + sy**2)
+
     if md.mesh.dimension() == 3:
-        dfdx = project3d(md, 'vector', dfdx, 'type', 'element')
-        dfdy = project3d(md, 'vector', dfdy, 'type', 'element')
+        sx = project3d(md, 'vector', sx, 'type', 'element')
+        sy = project3d(md, 'vector', sy, 'type', 'element')
+        s = np.sqrt(sx**2 + sy**2)
 
-    #Compute magnitude
-    ds = np.sqrt(dfdx**2 + dfdy**2)
-
-    return (dfdx, dfdy, ds)
+    return (sx, sy, s)

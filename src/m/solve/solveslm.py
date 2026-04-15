@@ -1,9 +1,12 @@
 from datetime import datetime
 import os
+
 import numpy as np
+
 from loadresultsfromcluster import loadresultsfromcluster
 from pairoptions import pairoptions
 from waitonlock import waitonlock
+
 
 def solveslm(slm, solutionstringi, *args):
     """solveslm - apply solution sequence for this sealevel model

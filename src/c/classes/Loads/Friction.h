@@ -5,12 +5,6 @@
 #ifndef _FRICTION_H_
 #define _FRICTION_H_
 
-#ifdef HAVE_CONFIG_H
-	#include <config.h>
-#else
-#error "Cannot compile with HAVE_CONFIG_H symbol! run configure first!"
-#endif
-
 /*Headers:*/
 class Inputs;
 class Elements;
@@ -18,9 +12,6 @@ class Parameters;
 class IoModel;
 class GaussPenta;
 class GaussTria;
-#ifdef _HAVE_PyBind11_
-class EmulatorParam;
-#endif
 
 class Friction{
 
@@ -35,9 +26,6 @@ class Friction{
 		Input      *vz_input;
 		IssmDouble *alpha2_list;
 		IssmDouble *alpha2_complement_list;
-		#ifdef _HAVE_PyBind11_
-		EmulatorParam* emulator;
-		#endif
 
 		/*methods: */
 		Friction();
@@ -71,9 +59,6 @@ class Friction{
 		void  GetAlpha2RegCoulomb(IssmDouble* palpha2,Gauss* gauss);
 		void  GetAlpha2RegCoulomb2(IssmDouble* palpha2,Gauss* gauss);
 		void  GetAlpha2Tsai(IssmDouble* palpha2,Gauss* gauss);
-		#if _HAVE_PyBind11_
-		void GetAlpha2Emulator(IssmDouble* palpha2, Gauss* gauss);
-		#endif
 
 		IssmDouble EffectivePressure(Gauss* gauss);
 		IssmDouble IcePressure(Gauss* gauss);

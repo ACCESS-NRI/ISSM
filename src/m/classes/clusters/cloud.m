@@ -47,20 +47,10 @@ classdef cloud
 			end
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
-
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
+		function BuildQueueScript(cluster,dirname,modelname,solution,io_gather,isvalgrind,isgprof,isdakota,isoceancoupling) % {{{
 
 			%write queuing script 
-			fid=fopen(filename, 'w');
+			fid=fopen([modelname '.queue'],'w');
 			fprintf(fid,'#!/bin/bash\n');
 			fprintf(fid,'source %s%s\n',cluster.codepath,'/../etc/environment.sh');
 			fprintf(fid,'cd %s\n',[cluster.executionpath '/' dirname]);

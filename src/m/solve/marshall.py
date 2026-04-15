@@ -2,23 +2,25 @@ import subprocess
 
 from WriteData import WriteData
 
-def marshall(md, filename):
-    """marshall - writes a binary file from a model
 
-    The routine creates a binary file from a md
+def marshall(md):
+    """marshall - outputs a compatible binary file from @model md, for certain solution type.
+
+    The routine creates a compatible binary file from @model md
+    his binary file will be used for parallel runs in JPL-package
 
     Usage:
-        marshall(md, filename)
+        marshall(md)
     """
 
     if md.verbose.solution:
-        print('marshalling file \'{}\''.format(filename))
+        print('marshalling file \'{}\'.bin'.format(md.miscellaneous.name))
 
     # Open file for binary writing
     try:
-        fid = open(filename, 'wb')
+        fid = open(md.miscellaneous.name + '.bin', 'wb')
     except IOError as e:
-        print('marshall error message: could not open \'{}\' file for binary writing due to: {}'.format(filename, e))
+        print('marshall error message: could not open \'{}.bin\' file for binary writing due to: {}'.format(md.miscellaneous.name, e))
 
     fields = md.properties()
     fields.sort() # sort fields so that comparison of binary files is easier
@@ -43,7 +45,7 @@ def marshall(md, filename):
         fid.close()
 
     except IOError as e:
-        print('marshall error message: could not close \'{}\' file for binary writing due to: {}'.format(filename, e))
+        print('marshall error message: could not close \'{}.bin\' file for binary writing due to: {}'.format(md.miscellaneous.name, e))
 
     # Uncomment the following to make a copy of the binary input file for 
     # debugging purposes (can be fed into scripts/BinRead.py).

@@ -61,34 +61,23 @@ classdef aurora
 			QueueRequirements(available_queues,queue_requirements_time,queue_requirements_np,cluster.queue,cluster.numnodes.*cluster.cpuspernode,cluster.time)
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster,dirname,modelname,solution,io_gather,isvalgrind,isgprof,isdakota,isoceancoupling) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
-
-         %checks
-			if(isvalgrind); disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof);    disp('gprof not supported by cluster, ignoring...'); end
-
-			executable='issm.exe'
+			if(isvalgrind), disp('valgrind not supported by cluster, ignoring...'); end
+			if(isgprof),    disp('gprof not supported by cluster, ignoring...'); end
+			executable='issm.exe';
 			if isdakota,
-				version=IssmConfig('_DAKOTA_VERSION_');
-				version=str2num(version(1:3));
-				if(version>=6) executable='issm_dakota.exe'; end
+				version=IssmConfig('_DAKOTA_VERSION_'); version=str2num(version(1:3));
+				if (version>=6),
+					executable='issm_dakota.exe';
+				end
 			end
-			if isoceancoupling
+			if isoceancoupling,
 				executable='issm_ocean.exe';
 			end
 
 			%write queuing script 
-			fid=fopen(filename, 'w');
+			fid=fopen([modelname '.queue'],'w');
 			fprintf(fid,'#!/bin/bash\n');
 			fprintf(fid,'#PBS -l select=%i:ncpus=%i\n',cluster.numnodes,cluster.cpuspernode);
 			fprintf(fid,'#PBS -N %s\n',modelname);
@@ -108,6 +97,7 @@ classdef aurora
 			fprintf(fid,'cd $PBS_O_WORKDIR\n');
 			fprintf(fid,'mpirun -n %i %s/%s %s %s %s',cluster.nprocs(),cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
 			fclose(fid);
+
 		end
 		%}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{

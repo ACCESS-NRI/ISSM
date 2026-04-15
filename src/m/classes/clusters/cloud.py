@@ -54,20 +54,9 @@ class cloud(object):
         return self
     # }}}
 
-    def BuildQueueScript(self, md, filename):  # {{{
-
-        # Get variables from md
-        dirname         = md.private.runtimename
-        modelname       = md.miscellaneous.name
-        solution        = md.private.solution
-        io_gather       = md.settings.io_gather
-        isvalgrind      = md.debug.valgrind
-        isgprof         = md.debug.gprof
-        isdakota        = md.qmu.isdakota
-        isoceancoupling = md.transient.isoceancoupling
-
+    def BuildQueueScript(self, dirname, modelname, solution, io_gather, isvalgrind, isgprof, isdakota, isoceancoupling):  # {{{
         # Write queuing script
-        fid = open(filename, 'w')
+        fid = open(modelname + '.queue', 'w')
 
         fid.write('#/bin/bash\n')
         fid.write('source {}{}\n'.format(self.codepath, '/../etc/environment.sh'))

@@ -72,7 +72,7 @@ class solidearth {//{{{
 	} //}}}
 
 	defaultoutputs(md) {//{{{
-		return ['Sealevel','Bed'];
+		return ['Sealevel'];
 	} //}}}
 
 	marshall(md, prefix, fid) {//{{{

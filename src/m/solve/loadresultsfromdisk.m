@@ -56,31 +56,19 @@ if ~md.qmu.isdakota
 
 	%read log files onto fields (only keep the first 1000 lines!)
 	if exist([md.miscellaneous.name '.errlog'],'file')
-		if ~verLessThan('matlab', '9.9')  % R2020b = version 9.9
-			errlog = readlines([md.miscellaneous.name '.errlog'],'EmptyLineRule','skip');
-			errlog = errlog(1:min(1000, end));
-		else
-			errlog = char(textread([md.miscellaneous.name '.errlog'],'%s',1000,'delimiter','\n'));
-		end
-		md.results.(structure(1).SolutionType)(1).errlog= errlog;
+		md.results.(structure(1).SolutionType)(1).errlog=char(textread([md.miscellaneous.name '.errlog'],'%s',1000,'delimiter','\n'));
 	else
 		md.results.(structure(1).SolutionType)(1).errlog='';
 	end
 
 	if exist([md.miscellaneous.name '.outlog'],'file')
-		if ~verLessThan('matlab', '9.9')  % R2020b = version 9.9
-			outlog = readlines([md.miscellaneous.name '.outlog']);
-			outlog = outlog(1:min(4000,end));
-		else
-			outlog = char(textread([md.miscellaneous.name '.outlog'],'%s',4000,'delimiter','\n'));
-		end
-		md.results.(structure(1).SolutionType)(1).outlog= outlog;
+		md.results.(structure(1).SolutionType)(1).outlog=char(textread([md.miscellaneous.name '.outlog'],'%c',4000,'delimiter','\n'));
 	else
 		md.results.(structure(1).SolutionType)(1).outlog='';
 	end
 
 	if ~isempty(md.results.(structure(1).SolutionType)(1).errlog)
-		disp(['WARNING: possible error during solution. Check the errlog and outlog']);
+		disp(['loadresultsfromdisk info message: error during solution. Check your errlog and outlog model fields']);
 	end
 
 %postprocess qmu results if necessary

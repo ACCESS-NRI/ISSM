@@ -1,19 +1,20 @@
-function marshall(md, filename)
-%MARSHALL - writes a binary file from a model
+function marshall(md)
+%MARSHALL - outputs a compatible binary file from @model md, for certain solution type.
 %
-%   The function creates a binary file from model md
+%   The routine creates a compatible binary file from @model md
+%   This binary file will be used for parallel runs in JPL-package
 %
 %   Usage:
-%      marshall(md, filename)
+%      marshall(md)
 
 if md.verbose.solution
-	disp(['marshalling file ' filename]);
+	disp(['marshalling file ' md.miscellaneous.name '.bin']);
 end
 
 %open file for binary writing
-fid=fopen(filename, 'wb');
+fid=fopen([ md.miscellaneous.name '.bin'],'wb');
 if fid==-1
-	error(['marshall error message: could not open ' filename ' file for binary writing']);
+	error(['marshall error message: could not open ' [md.miscellaneous.name '.bin'],' file for binary writing']);
 end
 
 % Go through all model fields: check that it is a class and call checkconsistency
@@ -41,8 +42,9 @@ WriteData(fid,'XXX','name','md.EOF','data',true,'format','Boolean');
 
 %close file
 st=fclose(fid);
-if st==-1
-	error(['marshall error message: could not close file ' filename]);
+
+if st==-1,
+	error(['marshall error message: could not close file ' [md.miscellaneous.name '.bin']]);
 end
 
 % Uncomment the following to make a copy of the binary input file for debugging 

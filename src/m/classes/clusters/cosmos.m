@@ -45,29 +45,18 @@ classdef cosmos
 			QueueRequirements(available_queues,queue_requirements_time,queue_requirements_np,cluster.queue,cluster.np,cluster.time)
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster,dirname,modelname,solution,io_gather,isvalgrind,isgprof,isdakota,isoceancoupling) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
-
-         %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(isvalgrind), disp('valgrind not supported by cluster, ignoring...'); end
+			if(isgprof),    disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queuing script
-			fid=fopen(filename, 'w');
+			fid=fopen([modelname '.queue'],'w');
 			fprintf(fid,'#!/bin/bash\n');
 			fprintf(fid,'#PBS -l select=%i:ncpus=1\n',cluster.np);
 			fprintf(fid,'#PBS -N %s\n',modelname);
 			fprintf(fid,'#PBS -l walltime=%i\n',time*60); %walltime is in seconds.
-			fprintf(fid,'#PBS -q %s\n',cluster.queue);
+			fprintf(fid,'#PBS -q %s\n',queue);
 			fprintf(fid,'#PBS -o %s.outlog \n',modelname);
 			fprintf(fid,'#PBS -e %s.errlog \n',modelname);
 			fprintf(fid,'export PBS_O_WORKDIR=%s\n',[cluster.executionpath '/' dirname]);

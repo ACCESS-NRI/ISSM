@@ -60,32 +60,24 @@ classdef generic_static
 			end
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
-
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
-
+		function BuildQueueScript(cluster,dirname,modelname,solution,io_gather,isvalgrind,isgprof,isdakota,isoceancoupling) % {{{
 			% Which executable are we calling?
 			executable='issm.exe'; % default
-			if isdakota
+
+			if isdakota,
 				version=IssmConfig('_DAKOTA_VERSION_');
 				version=str2num(version(1:3));
-				if(version>=6) executable='issm_dakota.exe'; end
+				if (version>=6),
+					executable='issm_dakota.exe';
+				end
 			end
-			if isoceancoupling
+			if isoceancoupling,
 				executable='issm_ocean.exe';
 			end
 
-			if ~ispc()
+			if ~ispc(),
 				% Check that executable exists at the right path
-				if ~exist([cluster.codepath '/' executable],'file')
+				if ~exist([cluster.codepath '/' executable],'file'),
 					error(['File ' cluster.codepath '/' executable ' does not exist']);
 				end
 
@@ -93,14 +85,15 @@ classdef generic_static
 				codepath=strrep(cluster.codepath,' ','\ ');
 
 				% Write queuing script
-				fid=fopen(filename, 'w');
+				fid=fopen([modelname '.queue'],'w');
 				fprintf(fid,'#!%s\n',cluster.shell);
 				fprintf(fid,['%s/mpiexec -np %i %s/%s %s %s %s \n'],codepath,cluster.np,codepath,executable,solution,'./',modelname);
 				fclose(fid);
 			else % Windows
-				fid=fopen([modelname '.bat'], 'w');
+				fid=fopen([modelname '.bat'],'w');
 				fprintf(fid,'@echo off\n');
-				if cluster.np>1
+
+				if cluster.np>1,
 					fprintf(fid,'"%s\\mpiexec.exe" -n %i "%s/%s" %s ./ %s',cluster.codepath,cluster.np,cluster.codepath,executable,solution,modelname);
 				else
 					fprintf(fid,'"%s\\%s" %s ./ %s',cluster.codepath,executable,solution,modelname);
@@ -109,8 +102,10 @@ classdef generic_static
 			end
 
 			%Create an errlog and outlog file
-			fid=fopen([modelname '.errlog'],'w'); fclose(fid);
-			fid=fopen([modelname '.outlog'],'w'); fclose(fid);
+			fid=fopen([modelname '.errlog'],'w');
+			fclose(fid);
+			fid=fopen([modelname '.outlog'],'w');
+			fclose(fid);
 		end
 		%}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
@@ -118,9 +113,9 @@ classdef generic_static
 			return;
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
-			if ~ispc
+			if ~ispc,
 				% Figure out which file extension to use
-				if isempty(strfind(cluster.shell,'csh'))
+				if isempty(strfind(cluster.shell,'csh')),
 					shellext='sh';
 				else
 					shellext='csh';

@@ -427,7 +427,6 @@ Param* IoModel::CopyConstantObject(const char* constant_name,int param_enum){/*{
 		}
 	}
 
-	this->PrintDebugMessage();
 	_error_("Constant \"" << constant_name << "\" not found in iomodel");
 	return NULL;
 }
@@ -2780,7 +2779,15 @@ void  IoModel::FindConstant(bool* pvalue,const char* constant_name){/*{{{*/
 
 		if(strcmp(ioconstant->name,constant_name)==0){
 			if(ioconstant->constant->ObjectEnum()!=BoolParamEnum){
-				this->PrintDebugMessage();
+				_printf0_("=========================================================================\n");
+				_printf0_(" Marshalled file is not consistent with compiled code                    \n");
+				_printf0_("                                                                         \n");
+				_printf0_("    This problem typically happens when two different versions of ISSM   \n");
+				_printf0_("    are being used. Make sure that you are running the same version:     \n");
+				_printf0_("    - to marshall the model (i.e., MATLAB/python interface)              \n");
+				_printf0_("    - to run ISSM (i.e., the compiled code issm.exe)                     \n");
+				_printf0_("                                                                         \n");
+				_printf0_("=========================================================================\n\n");
 				_error_("\""<< constant_name <<"\" cannot return a bool, it is a " << EnumToStringx(ioconstant->constant->ObjectEnum()));
 			}
 			ioconstant->constant->GetParameterValue(pvalue);
@@ -2802,7 +2809,15 @@ void  IoModel::FindConstant(int* pvalue,const char* constant_name){/*{{{*/
 
 		if(strcmp(ioconstant->name,constant_name)==0){
 			if(ioconstant->constant->ObjectEnum()!=IntParamEnum){
-				this->PrintDebugMessage();
+				_printf0_("=========================================================================\n");
+				_printf0_(" Marshalled file is not consistent with compiled code                    \n");
+				_printf0_("                                                                         \n");
+				_printf0_("    This problem typically happens when two different versions of ISSM   \n");
+				_printf0_("    are being used. Make sure that you are running the same version:     \n");
+				_printf0_("    - to marshall the model (i.e., MATLAB/python interface)              \n");
+				_printf0_("    - to run ISSM (i.e., the compiled code issm.exe)                     \n");
+				_printf0_("                                                                         \n");
+				_printf0_("=========================================================================\n\n");
 				_error_("\""<< constant_name <<"\" cannot return an int, it is a " << EnumToStringx(ioconstant->constant->ObjectEnum()));
 			}
 			ioconstant->constant->GetParameterValue(pvalue);
@@ -2823,7 +2838,15 @@ void  IoModel::FindConstant(IssmDouble* pvalue,const char* constant_name){/*{{{*
 
 		if(strcmp(ioconstant->name,constant_name)==0){
 			if(ioconstant->constant->ObjectEnum()!=DoubleParamEnum){
-				this->PrintDebugMessage();
+				_printf0_("=========================================================================\n");
+				_printf0_(" Marshalled file is not consistent with compiled code                    \n");
+				_printf0_("                                                                         \n");
+				_printf0_("    This problem typically happens when two different versions of ISSM   \n");
+				_printf0_("    are being used. Make sure that you are running the same version:     \n");
+				_printf0_("    - to marshall the model (i.e., MATLAB/python interface)              \n");
+				_printf0_("    - to run ISSM (i.e., the compiled code issm.exe)                     \n");
+				_printf0_("                                                                         \n");
+				_printf0_("=========================================================================\n\n");
 				_error_("\""<< constant_name <<"\" cannot return a double, it is a " << EnumToStringx(ioconstant->constant->ObjectEnum()));
 			}
 			ioconstant->constant->GetParameterValue(pvalue);
@@ -2844,7 +2867,15 @@ void  IoModel::FindConstant(char** pvalue,const char* constant_name){/*{{{*/
 
 		if(strcmp(ioconstant->name,constant_name)==0){
 			if(ioconstant->constant->ObjectEnum()!=StringParamEnum){
-				this->PrintDebugMessage();
+				_printf0_("=========================================================================\n");
+				_printf0_(" Marshalled file is not consistent with compiled code                    \n");
+				_printf0_("                                                                         \n");
+				_printf0_("    This problem typically happens when two different versions of ISSM   \n");
+				_printf0_("    are being used. Make sure that you are running the same version:     \n");
+				_printf0_("    - to marshall the model (i.e., MATLAB/python interface)              \n");
+				_printf0_("    - to run ISSM (i.e., the compiled code issm.exe)                     \n");
+				_printf0_("                                                                         \n");
+				_printf0_("=========================================================================\n\n");
 				_error_("\""<< constant_name <<"\" cannot return a string, it is a " << EnumToStringx(ioconstant->constant->ObjectEnum()));
 			}
 			ioconstant->constant->GetParameterValue(pvalue);
@@ -2865,7 +2896,15 @@ void  IoModel::FindConstant(char*** pvalue,int* psize,const char* constant_name)
 
 		if(strcmp(ioconstant->name,constant_name)==0){
 			if(ioconstant->constant->ObjectEnum()!=StringArrayParamEnum){
-				this->PrintDebugMessage();
+				_printf0_("=========================================================================\n");
+				_printf0_(" Marshalled file is not consistent with compiled code                    \n");
+				_printf0_("                                                                         \n");
+				_printf0_("    This problem typically happens when two different versions of ISSM   \n");
+				_printf0_("    are being used. Make sure that you are running the same version:     \n");
+				_printf0_("    - to marshall the model (i.e., MATLAB/python interface)              \n");
+				_printf0_("    - to run ISSM (i.e., the compiled code issm.exe)                     \n");
+				_printf0_("                                                                         \n");
+				_printf0_("=========================================================================\n\n");
 				_error_("\""<< constant_name <<"\" cannot return a string array, it is a " << EnumToStringx(ioconstant->constant->ObjectEnum()));
 			}
 			ioconstant->constant->GetParameterValue(pvalue,psize);
@@ -2897,19 +2936,6 @@ int   IoModel::NumIndependents(void){/*{{{*/
 
 	/*return*/
 	return num_independents;
-}
-/*}}}*/
-void  IoModel::PrintDebugMessage(void){/*{{{*/
-
-	_printf0_("=========================================================================\n");
-	_printf0_(" Input file (.bin) is not consistent with compiled code                  \n");
-	_printf0_("                                                                         \n");
-	_printf0_("    This problem typically happens when two different versions of ISSM   \n");
-	_printf0_("    are being used. Make sure that you are running the same version:     \n");
-	_printf0_("    - to marshall the model (i.e., MATLAB/python interface)              \n");
-	_printf0_("    - to run ISSM (i.e., the compiled code issm.exe)                     \n");
-	_printf0_("                                                                         \n");
-	_printf0_("=========================================================================\n\n");
 }
 /*}}}*/
 fpos_t* IoModel::SetFilePointersToData(int** pcodes,int** pvector_types, int* pnum_instances,const char* data_name){/*{{{*/
@@ -3128,10 +3154,7 @@ FILE* IoModel::SetFilePointerToData(int* pcode,int* pvector_type,const char* dat
 		}
 	}
 	ISSM_MPI_Bcast(&found,1,ISSM_MPI_INT,0,IssmComm::GetComm());
-	if(!found){
-		this->PrintDebugMessage();
-		_error_("could not find data with name \"" << data_name << "\" in binary file");
-	}
+	if(!found) _error_("could not find data with name \"" << data_name << "\" in binary file");
 
 	/*Broadcast code and vector type: */
 	ISSM_MPI_Bcast(&record_code,1,ISSM_MPI_INT,0,IssmComm::GetComm());
