@@ -403,6 +403,14 @@ classdef model
 				md.smb.mass_balance=project2d(md,md.smb.mass_balance,md.mesh.numberoflayers); 
 			elseif isa(md.smb,'SMBhenning') & ~isnan(md.smb.smbref),
 				md.smb.smbref=project2d(md,md.smb.smbref,md.mesh.numberoflayers);
+			elseif isa(md.smb, 'SMBpddSicopolis') || isa(md.smb, 'SMBpddFast');
+				md.smb.s0p = project2d(md, md.smb.s0p, md.mesh.numberoflayers);
+				md.smb.s0t = project2d(md, md.smb.s0t, md.mesh.numberoflayers);
+				md.smb.smb_corr = project2d(md, md.smb.smb_corr, md.mesh.numberoflayers);
+				md.smb.monthlytemperatures = project2d(md, md.smb.monthlytemperatures, md.mesh.numberoflayers);
+				md.smb.temperature_anomaly = project2d(md, md.smb.temperature_anomaly, md.mesh.numberoflayers);
+				md.smb.precipitation       = project2d(md, md.smb.precipitation, md.mesh.numberoflayers);
+				md.smb.precipitation_anomaly = project2d(md, md.smb.precipitation_anomaly, md.mesh.numberoflayers);
 			end
 
 			%results
@@ -442,7 +450,6 @@ classdef model
 			if ~isnan(md.initialization.debris),
 				md.initialization.debris=project2d(md,md.initialization.debris,1);
 			end
-
 
 			%elementstype
 			if ~isnan(md.flowequation.element_equation)
@@ -499,6 +506,12 @@ classdef model
 			end
 			if isprop(md.basalforcings,'floatingice_melting_rate') & ~isnan(md.basalforcings.floatingice_melting_rate),
 				md.basalforcings.floatingice_melting_rate=project2d(md,md.basalforcings.floatingice_melting_rate,1); 
+			end
+			if isprop(md.basalforcings,'deepwater_melting_rate')
+				md.basalforcings.deepwater_melting_rate = project2d(md,md.basalforcings.deepwater_melting_rate,1);
+				md.basalforcings.deepwater_elevation = project2d(md,md.basalforcings.deepwater_elevation,1);
+				md.basalforcings.upperwater_melting_rate = project2d(md,md.basalforcings.upperwater_melting_rate,1);
+				md.basalforcings.upperwater_elevation = project2d(md,md.basalforcings.upperwater_elevation,1);
 			end
 			md.basalforcings.geothermalflux=project2d(md,md.basalforcings.geothermalflux,1); %bedrock only gets geothermal flux
 
@@ -1824,7 +1837,7 @@ classdef model
 			save('id','md');
 
 			%Now, upload the file: 
-			issmscpout(md.settings.upload_server,md.settings.upload_path,md.settings.upload_login,md.settings.upload_port,{id},1);
+			issmscpout(md.settings.upload_server,md.settings.upload_path,md.settings.upload_login,md.settings.upload_port,{id});
 
 			%Now, empty this model of everything except settings, and record name of file we just uploaded!
 			settings_back=md.settings;
@@ -1834,7 +1847,6 @@ classdef model
 
 			%get locally rid of file that was uploaded
 			delete(id);
-
 		end % }}}
 		function md=download(md) % {{{
 

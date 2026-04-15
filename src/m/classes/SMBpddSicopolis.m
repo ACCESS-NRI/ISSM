@@ -87,16 +87,17 @@ classdef SMBpddSicopolis
 				md = checkfield(md,'fieldname','smb.s0p','>=',0,'NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 1]);
 				md = checkfield(md,'fieldname','smb.s0t','>=',0,'NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 1]);
 				md = checkfield(md,'fieldname','smb.rlaps','>=',0,'numel',1);
-				md = checkfield(md,'fieldname','smb.monthlytemperatures','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 12]);
-				md = checkfield(md,'fieldname','smb.precipitation','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 12]);
+				md = checkfield(md,'fieldname','smb.monthlytemperatures','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 12],'>' ,0., '<', 300.);
+				md = checkfield(md,'fieldname','smb.precipitation','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 12],'>=' ,0.);
 				md = checkfield(md,'fieldname','smb.pdd_fac_ice','>',0,'numel',1);
 				md = checkfield(md,'fieldname','smb.pdd_fac_snow','>',0,'numel',1);
-
+				md = checkfield(md,'fieldname','smb.smb_corr','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 1]);
+				md = checkfield(md,'fieldname','smb.temperature_anomaly','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 1]);
+				md = checkfield(md,'fieldname','smb.precipitation_anomaly','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 1]);
 			end
 			md = checkfield(md,'fieldname','smb.steps_per_step','>=',1,'numel',[1]);
 			md = checkfield(md,'fieldname','smb.averaging', 'numel', [1], 'values', [0, 1, 2]);
 			md = checkfield(md,'fieldname','smb.requested_outputs','stringrow',1);
-
 		end % }}}
 		function disp(self) % {{{
 			disp(sprintf('   surface forcings parameters:'));
@@ -112,10 +113,10 @@ classdef SMBpddSicopolis
 			fielddisplay(self,'rlaps','present day lapse rate (default is 7.4 degree/km)');
 			fielddisplay(self,'desfac','desertification elevation factor (default is -log(2.0)/1000)');
 			fielddisplay(self,'isfirnwarming','is firnwarming (Reeh 1991) activated (0 or 1, default is 1)');
-			fielddisplay(self, 'steps_per_step', 'number of smb steps per time step');
+			fielddisplay(self,'steps_per_step', 'number of smb steps per time step');
 			fielddisplay(self,'averaging','averaging methods from short to long steps');
-			fielddisplay(self,'pdd_fac_ice','Pdd factor for ice for all the domain [mm ice equiv/day/degree C]');
-			fielddisplay(self,'pdd_fac_snow','Pdd factor for snow for all the domain [mm ice equiv/day/degree C]');
+			fielddisplay(self,'pdd_fac_ice','Pdd factor for ice for all the domain [mm water equiv/day/degree C]');
+			fielddisplay(self,'pdd_fac_snow','Pdd factor for snow for all the domain [mm water equiv/day/degree C]');
 			disp(sprintf('%51s  0: Arithmetic (default)',' '));
 			disp(sprintf('%51s  1: Geometric',' '));
 			disp(sprintf('%51s  2: Harmonic',' '));
