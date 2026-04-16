@@ -74,6 +74,9 @@
 	BasalforcingsIsmip6IsLocalEnum
 	BasalforcingsIsmip6NumBasinsEnum
 	BasalforcingsIsmip6TfDepthsEnum
+	BasalforcingsIsmip7TfDepthsEnum
+	BasalforcingsIsmip7NumBasinsEnum
+	BasalforcingsIsmip7GammaEnum
 	BasalforcingsLinearNumBasinsEnum
 	BasalforcingsLinearNumBreaksEnum
 	BasalforcingsLinearNumParamsEnum
@@ -455,6 +458,7 @@
 	SamplingRobinEnum
 	SamplingSeedEnum
 	SaveResultsEnum
+	SaveFinalResultsEnum
 	SolidearthPartitionIceEnum
 	SolidearthPartitionHydroEnum
 	SolidearthPartitionOceanEnum
@@ -763,6 +767,7 @@
 	BalancethicknessSpcthicknessEnum
 	BalancethicknessThickeningRateEnum
 	BasalCrevasseEnum
+	BasalforcingsCoriolisFEnum
 	BasalforcingsDeepwaterMeltingRatearmaEnum
 	BasalforcingsDeepwaterMeltingRateNoiseEnum
 	BasalforcingsDeepwaterMeltingRateValuesAutoregressionEnum
@@ -782,6 +787,10 @@
 	BasalforcingsIsmip6TfEnum
 	BasalforcingsIsmip6TfShelfEnum
 	BasalforcingsIsmip6MeltAnomalyEnum
+	BasalforcingsIsmip7TfEnum
+	BasalforcingsIsmip7TfShelfEnum
+	BasalforcingsIsmip7SalinityEnum
+	BasalforcingsIsmip7SalinityShelfEnum
 	BasalforcingsMeltrateFactorEnum
 	BasalforcingsOceanSalinityEnum
 	BasalforcingsOceanTempEnum
@@ -1177,6 +1186,7 @@
 	SmbIsInitializedEnum
 	SmbMAddEnum
 	SmbMappedforcingpointEnum
+	SmbMappedforcingprecipscalingEnum
 	SmbMassBalanceEnum
 	SmbMassBalanceSnowEnum
 	SmbMassBalanceIceEnum
@@ -3381,6 +3391,7 @@
 	BalancevelocityAnalysisEnum
 	BalancevelocitySolutionEnum
 	BasalforcingsIsmip6Enum
+	BasalforcingsIsmip7Enum
 	BasalforcingsPicoEnum
 	BeckmannGoosseFloatingMeltRateEnum
 	BedSlopeSolutionEnum
@@ -3454,6 +3465,7 @@
 	ElementEnum
 	ElementHookEnum
 	ElementSIdEnum
+	EmulatorParamEnum
 	EnthalpyAnalysisEnum
 	EsaAnalysisEnum
 	EsaSolutionEnum
@@ -3475,6 +3487,7 @@
 	FreeEnum
 	FreeSurfaceBaseAnalysisEnum
 	FreeSurfaceTopAnalysisEnum
+	FrictionEmulatorEnum
 	FrontalForcingsDefaultEnum
 	FrontalForcingsRignotEnum
 	FrontalForcingsRignotarmaEnum
@@ -3510,6 +3523,7 @@
 	HydrologyPismAnalysisEnum
 	HydrologyShaktiAnalysisEnum
 	HydrologyShreveAnalysisEnum
+	HydrologyPrescribeAnalysisEnum
 	HydrologySolutionEnum
 	HydrologySubstepsEnum
 	HydrologySubTimeEnum
@@ -3517,6 +3531,7 @@
 	HydrologypismEnum
 	HydrologyshaktiEnum
 	HydrologyshreveEnum
+	HydrologyprescribeEnum
 	IceMassEnum
 	IceMassScaledEnum
 	IceVolumeAboveFloatationEnum
@@ -3678,6 +3693,7 @@
 	SMBpddEnum
 	SMBpddSicopolisEnum
 	SMBpddGCMEnum
+	SMBpddFastEnum
 	SMBsemicEnum
 	SSAApproximationEnum
 	SSAFSApproximationEnum
@@ -3737,6 +3753,7 @@
 	TotalFloatingBmbScaledEnum
 	TotalGroundedBmbEnum
 	TotalGroundedBmbScaledEnum
+	TotalHydrologyBasalFluxEnum
 	TotalSmbEnum
 	TotalSmbScaledEnum
 	TotalSmbRefreezeEnum
@@ -3853,6 +3870,9 @@ function EnumToString(enum::IssmEnum)
 	if(enum==BasalforcingsIsmip6IsLocalEnum) return "BasalforcingsIsmip6IsLocal" end
 	if(enum==BasalforcingsIsmip6NumBasinsEnum) return "BasalforcingsIsmip6NumBasins" end
 	if(enum==BasalforcingsIsmip6TfDepthsEnum) return "BasalforcingsIsmip6TfDepths" end
+	if(enum==BasalforcingsIsmip7TfDepthsEnum) return "BasalforcingsIsmip7TfDepths" end
+	if(enum==BasalforcingsIsmip7NumBasinsEnum) return "BasalforcingsIsmip7NumBasins" end
+	if(enum==BasalforcingsIsmip7GammaEnum) return "BasalforcingsIsmip7Gamma" end
 	if(enum==BasalforcingsLinearNumBasinsEnum) return "BasalforcingsLinearNumBasins" end
 	if(enum==BasalforcingsLinearNumBreaksEnum) return "BasalforcingsLinearNumBreaks" end
 	if(enum==BasalforcingsLinearNumParamsEnum) return "BasalforcingsLinearNumParams" end
@@ -4234,6 +4254,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==SamplingRobinEnum) return "SamplingRobin" end
 	if(enum==SamplingSeedEnum) return "SamplingSeed" end
 	if(enum==SaveResultsEnum) return "SaveResults" end
+	if(enum==SaveFinalResultsEnum) return "SaveFinalResults" end
 	if(enum==SolidearthPartitionIceEnum) return "SolidearthPartitionIce" end
 	if(enum==SolidearthPartitionHydroEnum) return "SolidearthPartitionHydro" end
 	if(enum==SolidearthPartitionOceanEnum) return "SolidearthPartitionOcean" end
@@ -4542,6 +4563,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==BalancethicknessSpcthicknessEnum) return "BalancethicknessSpcthickness" end
 	if(enum==BalancethicknessThickeningRateEnum) return "BalancethicknessThickeningRate" end
 	if(enum==BasalCrevasseEnum) return "BasalCrevasse" end
+	if(enum==BasalforcingsCoriolisFEnum) return "BasalforcingsCoriolisF" end
 	if(enum==BasalforcingsDeepwaterMeltingRatearmaEnum) return "BasalforcingsDeepwaterMeltingRatearma" end
 	if(enum==BasalforcingsDeepwaterMeltingRateNoiseEnum) return "BasalforcingsDeepwaterMeltingRateNoise" end
 	if(enum==BasalforcingsDeepwaterMeltingRateValuesAutoregressionEnum) return "BasalforcingsDeepwaterMeltingRateValuesAutoregression" end
@@ -4561,6 +4583,10 @@ function EnumToString(enum::IssmEnum)
 	if(enum==BasalforcingsIsmip6TfEnum) return "BasalforcingsIsmip6Tf" end
 	if(enum==BasalforcingsIsmip6TfShelfEnum) return "BasalforcingsIsmip6TfShelf" end
 	if(enum==BasalforcingsIsmip6MeltAnomalyEnum) return "BasalforcingsIsmip6MeltAnomaly" end
+	if(enum==BasalforcingsIsmip7TfEnum) return "BasalforcingsIsmip7Tf" end
+	if(enum==BasalforcingsIsmip7TfShelfEnum) return "BasalforcingsIsmip7TfShelf" end
+	if(enum==BasalforcingsIsmip7SalinityEnum) return "BasalforcingsIsmip7Salinity" end
+	if(enum==BasalforcingsIsmip7SalinityShelfEnum) return "BasalforcingsIsmip7SalinityShelf" end
 	if(enum==BasalforcingsMeltrateFactorEnum) return "BasalforcingsMeltrateFactor" end
 	if(enum==BasalforcingsOceanSalinityEnum) return "BasalforcingsOceanSalinity" end
 	if(enum==BasalforcingsOceanTempEnum) return "BasalforcingsOceanTemp" end
@@ -4956,6 +4982,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==SmbIsInitializedEnum) return "SmbIsInitialized" end
 	if(enum==SmbMAddEnum) return "SmbMAdd" end
 	if(enum==SmbMappedforcingpointEnum) return "SmbMappedforcingpoint" end
+	if(enum==SmbMappedforcingprecipscalingEnum) return "SmbMappedforcingprecipscaling" end
 	if(enum==SmbMassBalanceEnum) return "SmbMassBalance" end
 	if(enum==SmbMassBalanceSnowEnum) return "SmbMassBalanceSnow" end
 	if(enum==SmbMassBalanceIceEnum) return "SmbMassBalanceIce" end
@@ -7160,6 +7187,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==BalancevelocityAnalysisEnum) return "BalancevelocityAnalysis" end
 	if(enum==BalancevelocitySolutionEnum) return "BalancevelocitySolution" end
 	if(enum==BasalforcingsIsmip6Enum) return "BasalforcingsIsmip6" end
+	if(enum==BasalforcingsIsmip7Enum) return "BasalforcingsIsmip7" end
 	if(enum==BasalforcingsPicoEnum) return "BasalforcingsPico" end
 	if(enum==BeckmannGoosseFloatingMeltRateEnum) return "BeckmannGoosseFloatingMeltRate" end
 	if(enum==BedSlopeSolutionEnum) return "BedSlopeSolution" end
@@ -7233,6 +7261,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==ElementEnum) return "Element" end
 	if(enum==ElementHookEnum) return "ElementHook" end
 	if(enum==ElementSIdEnum) return "ElementSId" end
+	if(enum==EmulatorParamEnum) return "EmulatorParam" end
 	if(enum==EnthalpyAnalysisEnum) return "EnthalpyAnalysis" end
 	if(enum==EsaAnalysisEnum) return "EsaAnalysis" end
 	if(enum==EsaSolutionEnum) return "EsaSolution" end
@@ -7254,6 +7283,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==FreeEnum) return "Free" end
 	if(enum==FreeSurfaceBaseAnalysisEnum) return "FreeSurfaceBaseAnalysis" end
 	if(enum==FreeSurfaceTopAnalysisEnum) return "FreeSurfaceTopAnalysis" end
+	if(enum==FrictionEmulatorEnum) return "FrictionEmulator" end
 	if(enum==FrontalForcingsDefaultEnum) return "FrontalForcingsDefault" end
 	if(enum==FrontalForcingsRignotEnum) return "FrontalForcingsRignot" end
 	if(enum==FrontalForcingsRignotarmaEnum) return "FrontalForcingsRignotarma" end
@@ -7289,6 +7319,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==HydrologyPismAnalysisEnum) return "HydrologyPismAnalysis" end
 	if(enum==HydrologyShaktiAnalysisEnum) return "HydrologyShaktiAnalysis" end
 	if(enum==HydrologyShreveAnalysisEnum) return "HydrologyShreveAnalysis" end
+	if(enum==HydrologyPrescribeAnalysisEnum) return "HydrologyPrescribeAnalysis" end
 	if(enum==HydrologySolutionEnum) return "HydrologySolution" end
 	if(enum==HydrologySubstepsEnum) return "HydrologySubsteps" end
 	if(enum==HydrologySubTimeEnum) return "HydrologySubTime" end
@@ -7296,6 +7327,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==HydrologypismEnum) return "Hydrologypism" end
 	if(enum==HydrologyshaktiEnum) return "Hydrologyshakti" end
 	if(enum==HydrologyshreveEnum) return "Hydrologyshreve" end
+	if(enum==HydrologyprescribeEnum) return "Hydrologyprescribe" end
 	if(enum==IceMassEnum) return "IceMass" end
 	if(enum==IceMassScaledEnum) return "IceMassScaled" end
 	if(enum==IceVolumeAboveFloatationEnum) return "IceVolumeAboveFloatation" end
@@ -7457,6 +7489,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==SMBpddEnum) return "SMBpdd" end
 	if(enum==SMBpddSicopolisEnum) return "SMBpddSicopolis" end
 	if(enum==SMBpddGCMEnum) return "SMBpddGCM" end
+	if(enum==SMBpddFastEnum) return "SMBpddFast" end
 	if(enum==SMBsemicEnum) return "SMBsemic" end
 	if(enum==SSAApproximationEnum) return "SSAApproximation" end
 	if(enum==SSAFSApproximationEnum) return "SSAFSApproximation" end
@@ -7516,6 +7549,7 @@ function EnumToString(enum::IssmEnum)
 	if(enum==TotalFloatingBmbScaledEnum) return "TotalFloatingBmbScaled" end
 	if(enum==TotalGroundedBmbEnum) return "TotalGroundedBmb" end
 	if(enum==TotalGroundedBmbScaledEnum) return "TotalGroundedBmbScaled" end
+	if(enum==TotalHydrologyBasalFluxEnum) return "TotalHydrologyBasalFlux" end
 	if(enum==TotalSmbEnum) return "TotalSmb" end
 	if(enum==TotalSmbScaledEnum) return "TotalSmbScaled" end
 	if(enum==TotalSmbRefreezeEnum) return "TotalSmbRefreeze" end
@@ -7632,6 +7666,9 @@ function StringToEnum(name::String)
 	if(name=="BasalforcingsIsmip6IsLocal") return BasalforcingsIsmip6IsLocalEnum  end
 	if(name=="BasalforcingsIsmip6NumBasins") return BasalforcingsIsmip6NumBasinsEnum  end
 	if(name=="BasalforcingsIsmip6TfDepths") return BasalforcingsIsmip6TfDepthsEnum  end
+	if(name=="BasalforcingsIsmip7TfDepths") return BasalforcingsIsmip7TfDepthsEnum  end
+	if(name=="BasalforcingsIsmip7NumBasins") return BasalforcingsIsmip7NumBasinsEnum  end
+	if(name=="BasalforcingsIsmip7Gamma") return BasalforcingsIsmip7GammaEnum  end
 	if(name=="BasalforcingsLinearNumBasins") return BasalforcingsLinearNumBasinsEnum  end
 	if(name=="BasalforcingsLinearNumBreaks") return BasalforcingsLinearNumBreaksEnum  end
 	if(name=="BasalforcingsLinearNumParams") return BasalforcingsLinearNumParamsEnum  end
@@ -8013,6 +8050,7 @@ function StringToEnum(name::String)
 	if(name=="SamplingRobin") return SamplingRobinEnum  end
 	if(name=="SamplingSeed") return SamplingSeedEnum  end
 	if(name=="SaveResults") return SaveResultsEnum  end
+	if(name=="SaveFinalResults") return SaveFinalResultsEnum  end
 	if(name=="SolidearthPartitionIce") return SolidearthPartitionIceEnum  end
 	if(name=="SolidearthPartitionHydro") return SolidearthPartitionHydroEnum  end
 	if(name=="SolidearthPartitionOcean") return SolidearthPartitionOceanEnum  end
@@ -8321,6 +8359,7 @@ function StringToEnum(name::String)
 	if(name=="BalancethicknessSpcthickness") return BalancethicknessSpcthicknessEnum  end
 	if(name=="BalancethicknessThickeningRate") return BalancethicknessThickeningRateEnum  end
 	if(name=="BasalCrevasse") return BasalCrevasseEnum  end
+	if(name=="BasalforcingsCoriolisF") return BasalforcingsCoriolisFEnum  end
 	if(name=="BasalforcingsDeepwaterMeltingRatearma") return BasalforcingsDeepwaterMeltingRatearmaEnum  end
 	if(name=="BasalforcingsDeepwaterMeltingRateNoise") return BasalforcingsDeepwaterMeltingRateNoiseEnum  end
 	if(name=="BasalforcingsDeepwaterMeltingRateValuesAutoregression") return BasalforcingsDeepwaterMeltingRateValuesAutoregressionEnum  end
@@ -8340,6 +8379,10 @@ function StringToEnum(name::String)
 	if(name=="BasalforcingsIsmip6Tf") return BasalforcingsIsmip6TfEnum  end
 	if(name=="BasalforcingsIsmip6TfShelf") return BasalforcingsIsmip6TfShelfEnum  end
 	if(name=="BasalforcingsIsmip6MeltAnomaly") return BasalforcingsIsmip6MeltAnomalyEnum  end
+	if(name=="BasalforcingsIsmip7Tf") return BasalforcingsIsmip7TfEnum  end
+	if(name=="BasalforcingsIsmip7TfShelf") return BasalforcingsIsmip7TfShelfEnum  end
+	if(name=="BasalforcingsIsmip7Salinity") return BasalforcingsIsmip7SalinityEnum  end
+	if(name=="BasalforcingsIsmip7SalinityShelf") return BasalforcingsIsmip7SalinityShelfEnum  end
 	if(name=="BasalforcingsMeltrateFactor") return BasalforcingsMeltrateFactorEnum  end
 	if(name=="BasalforcingsOceanSalinity") return BasalforcingsOceanSalinityEnum  end
 	if(name=="BasalforcingsOceanTemp") return BasalforcingsOceanTempEnum  end
@@ -8735,6 +8778,7 @@ function StringToEnum(name::String)
 	if(name=="SmbIsInitialized") return SmbIsInitializedEnum  end
 	if(name=="SmbMAdd") return SmbMAddEnum  end
 	if(name=="SmbMappedforcingpoint") return SmbMappedforcingpointEnum  end
+	if(name=="SmbMappedforcingprecipscaling") return SmbMappedforcingprecipscalingEnum  end
 	if(name=="SmbMassBalance") return SmbMassBalanceEnum  end
 	if(name=="SmbMassBalanceSnow") return SmbMassBalanceSnowEnum  end
 	if(name=="SmbMassBalanceIce") return SmbMassBalanceIceEnum  end
@@ -10939,6 +10983,7 @@ function StringToEnum(name::String)
 	if(name=="BalancevelocityAnalysis") return BalancevelocityAnalysisEnum  end
 	if(name=="BalancevelocitySolution") return BalancevelocitySolutionEnum  end
 	if(name=="BasalforcingsIsmip6") return BasalforcingsIsmip6Enum  end
+	if(name=="BasalforcingsIsmip7") return BasalforcingsIsmip7Enum  end
 	if(name=="BasalforcingsPico") return BasalforcingsPicoEnum  end
 	if(name=="BeckmannGoosseFloatingMeltRate") return BeckmannGoosseFloatingMeltRateEnum  end
 	if(name=="BedSlopeSolution") return BedSlopeSolutionEnum  end
@@ -11012,6 +11057,7 @@ function StringToEnum(name::String)
 	if(name=="Element") return ElementEnum  end
 	if(name=="ElementHook") return ElementHookEnum  end
 	if(name=="ElementSId") return ElementSIdEnum  end
+	if(name=="EmulatorParam") return EmulatorParamEnum  end
 	if(name=="EnthalpyAnalysis") return EnthalpyAnalysisEnum  end
 	if(name=="EsaAnalysis") return EsaAnalysisEnum  end
 	if(name=="EsaSolution") return EsaSolutionEnum  end
@@ -11033,6 +11079,7 @@ function StringToEnum(name::String)
 	if(name=="Free") return FreeEnum  end
 	if(name=="FreeSurfaceBaseAnalysis") return FreeSurfaceBaseAnalysisEnum  end
 	if(name=="FreeSurfaceTopAnalysis") return FreeSurfaceTopAnalysisEnum  end
+	if(name=="FrictionEmulator") return FrictionEmulatorEnum  end
 	if(name=="FrontalForcingsDefault") return FrontalForcingsDefaultEnum  end
 	if(name=="FrontalForcingsRignot") return FrontalForcingsRignotEnum  end
 	if(name=="FrontalForcingsRignotarma") return FrontalForcingsRignotarmaEnum  end
@@ -11068,6 +11115,7 @@ function StringToEnum(name::String)
 	if(name=="HydrologyPismAnalysis") return HydrologyPismAnalysisEnum  end
 	if(name=="HydrologyShaktiAnalysis") return HydrologyShaktiAnalysisEnum  end
 	if(name=="HydrologyShreveAnalysis") return HydrologyShreveAnalysisEnum  end
+	if(name=="HydrologyPrescribeAnalysis") return HydrologyPrescribeAnalysisEnum  end
 	if(name=="HydrologySolution") return HydrologySolutionEnum  end
 	if(name=="HydrologySubsteps") return HydrologySubstepsEnum  end
 	if(name=="HydrologySubTime") return HydrologySubTimeEnum  end
@@ -11075,6 +11123,7 @@ function StringToEnum(name::String)
 	if(name=="Hydrologypism") return HydrologypismEnum  end
 	if(name=="Hydrologyshakti") return HydrologyshaktiEnum  end
 	if(name=="Hydrologyshreve") return HydrologyshreveEnum  end
+	if(name=="Hydrologyprescribe") return HydrologyprescribeEnum  end
 	if(name=="IceMass") return IceMassEnum  end
 	if(name=="IceMassScaled") return IceMassScaledEnum  end
 	if(name=="IceVolumeAboveFloatation") return IceVolumeAboveFloatationEnum  end
@@ -11236,6 +11285,7 @@ function StringToEnum(name::String)
 	if(name=="SMBpdd") return SMBpddEnum  end
 	if(name=="SMBpddSicopolis") return SMBpddSicopolisEnum  end
 	if(name=="SMBpddGCM") return SMBpddGCMEnum  end
+	if(name=="SMBpddFast") return SMBpddFastEnum  end
 	if(name=="SMBsemic") return SMBsemicEnum  end
 	if(name=="SSAApproximation") return SSAApproximationEnum  end
 	if(name=="SSAFSApproximation") return SSAFSApproximationEnum  end
@@ -11295,6 +11345,7 @@ function StringToEnum(name::String)
 	if(name=="TotalFloatingBmbScaled") return TotalFloatingBmbScaledEnum  end
 	if(name=="TotalGroundedBmb") return TotalGroundedBmbEnum  end
 	if(name=="TotalGroundedBmbScaled") return TotalGroundedBmbScaledEnum  end
+	if(name=="TotalHydrologyBasalFlux") return TotalHydrologyBasalFluxEnum  end
 	if(name=="TotalSmb") return TotalSmbEnum  end
 	if(name=="TotalSmbScaled") return TotalSmbScaledEnum  end
 	if(name=="TotalSmbRefreeze") return TotalSmbRefreezeEnum  end
