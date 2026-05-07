@@ -41,6 +41,7 @@ AC_CONFIG_FILES([
         Makefile
         src/Makefile
         src/c/Makefile
+        src/nuopc_cap/Makefile
         src/m/Makefile
         src/wrappers/Makefile
         src/wrappers/python/Makefile

@@ -624,6 +624,7 @@ endif
 # Esmf sources {{{
 if ESMF
 issm_sources += ./main/esmfbinders.cpp
+issm_sources += ./main/issm_nuopc_capi.cpp
 endif
 #}}}
 # SEMIC sources {{{

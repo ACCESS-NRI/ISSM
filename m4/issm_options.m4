@@ -980,14 +980,16 @@ AC_DEFUN([ISSM_OPTIONS],[
 	fi
 	AC_MSG_RESULT([${HAVE_ESMF}])
 
-	dnl ESMF libraries and header files
-	if test "x${HAVE_ESMF}" == "xyes"; then
-		ESMFINCL="-I${ESMF_ROOT}/include"
-		ESMFLIB="-L${ESMF_ROOT}/lib/libO/Linux.gfortran.64.mpich.default/ -lesmf"
-		AC_DEFINE([_HAVE_ESMF_], [1], [with ESMF in ISSM src])
-		AC_SUBST([ESMFINCL])
-		AC_SUBST([ESMFLIB])
-	fi
+		dnl ESMF libraries and header files
+		if test "x${HAVE_ESMF}" == "xyes"; then
+			ESMFINCL="-I${ESMF_ROOT}/include"
+			ESMFFCFLAGS="-I${ESMF_ROOT}/include -I${ESMF_ROOT}/mod/modO/Linux.gfortran.64.mpich.default"
+			ESMFLIB="-L${ESMF_ROOT}/lib/libO/Linux.gfortran.64.mpich.default/ -lesmf"
+			AC_DEFINE([_HAVE_ESMF_], [1], [with ESMF in ISSM src])
+			AC_SUBST([ESMFINCL])
+			AC_SUBST([ESMFFCFLAGS])
+			AC_SUBST([ESMFLIB])
+		fi
 	AM_CONDITIONAL([ESMF], [test "x${HAVE_ESMF}" == "xyes"])
 	dnl }}}
 	dnl CoDiPack{{{

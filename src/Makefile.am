@@ -1,2 +1,6 @@
 EXTRA_DIST =  perl
-SUBDIRS = c m wrappers
+SUBDIRS = c
+if ESMF
+SUBDIRS += nuopc_cap
+endif
+SUBDIRS += m wrappers
