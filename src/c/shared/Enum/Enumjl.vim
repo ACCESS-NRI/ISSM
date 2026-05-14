@@ -78,6 +78,8 @@ syn keyword juliaConstC BasalforcingsIsmip6Gamma0Enum
 syn keyword juliaConstC BasalforcingsIsmip6IsLocalEnum
 syn keyword juliaConstC BasalforcingsIsmip6NumBasinsEnum
 syn keyword juliaConstC BasalforcingsIsmip6TfDepthsEnum
+syn keyword juliaConstC BasalforcingsIsmip7DeltaTEnum
+syn keyword juliaConstC BasalforcingsIsmip7IsLocalEnum
 syn keyword juliaConstC BasalforcingsIsmip7TfDepthsEnum
 syn keyword juliaConstC BasalforcingsIsmip7NumBasinsEnum
 syn keyword juliaConstC BasalforcingsIsmip7GammaEnum
@@ -481,6 +483,9 @@ syn keyword juliaConstC SealevelchangeGeometryDoneEnum
 syn keyword juliaConstC SealevelchangeViscousNumStepsEnum
 syn keyword juliaConstC SealevelchangeViscousTimesEnum
 syn keyword juliaConstC SealevelchangeViscousIndexEnum
+syn keyword juliaConstC SealevelchangeViscousSamplingEnum
+syn keyword juliaConstC SealevelchangeViscousSamplingLengthEnum
+syn keyword juliaConstC SealevelchangeViscousSamplingIndexEnum
 syn keyword juliaConstC SealevelchangeViscousPolarMotionEnum
 syn keyword juliaConstC SealevelchangeRunCountEnum
 syn keyword juliaConstC SealevelchangeTransitionsEnum
@@ -609,6 +614,8 @@ syn keyword juliaConstC SmbIsdeltaLWupEnum
 syn keyword juliaConstC SmbIsfirnwarmingEnum
 syn keyword juliaConstC SmbIsgraingrowthEnum
 syn keyword juliaConstC SmbIsmappedforcingEnum
+syn keyword juliaConstC SmbIsmappingusingneighborsEnum
+syn keyword juliaConstC SmbIsmappingneighborxyEnum
 syn keyword juliaConstC SmbIsmeltEnum
 syn keyword juliaConstC SmbIsmungsmEnum
 syn keyword juliaConstC SmbIsprecipforcingremappedEnum
@@ -622,6 +629,8 @@ syn keyword juliaConstC SmbKEnum
 syn keyword juliaConstC SmbLapsedlwrfValueEnum
 syn keyword juliaConstC SmbLapseRatesEnum
 syn keyword juliaConstC SmbLapseTaValueEnum
+syn keyword juliaConstC SmbLatMappedforcingEnum
+syn keyword juliaConstC SmbLonMappedforcingEnum
 syn keyword juliaConstC SmbLWgradEnum
 syn keyword juliaConstC SmbMappedforcingelevationEnum
 syn keyword juliaConstC SmbNumBasinsEnum
@@ -661,6 +670,7 @@ syn keyword juliaConstC SmbT0dryEnum
 syn keyword juliaConstC SmbT0wetEnum
 syn keyword juliaConstC SmbTaParamEnum
 syn keyword juliaConstC SmbTcIdxEnum
+syn keyword juliaConstC SmbTeDefaultEnum
 syn keyword juliaConstC SmbTeThreshEnum
 syn keyword juliaConstC SmbTdiffEnum
 syn keyword juliaConstC SmbThermoDeltaTScalingEnum
@@ -672,6 +682,8 @@ syn keyword juliaConstC SmbVParamEnum
 syn keyword juliaConstC SmbVmeanParamEnum
 syn keyword juliaConstC SmbVzParamEnum
 syn keyword juliaConstC SmbWindspeedgradEnum
+syn keyword juliaConstC SmbXMappedforcingEnum
+syn keyword juliaConstC SmbYMappedforcingEnum
 syn keyword juliaConstC SmoothThicknessMultiplierEnum
 syn keyword juliaConstC SolutionTypeEnum
 syn keyword juliaConstC SteadystateMaxiterEnum
@@ -748,6 +760,8 @@ syn keyword juliaConstC YyeEnum
 syn keyword juliaConstC ZzeEnum
 syn keyword juliaConstC AreaeEnum
 syn keyword juliaConstC WorldCommEnum
+syn keyword juliaConstC FrictionEmulatorEnum
+syn keyword juliaConstC SmbEmulatorEnum
 syn keyword juliaConstC ParametersENDEnum
 syn keyword juliaConstC InputsSTARTEnum
 syn keyword juliaConstC AccumulatedDeltaBottomPressureEnum
@@ -791,6 +805,7 @@ syn keyword juliaConstC BasalforcingsIsmip6BasinIdEnum
 syn keyword juliaConstC BasalforcingsIsmip6TfEnum
 syn keyword juliaConstC BasalforcingsIsmip6TfShelfEnum
 syn keyword juliaConstC BasalforcingsIsmip6MeltAnomalyEnum
+syn keyword juliaConstC BasalforcingsIsmip7BasinIdEnum
 syn keyword juliaConstC BasalforcingsIsmip7TfEnum
 syn keyword juliaConstC BasalforcingsIsmip7TfShelfEnum
 syn keyword juliaConstC BasalforcingsIsmip7SalinityEnum
@@ -1188,7 +1203,10 @@ syn keyword juliaConstC SmbHSnowEnum
 syn keyword juliaConstC SmbHSnowInitEnum
 syn keyword juliaConstC SmbHrefEnum
 syn keyword juliaConstC SmbIsInitializedEnum
+syn keyword juliaConstC SmbLatEnum
+syn keyword juliaConstC SmbLonEnum
 syn keyword juliaConstC SmbMAddEnum
+syn keyword juliaConstC SmbMappedforcingneighborsEnum
 syn keyword juliaConstC SmbMappedforcingpointEnum
 syn keyword juliaConstC SmbMappedforcingprecipscalingEnum
 syn keyword juliaConstC SmbMassBalanceEnum
@@ -1197,12 +1215,16 @@ syn keyword juliaConstC SmbMassBalanceIceEnum
 syn keyword juliaConstC SmbMassBalanceSubstepEnum
 syn keyword juliaConstC SmbMassBalanceTransientEnum
 syn keyword juliaConstC SmbMaskEnum
+syn keyword juliaConstC SmbMaxXEnum
+syn keyword juliaConstC SmbMaxYEnum
 syn keyword juliaConstC SmbMeanLHFEnum
 syn keyword juliaConstC SmbMeanSHFEnum
 syn keyword juliaConstC SmbMeanULWEnum
 syn keyword juliaConstC SmbMeanTemperatureEnum
 syn keyword juliaConstC SmbMeltEnum
 syn keyword juliaConstC SmbMeltSubstepEnum
+syn keyword juliaConstC SmbMinXEnum
+syn keyword juliaConstC SmbMinYEnum
 syn keyword juliaConstC SmbMonthlytemperaturesEnum
 syn keyword juliaConstC SmbMonthlydsradiationEnum
 syn keyword juliaConstC SmbMonthlydlradiationEnum
@@ -1219,6 +1241,7 @@ syn keyword juliaConstC SmbPddfacSnowEnum
 syn keyword juliaConstC SmbPrecipitationEnum
 syn keyword juliaConstC SmbPrecipitationSubstepEnum
 syn keyword juliaConstC SmbPrecipitationsAnomalyEnum
+syn keyword juliaConstC SmbQinterpEnum
 syn keyword juliaConstC SmbDsradiationAnomalyEnum
 syn keyword juliaConstC SmbDlradiationAnomalyEnum
 syn keyword juliaConstC SmbWindspeedAnomalyEnum
@@ -1275,6 +1298,17 @@ syn keyword juliaConstC SmbZMaxEnum
 syn keyword juliaConstC SmbZMinEnum
 syn keyword juliaConstC SmbZTopEnum
 syn keyword juliaConstC SmbZYEnum
+syn keyword juliaConstC MariaSmbEnum
+syn keyword juliaConstC MariaElevEnum
+syn keyword juliaConstC MariaAlEnum
+syn keyword juliaConstC MariaStEnum
+syn keyword juliaConstC MariaTtEnum
+syn keyword juliaConstC MariaSwdEnum
+syn keyword juliaConstC MariaLwdEnum
+syn keyword juliaConstC MariaSwuEnum
+syn keyword juliaConstC MariaLwuEnum
+syn keyword juliaConstC MariaShfEnum
+syn keyword juliaConstC MariaLhfEnum
 syn keyword juliaConstC SolidearthExternalDisplacementEastRateEnum
 syn keyword juliaConstC SolidearthExternalDisplacementNorthRateEnum
 syn keyword juliaConstC SolidearthExternalDisplacementUpRateEnum
@@ -3491,7 +3525,6 @@ syn keyword juliaConstC FloatingMeltRateEnum
 syn keyword juliaConstC FreeEnum
 syn keyword juliaConstC FreeSurfaceBaseAnalysisEnum
 syn keyword juliaConstC FreeSurfaceTopAnalysisEnum
-syn keyword juliaConstC FrictionEmulatorEnum
 syn keyword juliaConstC FrontalForcingsDefaultEnum
 syn keyword juliaConstC FrontalForcingsRignotEnum
 syn keyword juliaConstC FrontalForcingsRignotarmaEnum
@@ -3699,6 +3732,7 @@ syn keyword juliaConstC SMBpddSicopolisEnum
 syn keyword juliaConstC SMBpddGCMEnum
 syn keyword juliaConstC SMBpddFastEnum
 syn keyword juliaConstC SMBsemicEnum
+syn keyword juliaConstC SMBmariaEnum
 syn keyword juliaConstC SSAApproximationEnum
 syn keyword juliaConstC SSAFSApproximationEnum
 syn keyword juliaConstC SSAHOApproximationEnum

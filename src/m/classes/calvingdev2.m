@@ -20,7 +20,7 @@ classdef calvingdev2
 					list2 = fieldnames(inputstruct);
 					for i=1:length(list1)
 						fieldname = list1{i};
-						if ismember(fieldname,list2),
+						if ismember(fieldname,list2)
 							self.(fieldname) = inputstruct.(fieldname);
 						end
 					end
@@ -43,7 +43,7 @@ classdef calvingdev2
 
 			md = checkfield(md,'fieldname','calving.stress_threshold_groundedice','>',0,'NaN',1,'Inf',1);
 			md = checkfield(md,'fieldname','calving.stress_threshold_floatingice','>',0,'NaN',1,'Inf',1);
-			md = checkfield(md,'fieldname','calving.height_above_floatation','<=',0);
+			md = checkfield(md,'fieldname','calving.height_above_floatation','>=',0);
 		end % }}}
 		function disp(self) % {{{
 			disp(sprintf('   Calving Dev2 parameters:'));

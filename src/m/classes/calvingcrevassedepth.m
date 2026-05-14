@@ -20,7 +20,7 @@ classdef calvingcrevassedepth
 					list2 = fieldnames(inputstruct);
 					for i=1:length(list1)
 						fieldname = list1{i};
-						if ismember(fieldname,list2),
+						if ismember(fieldname,list2)
 							self.(fieldname) = inputstruct.(fieldname);
 						end
 					end
@@ -32,8 +32,8 @@ classdef calvingcrevassedepth
 		end % }}}
 		function self = setdefaultparameters(self) % {{{
 			
-			crevasse_threshold      = 1.;
-			crevasse_opening_stress = 1;
+			self.crevasse_threshold      = 1.;
+			self.crevasse_opening_stress = 1;
          self.water_height       = 0.;
 		end % }}}
 		function md = checkconsistency(self,md,solution,analyses) % {{{

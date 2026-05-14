@@ -13,6 +13,10 @@
 #include "../classes.h"
 #include "shared/shared.h"
 #include "../../modules/InputUpdateFromConstantx/InputUpdateFromConstantx.h"
+#ifdef _HAVE_PyBind11_
+   #include <pybind11/numpy.h>
+   namespace py=pybind11;
+#endif
 /*}}}*/
 
 /*Constructors/destructors*/
@@ -27,6 +31,9 @@ Friction::Friction(){/*{{{*/
 	this->vz_input=NULL;
 	this->alpha2_list=NULL;
 	this->alpha2_complement_list=NULL;
+	#ifdef _HAVE_PyBind11_
+	this->emulator=NULL;
+	#endif
 }
 /*}}}*/
 Friction::Friction(Element* element_in){/*{{{*/
@@ -38,6 +45,9 @@ Friction::Friction(Element* element_in){/*{{{*/
 
 	this->element=element_in;
 	this->linearize  = 0;
+	#ifdef _HAVE_PyBind11_
+	this->emulator=NULL;
+	#endif
 
 	/* Load necessary parameters */
 	element_in->FindParam(&this->law,FrictionLawEnum);
@@ -99,9 +109,11 @@ Friction::Friction(Element* element_in){/*{{{*/
 	}
 
 	#ifdef _HAVE_PyBind11_
-	Param* emulator_param = element_in->parameters->FindParamObject(FrictionEmulatorEnum);
-	if(emulator_param->ObjectEnum()!=EmulatorParamEnum) _error_("Paramerer should be EmulatorParam");
-	this->emulator = (EmulatorParam*)emulator_param;
+	if(this->law==20){
+	  Param* emulator_param = element_in->parameters->FindParamObject(FrictionEmulatorEnum);
+	  if(emulator_param->ObjectEnum()!=EmulatorParamEnum) _error_("Paramerer should be EmulatorParam");
+	  this->emulator = (EmulatorParam*)emulator_param;
+	}
 	#endif
 
 }
@@ -1098,12 +1110,35 @@ void Friction::GetAlpha2RegCoulomb2(IssmDouble* palpha2, Gauss* gauss){/*{{{*/
 }/*}}}*/
 #if _HAVE_PyBind11_
 void Friction::GetAlpha2Emulator(IssmDouble* palpha2, Gauss* gauss){/*{{{*/
+	IssmDouble C;
+	IssmDouble alpha2;
 
-	/*Get velocity magnitude*/
-	IssmDouble ub = VelMag(gauss);
+	element->GetInputValue(&C,gauss,FrictionCEnum);
+	IssmDouble vmag = VelMag(gauss);
 
-	/*Compute alpha^2*/
-	IssmDouble alpha2 = 0.0;
+	/*Check to prevent dividing by zero if vmag==0*/
+	if(vmag==0.) {
+		alpha2=0.;
+	}
+	else {
+		try {
+			py::array_t<double> feats({1, 2});
+			auto feats_mut = feats.mutable_unchecked<2>();
+			feats_mut(0, 0) = static_cast<double>(C * C);
+			feats_mut(0, 1) = static_cast<double>(vmag);
+
+			py::object pred_obj = this->emulator->mod.attr("predict_alpha2_np")(feats, py::arg("dtype") = "float64");
+			py::array_t<double, py::array::c_style | py::array::forcecast> pred(pred_obj);
+			auto pred_view = pred.unchecked<2>();
+			alpha2 = static_cast<IssmDouble>(pred_view(0, 0));
+		}
+		catch (const py::error_already_set& e) {
+			_error_(std::string("Python friction inference failed: ") + e.what());
+		}
+		catch (const std::exception& e) {
+			_error_(std::string("Friction emulator inference failed: ") + e.what());
+		}
+	}
 
 	/*Assign output pointers:*/
 	*palpha2=alpha2;
@@ -1399,6 +1434,11 @@ void FrictionUpdateInputs(Elements* elements,Inputs* inputs,IoModel* iomodel){/*
 			iomodel->FetchDataToInput(inputs,elements,"md.friction.m",FrictionMEnum);
 			iomodel->FetchDataToInput(inputs,elements,"md.friction.K",FrictionKEnum);
 			break;
+		#ifdef _HAVE_PyBind11_
+		case 20:
+			iomodel->FetchDataToInput(inputs,elements,"md.friction.C",FrictionCEnum);
+			break;
+		#endif
 		default:
 			_error_("friction law "<< frictionlaw <<" not supported");
 	}
@@ -1485,10 +1525,14 @@ void FrictionUpdateParameters(Parameters* parameters,IoModel* iomodel){/*{{{*/
 					  iomodel->FetchData(&module_dir, "md.friction.module_dir");
 					  iomodel->FetchData(&pt_name, "md.friction.pt_name");
 					  iomodel->FetchData(&py_name, "md.friction.py_name");
+					  if(parameters->Exist(FrictionEmulatorEnum)){
+						  _error_("FrictionEmulatorEnum already exists in this process; EmulatorParam is process-local and must only be created once");
+					  }
 					  parameters->AddObject(new EmulatorParam(FrictionEmulatorEnum, module_dir,pt_name, py_name));
 					  xDelete<char>(module_dir);
 					  xDelete<char>(pt_name);
 					  xDelete<char>(py_name);
+					  break;
 				  }
 		#endif
 		default: _error_("Friction law "<<frictionlaw<<" not implemented yet");

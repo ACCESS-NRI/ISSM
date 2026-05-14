@@ -22,6 +22,10 @@
 #include "../Inputs/ControlInput.h"
 #include "../Inputs/ArrayInput.h"
 #include "../Inputs/IntArrayInput.h"
+#ifdef _HAVE_PyBind11_
+   #include <pybind11/numpy.h>
+   namespace py=pybind11;
+#endif
 /*}}}*/
 #define MAXVERTICES 6 /*Maximum number of vertices per element, currently Penta, to avoid dynamic mem allocation*/
 
@@ -2508,6 +2512,7 @@ void       Element::Ismip7FloatingiceMeltingRate(){/*{{{*/
 	if(!this->IsIceInElement() || !this->IsAllFloating() || !this->IsOnBase()) return;
 
 	int         basinid,num_basins,M,N;
+	IssmDouble  delta_t_basin;
 	IssmDouble* xyz_list;
 	
 	IssmDouble  tf,gamma0;
@@ -2515,6 +2520,7 @@ void       Element::Ismip7FloatingiceMeltingRate(){/*{{{*/
 	IssmDouble  coriolis; /*Coriolis parameter*/
 	IssmDouble  dbase[2]; /*derivative of z_b*/
 	IssmDouble  theta, slope;
+	IssmDouble* delta_t = NULL;
 	IssmDouble* depths  = NULL;
 	
 
@@ -2533,12 +2539,17 @@ void       Element::Ismip7FloatingiceMeltingRate(){/*{{{*/
 	IssmDouble g   = this->FindParam(ConstantsGEnum);
 
 	/* Get parameters and inputs */
+	this->GetInputValue(&basinid,BasalforcingsIsmip7BasinIdEnum);
+	this->parameters->FindParam(&num_basins,BasalforcingsIsmip7NumBasinsEnum);
+	this->parameters->FindParam(&delta_t,&M,BasalforcingsIsmip7DeltaTEnum);    _assert_(M==num_basins);
 	this->parameters->FindParam(&gamma0,BasalforcingsIsmip7GammaEnum);
 	
 	Input* base_input = this->GetInput(BaseEnum); _assert_(base_input);
 	Input* tf_input   = this->GetInput(BasalforcingsIsmip7TfShelfEnum); _assert_(tf_input);
 	Input* salinity_input = this->GetInput(BasalforcingsIsmip7SalinityShelfEnum); _assert_(salinity_input);
 	Input* coriolis_input = this->GetInput(BasalforcingsCoriolisFEnum); _assert_(coriolis_input);
+
+	delta_t_basin = delta_t[basinid];
 	
 	/*Compute melt rate for Local and Nonlocal parameterizations*/
 	Gauss* gauss=this->NewGauss();
@@ -2553,7 +2564,7 @@ void       Element::Ismip7FloatingiceMeltingRate(){/*{{{*/
 		slope = sqrt(pow(dbase[0],2)+pow(dbase[1],2));
 		theta = atan(slope);
 
-		basalmeltrate[i] = gamma0*sin(theta)*(rhow/rhoi)*pow(cp/lf,2)*betaS*salinity*g/2.0/fabs(coriolis)*fabs(tf)*tf;
+		basalmeltrate[i] = gamma0*sin(theta)*(rhow/rhoi)*pow(cp/lf,2)*betaS*salinity*g/2.0/fabs(coriolis)*fabs(tf+delta_t_basin)*(tf+delta_t_basin);
 	}
 
 	/*Return basal melt rate*/
@@ -2562,7 +2573,7 @@ void       Element::Ismip7FloatingiceMeltingRate(){/*{{{*/
 	/*Cleanup and return*/
 	delete gauss;
 	xDelete<IssmDouble>(depths);
-
+	xDelete<IssmDouble>(delta_t);
 }/*}}}*/
 void       Element::LapseRateBasinSMB(int numelevbins, IssmDouble* lapserates, IssmDouble* elevbins,IssmDouble* refelevation){/*{{{*/
 
@@ -4198,6 +4209,132 @@ void       Element::PositiveDegreeDayGCM(){/*{{{*/
 	delete gauss;
 }
 /*}}}*/
+#if _HAVE_PyBind11_
+void       Element::SmbEmulator(IssmDouble timeinputs, EmulatorParam* emulator){/*{{{*/
+	
+	int numvertices = this->GetNumberOfVertices();
+
+	IssmDouble* smb  = xNew<IssmDouble>(numvertices);
+	IssmDouble* elev = xNew<IssmDouble>(numvertices);
+	IssmDouble* lon  = xNew<IssmDouble>(numvertices);
+	IssmDouble* lat  = xNew<IssmDouble>(numvertices);
+	IssmDouble* al   = xNew<IssmDouble>(numvertices);
+	IssmDouble* st   = xNew<IssmDouble>(numvertices);
+	IssmDouble* tt   = xNew<IssmDouble>(numvertices);
+	IssmDouble* swd  = xNew<IssmDouble>(numvertices);
+	IssmDouble* lwd  = xNew<IssmDouble>(numvertices);
+	IssmDouble* swu  = xNew<IssmDouble>(numvertices);
+	IssmDouble* lwu  = xNew<IssmDouble>(numvertices);
+	IssmDouble* shf  = xNew<IssmDouble>(numvertices);
+	IssmDouble* lhf  = xNew<IssmDouble>(numvertices);
+
+	Input* elev_input = this->GetInput(SurfaceEnum);             _assert_(elev_input);
+	Input* al_input   = this->GetInput(MariaAlEnum,timeinputs);    _assert_(al_input);
+	Input* st_input   = this->GetInput(MariaStEnum,timeinputs);    _assert_(st_input);
+	Input* tt_input   = this->GetInput(MariaTtEnum,timeinputs);    _assert_(tt_input);
+	Input* swd_input  = this->GetInput(MariaSwdEnum,timeinputs);   _assert_(swd_input);
+	Input* lwd_input  = this->GetInput(MariaLwdEnum,timeinputs);   _assert_(lwd_input);
+	Input* swu_input  = this->GetInput(MariaSwuEnum,timeinputs);   _assert_(swu_input);
+	Input* lwu_input  = this->GetInput(MariaLwuEnum,timeinputs);   _assert_(lwu_input);
+	Input* shf_input  = this->GetInput(MariaShfEnum,timeinputs);   _assert_(shf_input);
+	Input* lhf_input  = this->GetInput(MariaLhfEnum,timeinputs);   _assert_(lhf_input);
+
+	for(int iv=0;iv<numvertices;iv++){
+		lon[iv] = this->vertices[iv]->GetLongitude();
+		lat[iv] = this->vertices[iv]->GetLatitude();
+	}
+	this->GetInputListOnVertices(elev,elev_input,0.);
+	this->GetInputListOnVertices(al,al_input,0.);
+	this->GetInputListOnVertices(st,st_input,0.);
+	this->GetInputListOnVertices(tt,tt_input,0.);
+	this->GetInputListOnVertices(swd,swd_input,0.);
+	this->GetInputListOnVertices(lwd,lwd_input,0.);
+	this->GetInputListOnVertices(swu,swu_input,0.);
+	this->GetInputListOnVertices(lwu,lwu_input,0.);
+	this->GetInputListOnVertices(shf,shf_input,0.);
+	this->GetInputListOnVertices(lhf,lhf_input,0.);
+
+	try{
+		py::gil_scoped_acquire gil;
+
+		py::array_t<double> lon_np(numvertices);
+		py::array_t<double> lat_np(numvertices);
+		py::array_t<double> elev_np(numvertices);
+		py::array_t<double> al_np(numvertices);
+		py::array_t<double> st_np(numvertices);
+		py::array_t<double> tt_np(numvertices);
+		py::array_t<double> swd_np(numvertices);
+		py::array_t<double> lwd_np(numvertices);
+		py::array_t<double> swu_np(numvertices);
+		py::array_t<double> lwu_np(numvertices);
+		py::array_t<double> shf_np(numvertices);
+		py::array_t<double> lhf_np(numvertices);
+
+		auto lon_view  = lon_np.mutable_unchecked<1>();
+		auto lat_view  = lat_np.mutable_unchecked<1>();
+		auto elev_view = elev_np.mutable_unchecked<1>();
+		auto al_view  = al_np.mutable_unchecked<1>();
+		auto st_view  = st_np.mutable_unchecked<1>();
+		auto tt_view  = tt_np.mutable_unchecked<1>();
+		auto swd_view = swd_np.mutable_unchecked<1>();
+		auto lwd_view = lwd_np.mutable_unchecked<1>();
+		auto swu_view = swu_np.mutable_unchecked<1>();
+		auto lwu_view = lwu_np.mutable_unchecked<1>();
+		auto shf_view = shf_np.mutable_unchecked<1>();
+		auto lhf_view = lhf_np.mutable_unchecked<1>();
+
+		for(int iv=0;iv<numvertices;iv++){
+			lon_view(iv)  = static_cast<double>(lon[iv]);
+			lat_view(iv)  = static_cast<double>(lat[iv]);
+			elev_view(iv) = static_cast<double>(elev[iv]);
+			al_view(iv)  = static_cast<double>(al[iv]);
+			st_view(iv)  = static_cast<double>(st[iv]);
+			tt_view(iv)  = static_cast<double>(tt[iv]);
+			swd_view(iv) = static_cast<double>(swd[iv]);
+			lwd_view(iv) = static_cast<double>(lwd[iv]);
+			swu_view(iv) = static_cast<double>(swu[iv]);
+			lwu_view(iv) = static_cast<double>(lwu[iv]);
+			shf_view(iv) = static_cast<double>(shf[iv]);
+			lhf_view(iv) = static_cast<double>(lhf[iv]);
+		}
+
+		py::object pred_obj = emulator->mod.attr("predict_smb_np")(
+					elev_np, lon_np, lat_np, al_np, st_np, tt_np, swd_np, lwd_np, swu_np, lwu_np, shf_np, lhf_np,
+					py::arg("dtype") = "float64");
+		py::array_t<double, py::array::c_style | py::array::forcecast> pred(pred_obj);
+		auto pred_view = pred.unchecked<1>();
+		_assert_(pred.shape(0)==numvertices);
+
+		for(int iv=0;iv<numvertices;iv++){
+			smb[iv] = static_cast<IssmDouble>(pred_view(iv));
+		}
+	}
+	catch(const py::error_already_set& e){
+		_error_(std::string("Python SMB emulator inference failed: ") + e.what());
+	}
+	catch(const std::exception& e){
+		_error_(std::string("SMB emulator inference failed: ") + e.what());
+	}
+
+	this->AddInput(SmbMassBalanceEnum,smb,P1Enum);
+
+	xDelete<IssmDouble>(lon);
+	xDelete<IssmDouble>(lat);
+	xDelete<IssmDouble>(elev);
+	xDelete<IssmDouble>(al);
+	xDelete<IssmDouble>(st);
+	xDelete<IssmDouble>(tt);
+	xDelete<IssmDouble>(swd);
+	xDelete<IssmDouble>(lwd);
+	xDelete<IssmDouble>(swu);
+	xDelete<IssmDouble>(lwu);
+	xDelete<IssmDouble>(shf);
+	xDelete<IssmDouble>(lhf);
+	xDelete<IssmDouble>(smb);
+		
+} 
+/*}}}*/
+#endif
 void       Element::ProjectGridDataToMesh(IssmDouble* griddata,IssmDouble* x_grid,IssmDouble* y_grid,int Nx,int Ny,int input_enum){/*{{{*/
 
 	const int NUM_VERTICES 	= this->GetNumberOfVertices();
@@ -5426,6 +5563,7 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 	int        dsnowIdx=0;
 	int        swIdx=0;
 	int        N=0;
+	int        N2=0;
 	IssmDouble cldFrac,t0wet, t0dry, K;
 	IssmDouble lhf=0.0;
 	IssmDouble shf=0.0;
@@ -5455,13 +5593,15 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 	IssmDouble accsumEC=0.0;
 	IssmDouble accsumP=0.0;
 	IssmDouble accsumRa=0.0;
-	bool isgraingrowth,isalbedo,isshortwave,isthermal,isaccumulation,ismelt,isdensification,isturbulentflux,ismappedforcing;
+	bool isgraingrowth,isalbedo,isshortwave,isthermal,isaccumulation,ismelt,isdensification,isturbulentflux;
+	bool ismappedforcing, ismappingusingneighbors, ismappingneighborxy;
 	bool isconstrainsurfaceT=false;
 	bool isdeltaLWup=false;
 	IssmDouble init_scaling=0.0;
 	IssmDouble thermo_scaling=1.0;
 	IssmDouble adThresh=1023.0;
 	IssmDouble teThresh=10;
+	IssmDouble teDefault=1;
 	IssmDouble tlapse=0.0;
 	IssmDouble dlwlapse=0.0;
 	/*}}}*/
@@ -5516,6 +5656,11 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 	IssmDouble* Radsub=NULL;
 	IssmDouble* Pdsub=NULL;
 	int         m=0;
+	int         mpQ11=0;
+	int         mpQ21=0;
+	int         mpQ12=0;
+	int         mpQ22=0;
+	IssmDouble minx, maxx, miny, maxy, lat, lon;
 	/*}}}*/
 
 	/*Retrieve material properties and parameters:{{{ */
@@ -5551,7 +5696,10 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 	parameters->FindParam(&thermo_scaling,SmbThermoDeltaTScalingEnum);
 	parameters->FindParam(&adThresh,SmbAdThreshEnum);
 	parameters->FindParam(&teThresh,SmbTeThreshEnum);
+	parameters->FindParam(&teDefault,SmbTeDefaultEnum);
 	parameters->FindParam(&ismappedforcing,SmbIsmappedforcingEnum);
+	parameters->FindParam(&ismappingusingneighbors,SmbIsmappingusingneighborsEnum);
+	parameters->FindParam(&ismappingneighborxy,SmbIsmappingneighborxyEnum);
 	/*}}}*/
 	/*Retrieve inputs: {{{*/
 	Input *zTop_input          = this->GetInput(SmbZTopEnum);         _assert_(zTop_input);
@@ -5573,6 +5721,8 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 	zMin_input->GetInputValue(&zMin,gauss);
 	zY_input->GetInputValue(&zY,gauss);
 
+	int* Qinterp=NULL;
+
 	if (!ismappedforcing) {
 		Input *Tmean_input         = this->GetInput(SmbTmeanEnum);        _assert_(Tmean_input);
 		Input *Vmean_input         = this->GetInput(SmbVmeanEnum);        _assert_(Vmean_input);
@@ -5589,29 +5739,196 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 	} else {
 		this->GetInputValue(&Mappedpoint,SmbMappedforcingpointEnum);
 
-		IssmDouble* tmean = NULL;
-		IssmDouble* vmean = NULL;
-		IssmDouble* cmean = NULL;
+		IssmDouble* tmeane = NULL;
+		IssmDouble* vmeane = NULL;
+		IssmDouble* cmeane = NULL;
 		IssmDouble* tzval = NULL;
 		IssmDouble* vzval = NULL;
 	
-		parameters->FindParam(&tmean,&N,SmbTmeanParamEnum);
-		parameters->FindParam(&vmean,&N,SmbVmeanParamEnum);
-		parameters->FindParam(&cmean,&N,SmbCParamEnum);
 		parameters->FindParam(&tzval,&N,SmbTzParamEnum);
 		parameters->FindParam(&vzval,&N,SmbVzParamEnum);
+		parameters->FindParam(&tmeane,&N,SmbTmeanParamEnum);
+		parameters->FindParam(&vmeane,&N,SmbVmeanParamEnum);
+		parameters->FindParam(&cmeane,&N,SmbCParamEnum);
 
-		Tmean = tmean[Mappedpoint-1];
-		Vmean = vmean[Mappedpoint-1];
-		C = cmean[Mappedpoint-1];
 		Tz = tzval[Mappedpoint-1];
 		Vz = vzval[Mappedpoint-1];
 
-		xDelete<IssmDouble>(tmean);
-		xDelete<IssmDouble>(vmean);
-		xDelete<IssmDouble>(cmean);
+		if (ismappingusingneighbors){
+
+			if (!isinitialized){
+
+				IssmDouble* lat_mappingpoint=NULL;
+				IssmDouble* lon_mappingpoint=NULL;
+				int* mappedforcingneighbors=NULL;
+
+				if (ismappingneighborxy) {
+					parameters->FindParam(&lon_mappingpoint,&N,SmbXMappedforcingEnum);
+					parameters->FindParam(&lat_mappingpoint,&N,SmbYMappedforcingEnum);
+				}else{
+					parameters->FindParam(&lon_mappingpoint,&N,SmbLonMappedforcingEnum);
+					parameters->FindParam(&lat_mappingpoint,&N,SmbLatMappedforcingEnum);
+				}
+
+				this->inputs->GetIntArray(SmbMappedforcingneighborsEnum,this->lid,&mappedforcingneighbors,&N2); _assert_(N2==3);
+
+				Qinterp = xNew<int>(4);
+				IssmDouble* xinterp = xNew<IssmDouble>(4);
+				IssmDouble* yinterp = xNew<IssmDouble>(4);
+				int* mappedforcingpoints = xNew<int>(4);
+				double* xelem = xNew<double>(1);
+				double* yelem = xNew<double>(1);
+				double* latelem = xNew<double>(1);
+				double* lonelem = xNew<double>(1);
+
+				/*Allocate all arrays*/
+				IssmDouble* xyz_list = NULL;
+				this->GetVerticesCoordinates(&xyz_list);
+				xelem[0]=reCast<double>(this->GetXcoord(xyz_list,gauss));
+				yelem[0]=reCast<double>(this->GetYcoord(xyz_list,gauss));
+
+				//Figure out which points are Q11, Q12, Q21, and Q22
+				int neighbor1,neighbor2,neighbor3;
+
+				if (mappedforcingneighbors[0] < 0 || mappedforcingneighbors[1] < 0 || mappedforcingneighbors[2] < 0){
+					neighbor1 = Mappedpoint;
+					neighbor2 = Mappedpoint;
+					neighbor3 = Mappedpoint;
+				}
+				else{
+					neighbor1 = mappedforcingneighbors[0];
+					neighbor2 = mappedforcingneighbors[1];
+					neighbor3 = mappedforcingneighbors[2];
+				}
+
+				mappedforcingpoints[0]=Mappedpoint;
+				mappedforcingpoints[1]=neighbor1;
+				mappedforcingpoints[2]=neighbor2;
+				mappedforcingpoints[3]=neighbor3;
+				xinterp[0]=lon_mappingpoint[mappedforcingpoints[0]-1];
+				xinterp[1]=lon_mappingpoint[mappedforcingpoints[1]-1];
+				xinterp[2]=lon_mappingpoint[mappedforcingpoints[2]-1];
+				xinterp[3]=lon_mappingpoint[mappedforcingpoints[3]-1];
+				yinterp[0]=lat_mappingpoint[mappedforcingpoints[0]-1];
+				yinterp[1]=lat_mappingpoint[mappedforcingpoints[1]-1];
+				yinterp[2]=lat_mappingpoint[mappedforcingpoints[2]-1];
+				yinterp[3]=lat_mappingpoint[mappedforcingpoints[3]-1];
+
+				if (ismappingneighborxy){
+					lat = yelem[0];
+					lon = xelem[0];
+				}
+				else{
+					if(xinterp[0]>180) xinterp[0]=xinterp[0]-360;
+					if(xinterp[1]>180) xinterp[1]=xinterp[1]-360;
+					if(xinterp[2]>180) xinterp[2]=xinterp[2]-360;
+					if(xinterp[3]>180) xinterp[3]=xinterp[3]-360;
+
+					int latlon = 0;
+					int signlat = 1;
+					if (yinterp[0]<0) signlat = -1;
+					latlon = Xy2llx(latelem, lonelem, xelem, yelem, 1, signlat); _assert_(latlon>0);
+					lat = latelem[0];
+					lon = lonelem[0];
+					if(lon>180) lon=lon-360;
+				}
+
+				minx=fmin(fmin(xinterp[0],xinterp[1]),fmin(xinterp[2],xinterp[3]));
+				maxx=fmax(fmax(xinterp[0],xinterp[1]),fmax(xinterp[2],xinterp[3]));
+				miny=fmin(fmin(yinterp[0],yinterp[1]),fmin(yinterp[2],yinterp[3]));
+				maxy=fmax(fmax(yinterp[0],yinterp[1]),fmax(yinterp[2],yinterp[3]));
+
+				for(int ni=0;ni<=N2;ni++) {
+					if(minx==xinterp[ni] && miny==yinterp[ni]) mpQ11=mappedforcingpoints[ni];
+					else if(minx==xinterp[ni] && maxy==yinterp[ni]) mpQ12=mappedforcingpoints[ni];
+					else if(maxx==xinterp[ni] && miny==yinterp[ni]) mpQ21=mappedforcingpoints[ni];
+					else if(maxx==xinterp[ni] && maxy==yinterp[ni]) mpQ22=mappedforcingpoints[ni];
+					else _error_("Gemb mapping neighbor points were not assignee properly. Check that they represent a uniform grid box of lat/lon.");
+				}
+
+				//Calculate Q order and set in Qinterp for this element, set mpQ12, mpQ21, mpQ11, mpQ22 locally
+				Tmean=bilinearinterp(minx, maxx, miny, maxy, tmeane[mpQ11-1], tmeane[mpQ12-1], tmeane[mpQ21-1], tmeane[mpQ22-1], lon, lat);
+				Vmean=bilinearinterp(minx, maxx, miny, maxy, vmeane[mpQ11-1], vmeane[mpQ12-1], vmeane[mpQ21-1], vmeane[mpQ22-1], lon, lat);
+				C=bilinearinterp(minx, maxx, miny, maxy, cmeane[mpQ11-1], cmeane[mpQ12-1], cmeane[mpQ21-1], cmeane[mpQ22-1], lon, lat);
+
+				//Set these all as element inputs
+				Qinterp[0]=mpQ11;
+				Qinterp[1]=mpQ12;
+				Qinterp[2]=mpQ21;
+				Qinterp[3]=mpQ22;
+
+				this->SetElementInput(SmbTmeanEnum,Tmean);
+				this->SetElementInput(SmbVmeanEnum,Vmean);
+				this->SetElementInput(SmbCEnum,C);
+
+				this->SetElementInput(SmbMinXEnum,minx);
+				this->SetElementInput(SmbMaxXEnum,maxx);
+				this->SetElementInput(SmbMinYEnum,miny);
+				this->SetElementInput(SmbMaxYEnum,maxy);
+				this->SetElementInput(SmbLatEnum,lat);
+				this->SetElementInput(SmbLonEnum,lon);
+				this->inputs->SetIntArrayInput(SmbQinterpEnum,this->lid,Qinterp,4);
+				xDelete<IssmDouble>(xyz_list);
+				xDelete<IssmDouble>(xinterp);
+				xDelete<IssmDouble>(yinterp);
+				xDelete<int>(mappedforcingpoints);
+				xDelete<double>(xelem);
+				xDelete<double>(yelem);
+				xDelete<double>(latelem);
+				xDelete<double>(lonelem);
+				xDelete<IssmDouble>(lat_mappingpoint);
+				xDelete<IssmDouble>(lon_mappingpoint);
+				xDelete<int>(mappedforcingneighbors);
+
+			} else {
+				// Get Qinterp for this element, set Q12, Q21, Q11, Q22 locally
+				this->inputs->GetIntArray(SmbQinterpEnum,this->lid,&Qinterp,&N);
+				mpQ11=Qinterp[0];
+				mpQ12=Qinterp[1];
+				mpQ21=Qinterp[2];
+				mpQ22=Qinterp[3];
+
+				// Get input values for this location already calculated before
+				Input *MinX_input          = this->GetInput(SmbMinXEnum);        _assert_(MinX_input);
+				Input *MinY_input          = this->GetInput(SmbMinYEnum);        _assert_(MinY_input);
+				Input *MaxX_input          = this->GetInput(SmbMaxXEnum);        _assert_(MaxX_input);
+				Input *MaxY_input          = this->GetInput(SmbMaxYEnum);        _assert_(MaxY_input);
+
+				MinX_input->GetInputAverage(&minx);
+				MinY_input->GetInputAverage(&miny);
+				MaxX_input->GetInputAverage(&maxx);
+				MaxY_input->GetInputAverage(&maxy);
+
+				Input *Lat_input          = this->GetInput(SmbLatEnum);        _assert_(Lat_input);
+				Input *Lon_input          = this->GetInput(SmbLonEnum);        _assert_(Lon_input);
+
+				Lat_input->GetInputAverage(&lat);
+				Lon_input->GetInputAverage(&lon);
+
+				// Get input values for this location already calculated before
+				Input *Tmean_input         = this->GetInput(SmbTmeanEnum);        _assert_(Tmean_input);
+				Input *Vmean_input         = this->GetInput(SmbVmeanEnum);        _assert_(Vmean_input);
+				Input *C_input             = this->GetInput(SmbCEnum);            _assert_(C_input);
+
+				Tmean_input->GetInputAverage(&Tmean);
+				Vmean_input->GetInputAverage(&Vmean);
+				C_input->GetInputAverage(&C);
+			}
+
+		} else {
+
+			Tmean = tmeane[Mappedpoint-1];
+			Vmean = vmeane[Mappedpoint-1];
+			C = cmeane[Mappedpoint-1];
+
+		}
+
 		xDelete<IssmDouble>(tzval);
 		xDelete<IssmDouble>(vzval);
+		xDelete<IssmDouble>(tmeane);
+		xDelete<IssmDouble>(vmeane);
+		xDelete<IssmDouble>(cmeane);
+
 	}
 	/*}}}*/
 
@@ -5872,6 +6189,8 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 		bool isprecipmap=true;
 		parameters->FindParam(&isprecipmap,SmbIsprecipforcingremappedEnum);
 
+		IssmDouble tlapsem, dlwlapsem, elevationm;
+
 		IssmDouble* tlapse = NULL;
 		parameters->FindParam(&tlapse,&N,SmbLapseTaValueEnum); _assert_(tlapse);
 
@@ -5882,22 +6201,83 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 		parameters->FindParam(&elevation,&N,SmbMappedforcingelevationEnum); _assert_(elevation);
 
 		//Variables for downscaling
-		IssmDouble taparam, dlwrfparam, rhparam, eaparam, pparam, prparam;
-		parameters->FindParam(&taparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbTaParamEnum);
-		parameters->FindParam(&dlwrfparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbDlwrfParamEnum);
-		parameters->FindParam(&eaparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbEAirParamEnum);
-		parameters->FindParam(&pparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbPAirParamEnum);
-		parameters->FindParam(&prparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbPParamEnum);
+		IssmDouble taparam, dlwrfparam, rhparam, eaparam, pparam, prparam, Q11param, Q12param, Q21param, Q22param;
+		if (ismappingusingneighbors){
 
-		//Variables not downscaled
-		parameters->FindParam(&V, Mappedpoint-1, timeinputs, timestepping, dt, SmbVParamEnum);
-		parameters->FindParam(&dsw, Mappedpoint-1, timeinputs, timestepping, dt, SmbDswrfParamEnum);
-		parameters->FindParam(&dswdiff, Mappedpoint-1, timeinputs, timestepping, dt, SmbDswdiffrfParamEnum);
+			//Calculate interpolated fields
+			tlapsem=bilinearinterp(minx, maxx, miny, maxy, tlapse[mpQ11-1], tlapse[mpQ12-1], tlapse[mpQ21-1], tlapse[mpQ22-1], lon, lat);
+			dlwlapsem=bilinearinterp(minx, maxx, miny, maxy, dlwlapse[mpQ11-1], dlwlapse[mpQ12-1], dlwlapse[mpQ21-1], dlwlapse[mpQ22-1], lon, lat);
+			elevationm=bilinearinterp(minx, maxx, miny, maxy, elevation[mpQ11-1], elevation[mpQ12-1], elevation[mpQ21-1], elevation[mpQ22-1], lon, lat);
 
-		Ta = taparam + (currentsurface - elevation[Mappedpoint-1])*tlapse[Mappedpoint-1];
-		Tmean = Tmean + (currentsurface - elevation[Mappedpoint-1])*tlapse[Mappedpoint-1];
-		if (fabs(dlwlapse[Mappedpoint-1]) > Dtol){
-			dlw = fmax(dlwrfparam + (currentsurface - elevation[Mappedpoint-1])*dlwlapse[Mappedpoint-1],0.0);
+			parameters->FindParam(&Q11param, mpQ11-1, timeinputs, timestepping, dt, SmbTaParamEnum);
+			parameters->FindParam(&Q12param, mpQ12-1, timeinputs, timestepping, dt, SmbTaParamEnum);
+			parameters->FindParam(&Q21param, mpQ21-1, timeinputs, timestepping, dt, SmbTaParamEnum);
+			parameters->FindParam(&Q22param, mpQ22-1, timeinputs, timestepping, dt, SmbTaParamEnum);
+			taparam=bilinearinterp(minx, maxx, miny, maxy, Q11param, Q12param, Q21param, Q22param, lon, lat);
+
+			parameters->FindParam(&Q11param, mpQ11-1, timeinputs, timestepping, dt, SmbDlwrfParamEnum);
+			parameters->FindParam(&Q12param, mpQ12-1, timeinputs, timestepping, dt, SmbDlwrfParamEnum);
+			parameters->FindParam(&Q21param, mpQ21-1, timeinputs, timestepping, dt, SmbDlwrfParamEnum);
+			parameters->FindParam(&Q22param, mpQ22-1, timeinputs, timestepping, dt, SmbDlwrfParamEnum);
+			dlwrfparam=bilinearinterp(minx, maxx, miny, maxy, Q11param, Q12param, Q21param, Q22param, lon, lat);
+
+			parameters->FindParam(&Q11param, mpQ11-1, timeinputs, timestepping, dt, SmbEAirParamEnum);
+			parameters->FindParam(&Q12param, mpQ12-1, timeinputs, timestepping, dt, SmbEAirParamEnum);
+			parameters->FindParam(&Q21param, mpQ21-1, timeinputs, timestepping, dt, SmbEAirParamEnum);
+			parameters->FindParam(&Q22param, mpQ22-1, timeinputs, timestepping, dt, SmbEAirParamEnum);
+			eaparam=bilinearinterp(minx, maxx, miny, maxy, Q11param, Q12param, Q21param, Q22param, lon, lat);
+
+			parameters->FindParam(&Q11param, mpQ11-1, timeinputs, timestepping, dt, SmbPAirParamEnum);
+			parameters->FindParam(&Q12param, mpQ12-1, timeinputs, timestepping, dt, SmbPAirParamEnum);
+			parameters->FindParam(&Q21param, mpQ21-1, timeinputs, timestepping, dt, SmbPAirParamEnum);
+			parameters->FindParam(&Q22param, mpQ22-1, timeinputs, timestepping, dt, SmbPAirParamEnum);
+			pparam=bilinearinterp(minx, maxx, miny, maxy, Q11param, Q12param, Q21param, Q22param, lon, lat);
+
+			parameters->FindParam(&Q11param, mpQ11-1, timeinputs, timestepping, dt, SmbPParamEnum);
+			parameters->FindParam(&Q12param, mpQ12-1, timeinputs, timestepping, dt, SmbPParamEnum);
+			parameters->FindParam(&Q21param, mpQ21-1, timeinputs, timestepping, dt, SmbPParamEnum);
+			parameters->FindParam(&Q22param, mpQ22-1, timeinputs, timestepping, dt, SmbPParamEnum);
+			prparam=bilinearinterp(minx, maxx, miny, maxy, Q11param, Q12param, Q21param, Q22param, lon, lat);
+
+			parameters->FindParam(&Q11param, mpQ11-1, timeinputs, timestepping, dt, SmbVParamEnum);
+			parameters->FindParam(&Q12param, mpQ12-1, timeinputs, timestepping, dt, SmbVParamEnum);
+			parameters->FindParam(&Q21param, mpQ21-1, timeinputs, timestepping, dt, SmbVParamEnum);
+			parameters->FindParam(&Q22param, mpQ22-1, timeinputs, timestepping, dt, SmbVParamEnum);
+			V=bilinearinterp(minx, maxx, miny, maxy, Q11param, Q12param, Q21param, Q22param, lon, lat);
+
+			parameters->FindParam(&Q11param, mpQ11-1, timeinputs, timestepping, dt, SmbDswrfParamEnum);
+			parameters->FindParam(&Q12param, mpQ12-1, timeinputs, timestepping, dt, SmbDswrfParamEnum);
+			parameters->FindParam(&Q21param, mpQ21-1, timeinputs, timestepping, dt, SmbDswrfParamEnum);
+			parameters->FindParam(&Q22param, mpQ22-1, timeinputs, timestepping, dt, SmbDswrfParamEnum);
+			dsw=bilinearinterp(minx, maxx, miny, maxy, Q11param, Q12param, Q21param, Q22param, lon, lat);
+
+			parameters->FindParam(&Q11param, mpQ11-1, timeinputs, timestepping, dt, SmbDswdiffrfParamEnum);
+			parameters->FindParam(&Q12param, mpQ12-1, timeinputs, timestepping, dt, SmbDswdiffrfParamEnum);
+			parameters->FindParam(&Q21param, mpQ21-1, timeinputs, timestepping, dt, SmbDswdiffrfParamEnum);
+			parameters->FindParam(&Q22param, mpQ22-1, timeinputs, timestepping, dt, SmbDswdiffrfParamEnum);
+			dswdiff=bilinearinterp(minx, maxx, miny, maxy, Q11param, Q12param, Q21param, Q22param, lon, lat);
+
+		} else {
+			tlapsem=tlapse[Mappedpoint-1];
+			dlwlapsem=dlwlapse[Mappedpoint-1];
+			elevationm=elevation[Mappedpoint-1];
+
+			parameters->FindParam(&taparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbTaParamEnum);
+			parameters->FindParam(&dlwrfparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbDlwrfParamEnum);
+			parameters->FindParam(&eaparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbEAirParamEnum);
+			parameters->FindParam(&pparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbPAirParamEnum);
+			parameters->FindParam(&prparam, Mappedpoint-1, timeinputs, timestepping, dt, SmbPParamEnum);
+
+			//Variables not downscaled
+			parameters->FindParam(&V, Mappedpoint-1, timeinputs, timestepping, dt, SmbVParamEnum);
+			parameters->FindParam(&dsw, Mappedpoint-1, timeinputs, timestepping, dt, SmbDswrfParamEnum);
+			parameters->FindParam(&dswdiff, Mappedpoint-1, timeinputs, timestepping, dt, SmbDswdiffrfParamEnum);
+		}
+
+		Ta = taparam + (currentsurface - elevationm)*tlapsem;
+		Tmean = Tmean + (currentsurface - elevationm)*tlapsem;
+		if (fabs(dlwlapsem) > Dtol){
+			dlw = fmax(dlwrfparam + (currentsurface - elevationm)*dlwlapsem,0.0);
 		}else{
 			//adjust downward longwave, holding emissivity equal (Glover et al, 1999)
 			IssmDouble SB = 5.67e-8; // Stefan-Boltzmann constant (W m-2 K-4)
@@ -5906,23 +6286,23 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 			dlw = fmax(effe*SB*pow(Ta,4.0),0.0);
 		}
 
-		if ( (fabs(dlwlapse[Mappedpoint-1]) > Dtol) || (fabs(tlapse[Mappedpoint-1]) > Dtol)){
+		if ( (fabs(dlwlapsem) > Dtol) || (fabs(tlapsem) > Dtol)){
+			// IssmDouble pscale = -8400;
+			// pAir=pparam*exp((currentsurface - elevationm)/pscale);
 			IssmDouble Rg = 8.314; // gas constant (J mol-1 K-1)
 			IssmDouble dAir = 0.0;
 			// calculated air density [kg/m3]
 			//    dAir = 0.029 * pAir /(R * Ta);
-			dAir=0.029 * pparam /(Rg * Ta);
-			pAir=pparam-gravity*dAir*(currentsurface - elevation[Mappedpoint-1]);
+			dAir=0.029 * pparam /(Rg * taparam);
+			pAir=pparam-gravity*dAir*(currentsurface - elevationm);
 		}
 		else pAir=pparam;
 
-		//Hold relative humidity constant, calculte new saturation vapor pressure,
-		// and new saturation specific humidity to scale precipitation
+		//Hold relative humidity constant and calculte new saturation vapor pressure
 		//https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html
 		//es over ice calculation
 		//Ding et al., 2019 after Bolton, 1980
 		//ea37 = rh37*100*6.112.*exp((17.67*(t237-273.15))./(t237-29.65));
-		//ea37s (hPa) = 6.1121*exp(22.587*(t-273.15)/(t-273.15+273.86)); (with respect to ice)
 		IssmDouble esparam, es, qsparam, qs;
 		esparam=6.112*exp((17.67*(taparam-273.15))/(taparam-29.65));
 		es=6.112*exp((17.67*(Ta-273.15))/(Ta-29.65));
@@ -5931,7 +6311,7 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 		qs=fmax(0.622*es/(pAir/100 - 0.378*es),0);
 		qsparam=fmax(0.622*esparam/(pparam/100 - 0.378*esparam),0);
 
-		if ((isprecipmap) && (qsparam>0)){ 
+		if ((isprecipmap) && (qsparam>0)){
 			IssmDouble precipscaling = 1.0;
 			Input *pscaling_input            = NULL;
 			pscaling_input = this->GetInput(SmbMappedforcingprecipscalingEnum);  _assert_(pscaling_input);
@@ -5964,7 +6344,7 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 		if (m>1) T[1]=Ta;
 	}
 	/*Thermal profile computation:*/
-	if(isthermal)thermo(&shf, &lhf, &EC, &T, &ulw, re, dz, d, swf, dlw, Ta, V, eAir, pAir, tcIdx, eIdx, teValue, dulwrfValue, teThresh, W[0], smb_dt, dzMin, m, Vz, Tz, thermo_scaling,rho_ice,this->Sid(),isconstrainsurfaceT,isdeltaLWup);
+	if(isthermal)thermo(&shf, &lhf, &EC, &T, &ulw, re, dz, d, swf, dlw, Ta, V, eAir, pAir, tcIdx, eIdx, teValue, teDefault, dulwrfValue, teThresh, W[0], smb_dt, dzMin, m, Vz, Tz, thermo_scaling,rho_ice,this->Sid(),isconstrainsurfaceT,isdeltaLWup);
 
 	/*Change in thickness of top cell due to evaporation/condensation  assuming same density as top cell.
 	 * need to fix this in case all or more of cell evaporates */
@@ -6184,6 +6564,8 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 	if(Fdsub) xDelete<IssmDouble>(Fdsub);
 	if(Radsub) xDelete<IssmDouble>(Radsub);
 	if(Pdsub) xDelete<IssmDouble>(Pdsub);
+
+	if(Qinterp) xDelete<int>(Qinterp);
 
 	delete gauss;
 	/*}}}*/

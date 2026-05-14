@@ -18,6 +18,9 @@ namespace py = pybind11;
 
 /*EmulatorParam constructors and destructor*/
 EmulatorParam::EmulatorParam(){/*{{{*/
+	this->module_dir = NULL;
+	this->pt_name    = NULL;
+	this->py_name    = NULL;
 	return;
 }
 /*}}}*/
@@ -55,7 +58,10 @@ EmulatorParam::EmulatorParam(int in_enum_type, char* module_dir_in, char* pt_nam
 		this->mod = py::module_::import(py_module_name.c_str());
 		this->mod.attr("init_model")(pt_path.c_str(), "auto");
 	}
-	catch(...){
+	catch(const py::error_already_set& e){
+		_printf_("EmulatorParam: Python exception in constructor\n");
+		_printf_("   " << e.what() << "\n");
+		this->mod = py::module_();
 		delete this->guard;
 		this->guard = NULL;
 		throw;
@@ -66,7 +72,10 @@ EmulatorParam::~EmulatorParam(){/*{{{*/
 	xDelete<char>(this->module_dir);
 	xDelete<char>(this->pt_name);
 	xDelete<char>(this->py_name);
-	delete this->guard;
+
+   this->mod = py::module_();
+   delete this->guard;
+	this->guard = NULL;
 }
 /*}}}*/
 

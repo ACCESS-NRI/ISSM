@@ -58,10 +58,10 @@ classdef timestepping
 			md = checkfield(md,'fieldname','timestepping.interp_forcing','numel',[1],'values',[0 1]);
 			md = checkfield(md,'fieldname','timestepping.average_forcing','numel',[1],'values',[0 1]);
 			md = checkfield(md,'fieldname','timestepping.cycle_forcing','numel',[1],'values',[0 1]);
-			if self.final_time-self.start_time<0,
+			if self.final_time-self.start_time<0
 				md = checkmessage(md,'timestepping.final_time should be larger than timestepping.start_time');
 			end
-			if strcmp(solution,'TransientSolution'),
+			if strcmp(solution,'TransientSolution')
 				md = checkfield(md,'fieldname','timestepping.time_step','numel',[1],'>',0,'NaN',1,'Inf',1);
 			end
 		end % }}}
@@ -83,7 +83,7 @@ classdef timestepping
 			writejsdouble(fid,[modelname '.timestepping.final_time'],self.final_time);
 			writejsdouble(fid,[modelname '.timestepping.time_step'],self.time_step);
 			writejsdouble(fid,[modelname '.timestepping.interp_forcing'],self.interp_forcing);
-			writejsdouble(fid,[modelname '.timestepping.average_forcing'],self.interp_forcing);
+			writejsdouble(fid,[modelname '.timestepping.average_forcing'],self.average_forcing);
 			writejsdouble(fid,[modelname '.timestepping.cycle_forcing'],self.cycle_forcing);
 
 		end % }}}
