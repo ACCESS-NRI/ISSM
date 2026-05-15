@@ -2,9 +2,11 @@
  * \brief: Minimal handle-based ISSM coupling API for an in-process NUOPC cap.
  */
 
+#define _DO_NOT_LOAD_GLOBALS_
 #include "./issm_nuopc_capi.h"
 
 #include <string>
+#include <vector>
 
 #include <ESMC.h>
 
@@ -31,30 +33,6 @@ static ISSM_MPI_Comm CommFromFortran(int mpi_comm_f){/*{{{*/
 #endif
 }/*}}}*/
 
-static void InitializePetscForCoupling(ISSM_MPI_Comm comm){/*{{{*/
-#ifdef _HAVE_PETSC_
-	PetscBool initialized = PETSC_FALSE;
-	PetscErrorCode ierr;
-	PetscInitialized(&initialized);
-	if(!initialized){
-		PETSC_COMM_WORLD = comm;
-		ierr = PetscInitializeNoArguments();
-		if(ierr) _error_("Could not initialize Petsc for ISSM_NUOPC");
-	}
-#else
-	(void)comm;
-#endif
-}/*}}}*/
-
-static void BuildCaseFilePaths(const char* case_dir, const char* model_name, std::string& rootpath, std::string& binfilename, std::string& outbinfilename, std::string& toolkitsfilename, std::string& lockfilename, std::string& restartfilename){/*{{{*/
-	rootpath         = EnsureTrailingSlash(case_dir);
-	binfilename      = rootpath + model_name + ".bin";
-	outbinfilename   = rootpath + model_name + ".outbin";
-	toolkitsfilename = rootpath + model_name + ".toolkits";
-	lockfilename     = rootpath + model_name + ".lock";
-	restartfilename  = rootpath + model_name + "_rank" + std::to_string(IssmComm::GetRank()) + ".rst";
-}/*}}}*/
-
 static ISSM_NUOPC_Model* GetModel(void* model_handle){/*{{{*/
 	if(!model_handle) _error_("ISSM_NUOPC received a null model handle");
 	ISSM_NUOPC_Model* model = reinterpret_cast<ISSM_NUOPC_Model*>(model_handle);
@@ -71,24 +49,28 @@ static void ExportVertexField(FemModel* femmodel, int input_enum, double* values
 
 void* ISSM_NUOPC_CreateFromCase(const char* case_dir, const char* model_name, const char* solution_name, int mpi_comm_f){/*{{{*/
 	ISSM_MPI_Comm comm = CommFromFortran(mpi_comm_f);
-	InitializePetscForCoupling(comm);
-	IssmComm::SetComm(comm);
-
-	std::string rootpath;
-	std::string binfilename;
-	std::string outbinfilename;
-	std::string toolkitsfilename;
-	std::string lockfilename;
-	std::string restartfilename;
-	BuildCaseFilePaths(case_dir, model_name, rootpath, binfilename, outbinfilename, toolkitsfilename, lockfilename, restartfilename);
+	std::string execution_dir(case_dir ? case_dir : ".");
 
 	int solution_type = StringToEnumx(solution_name);
 	if(solution_type != TransientSolutionEnum){
 		_error_("ISSM_NUOPC first version only supports TransientSolution");
 	}
 
+	std::vector<std::string> arg_storage;
+	arg_storage.emplace_back("issm_nuopc");
+	arg_storage.emplace_back(solution_name ? solution_name : "TransientSolution");
+	arg_storage.emplace_back(execution_dir);
+	arg_storage.emplace_back(model_name ? model_name : "");
+
+	std::vector<char*> argv;
+	argv.reserve(arg_storage.size());
+	for(size_t i = 0; i < arg_storage.size(); ++i){
+		argv.push_back(const_cast<char*>(arg_storage[i].c_str()));
+	}
+
 	ISSM_NUOPC_Model* model = new ISSM_NUOPC_Model();
-	model->femmodel = new FemModel(const_cast<char*>(rootpath.c_str()), const_cast<char*>(binfilename.c_str()), const_cast<char*>(outbinfilename.c_str()), const_cast<char*>(toolkitsfilename.c_str()), const_cast<char*>(lockfilename.c_str()), const_cast<char*>(restartfilename.c_str()), const_cast<char*>(model_name), comm, solution_type, NULL);
+	model->femmodel = new FemModel(static_cast<int>(argv.size()), argv.data(), comm);
+	model->femmodel->parameters->AddObject(new IntParam(IsSlcCouplingEnum,0));
 
 	int legacy_ocean_coupling = 0;
 	model->femmodel->parameters->FindParam(&legacy_ocean_coupling, TransientIsoceancouplingEnum);
@@ -153,7 +135,7 @@ void ISSM_NUOPC_ImportFloatingMelt(void* model_handle, const double* melt_rate, 
 
 	IssmDouble* local_values = xNew<IssmDouble>(size);
 	for(int i=0;i<size;i++) local_values[i] = static_cast<IssmDouble>(melt_rate[i]);
-	InputUpdateFromVectorx(model->femmodel, local_values, BasalforcingsFloatingiceMeltingRateEnum, VertexSIdEnum);
+	InputUpdateFromVectorx(model->femmodel, local_values, BasalforcingsFloatingiceMeltingRateEnum, VertexLIdEnum);
 	xDelete<IssmDouble>(local_values);
 }/*}}}*/
 

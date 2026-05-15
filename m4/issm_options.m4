@@ -970,6 +970,18 @@ AC_DEFUN([ISSM_OPTIONS],[
 		[ESMF_ROOT=${withval}],
 		[ESMF_ROOT="no"]
 	)
+	AC_ARG_WITH(
+		[esmf-moddir],
+		AS_HELP_STRING([--with-esmf-moddir=DIR], [ESMF Fortran module directory]),
+		[ESMF_MODDIR=${withval}],
+		[ESMF_MODDIR=""]
+	)
+	AC_ARG_WITH(
+		[esmf-libdir],
+		AS_HELP_STRING([--with-esmf-libdir=DIR], [ESMF library directory]),
+		[ESMF_LIBDIR=${withval}],
+		[ESMF_LIBDIR=""]
+	)
 	if test "x${ESMF_ROOT}" == "xno"; then
 		HAVE_ESMF=no
 	else
@@ -982,9 +994,33 @@ AC_DEFUN([ISSM_OPTIONS],[
 
 		dnl ESMF libraries and header files
 		if test "x${HAVE_ESMF}" == "xyes"; then
+			if test "x${ESMF_MODDIR}" == "x"; then
+				ESMF_MODDIR="${ESMF_ROOT}/include"
+			fi
+			if test "x${ESMF_LIBDIR}" == "x"; then
+				ESMF_LIBDIR="${ESMF_ROOT}/lib"
+			fi
+			if ! test -d "${ESMF_MODDIR}"; then
+				AC_MSG_ERROR([ESMF module directory provided (${ESMF_MODDIR}) does not exist!]);
+			fi
+			if ! test -d "${ESMF_LIBDIR}"; then
+				AC_MSG_ERROR([ESMF library directory provided (${ESMF_LIBDIR}) does not exist!]);
+			fi
 			ESMFINCL="-I${ESMF_ROOT}/include"
-			ESMFFCFLAGS="-I${ESMF_ROOT}/include -I${ESMF_ROOT}/mod/modO/Linux.gfortran.64.mpich.default"
-			ESMFLIB="-L${ESMF_ROOT}/lib/libO/Linux.gfortran.64.mpich.default/ -lesmf"
+			ESMFFCFLAGS="-I${ESMF_ROOT}/include -I${ESMF_MODDIR}"
+			ESMFMKFILE="${ESMF_ROOT}/lib/esmf.mk"
+			if test -f "${ESMFMKFILE}"; then
+				ESMF_F90LINKPATHS=`grep '^ESMF_F90LINKPATHS=' "${ESMFMKFILE}" | sed 's/^ESMF_F90LINKPATHS=//'`
+				ESMF_F90LINKRPATHS=`grep '^ESMF_F90LINKRPATHS=' "${ESMFMKFILE}" | sed 's/^ESMF_F90LINKRPATHS=//'`
+				ESMF_F90ESMFLINKLIBS=`grep '^ESMF_F90ESMFLINKLIBS=' "${ESMFMKFILE}" | sed 's/^ESMF_F90ESMFLINKLIBS=//'`
+				ESMFLIB="${ESMF_F90LINKPATHS} ${ESMF_F90LINKRPATHS} ${ESMF_F90ESMFLINKLIBS}"
+			else
+				if test "x${IS_MSYS2}" == "xyes"; then
+					ESMFLIB="-Wl,-L${ESMF_LIBDIR} -Wl,-lesmf"
+				else
+					ESMFLIB="-L${ESMF_LIBDIR} -lesmf"
+				fi
+			fi
 			AC_DEFINE([_HAVE_ESMF_], [1], [with ESMF in ISSM src])
 			AC_SUBST([ESMFINCL])
 			AC_SUBST([ESMFFCFLAGS])

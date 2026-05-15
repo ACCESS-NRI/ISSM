@@ -12,11 +12,13 @@ use ESMF, only: ESMF_State, ESMF_StateGet
 use ESMF, only: ESMF_SUCCESS, ESMF_TimeInterval, ESMF_TimeIntervalGet
 use ESMF, only: ESMF_KIND_R8, ESMF_TYPEKIND_R8, ESMF_VM, ESMF_VMGet
 
-use NUOPC, only: NUOPC_Advertise, NUOPC_CompDerive, NUOPC_CompFilterPhaseMap
-use NUOPC, only: NUOPC_CompAttributeGet, NUOPC_CompSetEntryPoint
-use NUOPC, only: NUOPC_CompSpecialize, NUOPC_IsConnected, NUOPC_Realize
+use NUOPC, only: NUOPC_Advertise, NUOPC_CompAttributeSet, NUOPC_CompDerive
+use NUOPC, only: NUOPC_CompFilterPhaseMap, NUOPC_CompAttributeGet
+use NUOPC, only: NUOPC_CompSetEntryPoint, NUOPC_CompSpecialize
+use NUOPC, only: NUOPC_IsConnected, NUOPC_Realize, NUOPC_SetAttribute
 use NUOPC_Model, only: NUOPC_ModelGet
 use NUOPC_Model, only: model_label_Advance        => label_Advance
+use NUOPC_Model, only: model_label_CheckImport    => label_CheckImport
 use NUOPC_Model, only: model_label_DataInitialize => label_DataInitialize
 use NUOPC_Model, only: model_label_Finalize       => label_Finalize
 use NUOPC_Model, only: model_routine_SS           => SetServices
@@ -60,7 +62,8 @@ end type issm_cap_state_type
 type(issm_cap_state_type), save :: cap_state
 
 interface
-  function ISSM_NUOPC_CreateFromCase(case_dir, model_name, solution_name, mpi_comm_f) bind(C, name='ISSM_NUOPC_CreateFromCase') result(handle)
+  function ISSM_NUOPC_CreateFromCase(case_dir, model_name, solution_name, mpi_comm_f) &
+    bind(C, name='ISSM_NUOPC_CreateFromCase') result(handle)
     import :: c_char, c_int, c_ptr
     character(kind=c_char), intent(in) :: case_dir(*)
     character(kind=c_char), intent(in) :: model_name(*)
@@ -94,7 +97,8 @@ interface
     real(c_double), intent(out) :: node_coords(*)
   end subroutine ISSM_NUOPC_GetMeshNodes
 
-  subroutine ISSM_NUOPC_GetMeshElements(handle, elem_ids, elem_types, elem_conn) bind(C, name='ISSM_NUOPC_GetMeshElements')
+  subroutine ISSM_NUOPC_GetMeshElements(handle, elem_ids, elem_types, elem_conn) &
+    bind(C, name='ISSM_NUOPC_GetMeshElements')
     import :: c_ptr, c_int
     type(c_ptr), value, intent(in) :: handle
     integer(c_int), intent(out) :: elem_ids(*)
@@ -151,13 +155,18 @@ subroutine SetServices(gcomp, rc)
   call ESMF_GridCompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, userRoutine=InitializeP0, phase=0, rc=rc)
   if (rc /= ESMF_SUCCESS) return
 
-  call NUOPC_CompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, phaseLabelList=(/'IPDv03p1'/), userRoutine=InitializeAdvertise, rc=rc)
+  call NUOPC_CompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, &
+    phaseLabelList=(/'IPDv03p1'/), userRoutine=InitializeAdvertise, rc=rc)
   if (rc /= ESMF_SUCCESS) return
 
-  call NUOPC_CompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, phaseLabelList=(/'IPDv03p3'/), userRoutine=InitializeRealize, rc=rc)
+  call NUOPC_CompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, &
+    phaseLabelList=(/'IPDv03p3'/), userRoutine=InitializeRealize, rc=rc)
   if (rc /= ESMF_SUCCESS) return
 
   call NUOPC_CompSpecialize(gcomp, specLabel=model_label_DataInitialize, specRoutine=DataInitialize, rc=rc)
+  if (rc /= ESMF_SUCCESS) return
+
+  call NUOPC_CompSpecialize(gcomp, specLabel=model_label_CheckImport, specRoutine=CheckImportNoOp, rc=rc)
   if (rc /= ESMF_SUCCESS) return
 
   call NUOPC_CompSpecialize(gcomp, specLabel=model_label_Advance, specRoutine=ModelAdvance, rc=rc)
@@ -210,7 +219,8 @@ subroutine InitializeAdvertise(gcomp, importState, exportState, clock, rc)
   call RequireAttribute(gcomp, 'model_name', model_name, rc)
   if (rc /= ESMF_SUCCESS) return
 
-  call NUOPC_CompAttributeGet(gcomp, name='solution_name', value=solution_name, isPresent=is_present, isSet=is_set, rc=rc)
+  call NUOPC_CompAttributeGet(gcomp, name='solution_name', value=solution_name, &
+    isPresent=is_present, isSet=is_set, rc=rc)
   if (rc /= ESMF_SUCCESS) return
   if (.not. is_present .or. .not. is_set) solution_name = 'TransientSolution'
 
@@ -218,7 +228,11 @@ subroutine InitializeAdvertise(gcomp, importState, exportState, clock, rc)
   if (rc /= ESMF_SUCCESS) return
   cap_state%write_restart = is_present .and. is_set .and. IsTrue(value)
 
-  cap_state%handle = ISSM_NUOPC_CreateFromCase(trim(case_dir)//c_null_char, trim(model_name)//c_null_char, trim(solution_name)//c_null_char, cap_state%mpi_comm)
+  cap_state%handle = ISSM_NUOPC_CreateFromCase( &
+    trim(case_dir)//c_null_char, &
+    trim(model_name)//c_null_char, &
+    trim(solution_name)//c_null_char, &
+    cap_state%mpi_comm)
   if (.not. c_associated(cap_state%handle)) then
     call ESMF_LogWrite('ISSM_NUOPC: failed to create ISSM model handle', ESMF_LOGMSG_ERROR, rc=rc)
     return
@@ -228,7 +242,15 @@ subroutine InitializeAdvertise(gcomp, importState, exportState, clock, rc)
   call AllocateCapState(rc)
   if (rc /= ESMF_SUCCESS) return
 
-  call NUOPC_Advertise(importState, standardName=import_melt_stdname, name=import_melt_name, rc=rc)
+  call NUOPC_Advertise( &
+    importState, &
+    standardName=import_melt_stdname, &
+    name=import_melt_name, &
+    TransferOfferGeomObject='will provide', &
+    SharePolicyField='share', &
+    SharePolicyGeomObject='share', &
+    rc=rc &
+  )
   if (rc /= ESMF_SUCCESS) return
   call NUOPC_Advertise(exportState, standardName=export_thickness_stdname, name=export_thickness_name, rc=rc)
   if (rc /= ESMF_SUCCESS) return
@@ -246,12 +268,15 @@ subroutine InitializeRealize(gcomp, importState, exportState, clock, rc)
 
   rc = ESMF_SUCCESS
 
-  call ISSM_NUOPC_GetMeshNodes(cap_state%handle, cap_state%node_ids, cap_state%node_owners, cap_state%node_coords)
-  call ISSM_NUOPC_GetMeshElements(cap_state%handle, cap_state%element_ids, cap_state%element_types, cap_state%element_conn)
+  call ISSM_NUOPC_GetMeshNodes(cap_state%handle, cap_state%node_ids, cap_state%node_owners, &
+    cap_state%node_coords)
+  call ISSM_NUOPC_GetMeshElements(cap_state%handle, cap_state%element_ids, &
+    cap_state%element_types, cap_state%element_conn)
 
   cap_state%mesh = ESMF_MeshCreate(parametricDim=2, spatialDim=2, coordSys=ESMF_COORDSYS_CART, &
-       nodeIds=cap_state%node_ids, nodeCoords=cap_state%node_coords, nodeOwners=cap_state%node_owners, &
-       elementIds=cap_state%element_ids, elementTypes=cap_state%element_types, elementConn=cap_state%element_conn, rc=rc)
+       nodeIds=cap_state%node_ids, nodeCoords=cap_state%node_coords, &
+       nodeOwners=cap_state%node_owners, elementIds=cap_state%element_ids, &
+       elementTypes=cap_state%element_types, elementConn=cap_state%element_conn, rc=rc)
   if (rc /= ESMF_SUCCESS) return
   cap_state%mesh_created = .true.
 
@@ -277,7 +302,16 @@ subroutine DataInitialize(gcomp, rc)
   call ESMF_GridCompGet(gcomp, exportState=exportState, rc=rc)
   if (rc /= ESMF_SUCCESS) return
   call RefreshExports(exportState, rc)
+  if (rc /= ESMF_SUCCESS) return
+  call NUOPC_CompAttributeSet(gcomp, name='InitializeDataComplete', value='true', rc=rc)
 end subroutine DataInitialize
+
+subroutine CheckImportNoOp(gcomp, rc)
+  type(ESMF_GridComp) :: gcomp
+  integer, intent(out) :: rc
+
+  rc = ESMF_SUCCESS
+end subroutine CheckImportNoOp
 
 subroutine ModelAdvance(gcomp, rc)
   type(ESMF_GridComp) :: gcomp
@@ -301,14 +335,12 @@ subroutine ModelAdvance(gcomp, rc)
   call ESMF_TimeIntervalGet(timeStep, s=dt_seconds, rc=rc)
   if (rc /= ESMF_SUCCESS) return
 
-  if (NUOPC_IsConnected(importState, fieldName=import_melt_name)) then
-    call ESMF_StateGet(importState, itemName=import_melt_name, field=field, rc=rc)
-    if (rc /= ESMF_SUCCESS) return
-    call ESMF_FieldGet(field, farrayPtr=field_ptr, rc=rc)
-    if (rc /= ESMF_SUCCESS) return
-    cap_state%import_melt(:) = field_ptr(:)
-    call ISSM_NUOPC_ImportFloatingMelt(cap_state%handle, cap_state%import_melt, cap_state%node_count)
-  end if
+  call ESMF_StateGet(importState, itemName=import_melt_name, field=field, rc=rc)
+  if (rc /= ESMF_SUCCESS) return
+  call ESMF_FieldGet(field, farrayPtr=field_ptr, rc=rc)
+  if (rc /= ESMF_SUCCESS) return
+  cap_state%import_melt(:) = field_ptr(:)
+  call ISSM_NUOPC_ImportFloatingMelt(cap_state%handle, cap_state%import_melt, cap_state%node_count)
 
   call ISSM_NUOPC_Advance(cap_state%handle, real(dt_seconds, c_double))
   call RefreshExports(exportState, rc)
@@ -401,9 +433,9 @@ subroutine RealizeField(state, field_name, mesh, rc)
   real(ESMF_KIND_R8), pointer :: field_ptr(:)
 
   rc = ESMF_SUCCESS
-  if (.not. NUOPC_IsConnected(state, fieldName=trim(field_name))) return
 
-  field = ESMF_FieldCreate(mesh=mesh, typekind=ESMF_TYPEKIND_R8, meshloc=ESMF_MESHLOC_NODE, name=trim(field_name), rc=rc)
+  field = ESMF_FieldCreate(mesh=mesh, typekind=ESMF_TYPEKIND_R8, &
+    meshloc=ESMF_MESHLOC_NODE, name=trim(field_name), rc=rc)
   if (rc /= ESMF_SUCCESS) return
   call ESMF_FieldGet(field, farrayPtr=field_ptr, rc=rc)
   if (rc /= ESMF_SUCCESS) return
@@ -424,9 +456,15 @@ subroutine RefreshExports(exportState, rc)
 
   call SetFieldData(exportState, export_thickness_name, cap_state%export_thickness, rc)
   if (rc /= ESMF_SUCCESS) return
+  call SetFieldUpdated(exportState, export_thickness_name, rc)
+  if (rc /= ESMF_SUCCESS) return
   call SetFieldData(exportState, export_surface_name, cap_state%export_surface, rc)
   if (rc /= ESMF_SUCCESS) return
+  call SetFieldUpdated(exportState, export_surface_name, rc)
+  if (rc /= ESMF_SUCCESS) return
   call SetFieldData(exportState, export_mask_name, cap_state%export_mask, rc)
+  if (rc /= ESMF_SUCCESS) return
+  call SetFieldUpdated(exportState, export_mask_name, rc)
 end subroutine RefreshExports
 
 subroutine SetFieldData(state, field_name, values, rc)
@@ -439,7 +477,6 @@ subroutine SetFieldData(state, field_name, values, rc)
   real(ESMF_KIND_R8), pointer :: field_ptr(:)
 
   rc = ESMF_SUCCESS
-  if (.not. NUOPC_IsConnected(state, fieldName=trim(field_name))) return
 
   call ESMF_StateGet(state, itemName=trim(field_name), field=field, rc=rc)
   if (rc /= ESMF_SUCCESS) return
@@ -447,6 +484,19 @@ subroutine SetFieldData(state, field_name, values, rc)
   if (rc /= ESMF_SUCCESS) return
   field_ptr(:) = values(:)
 end subroutine SetFieldData
+
+subroutine SetFieldUpdated(state, field_name, rc)
+  type(ESMF_State), intent(inout) :: state
+  character(len=*), intent(in) :: field_name
+  integer, intent(out) :: rc
+
+  type(ESMF_Field) :: field
+
+  rc = ESMF_SUCCESS
+  call ESMF_StateGet(state, itemName=trim(field_name), field=field, rc=rc)
+  if (rc /= ESMF_SUCCESS) return
+  call NUOPC_SetAttribute(field, name='Updated', value='true', rc=rc)
+end subroutine SetFieldUpdated
 
 logical function IsTrue(value)
   character(len=*), intent(in) :: value
