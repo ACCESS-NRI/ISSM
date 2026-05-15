@@ -18,7 +18,7 @@ fi
 ${ISSM_DIR}/scripts/DownloadExternalPackage.sh "https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-${VER}.tar.gz" "petsc-${VER}.tar.gz"
 
 # Unpack source
-tar -zxvf petsc-${VER}.tar.gz
+tar -xvf petsc-${VER}.tar.gz
 
 # Cleanup
 rm -rf ${PREFIX} ${PETSC_DIR}
