@@ -6,14 +6,12 @@ from loadresultsfromdisk import loadresultsfromdisk
 from MatlabFuncs import *
 from pairoptions import pairoptions
 
-
 def remove(filename):  #{{{
     try:
         os.remove(filename)
     except OSError:
         print(('WARNING: ' + filename + ' does not exist'))
 # }}}
-
 
 def loadresultsfromcluster(md, *args):  #{{{
     """loadresultsfromcluster - load results of solution sequence from cluster
@@ -64,20 +62,6 @@ def loadresultsfromcluster(md, *args):  #{{{
     for i in range(len(filelist)):
         filename = filelist[i]
         remove(filename)
-    if not ispc():
-        remove(md.private.runtimename + '.tar.gz')
-
-    # Erase input file if run was carried out on same platform
-    hostname = oshostname()
-    if hostname == cluster.name:
-        remove(md.miscellaneous.name + '.bin')
-        remove(md.miscellaneous.name + '.toolkits')
-        if md.qmu.isdakota:
-            remove(md.miscellaneous.name + '.qmu.in')
-        if not ispc():
-            remove(md.miscellaneous.name + '.queue')
-        else:
-            remove(md.miscellaneous.name + '.bat')
 
     return md
 # }}}

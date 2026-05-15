@@ -16,7 +16,7 @@
 double transient_ad(FemModel* femmodel, double* G,double* Jlist);
 #endif
 
-#if defined (_HAVE_M1QN3_) && defined(_HAVE_AD_)
+#if defined(_HAVE_AD_)
 /*m1qn3 prototypes {{{*/
 typedef void (*SimulFunc) (long* indic,long* n, double* x,double* pf,double* g,long [],float [],void* dzs);
 
@@ -481,7 +481,8 @@ void controladm1qn3_core(FemModel* femmodel){/*{{{*/
 	m1qn3_cpp(simul_ptr,
 				&n,X,&f,G,&dxmin,&df1,
 				&gttol,&impres,&io,&omode,&niter,&nsim,iz,dz,&ndz,
-				izs,rzs,(void*)&mystruct);
+				izs,rzs,(void*)&mystruct,
+				true); /*return_best: always restore the iterate with the lowest f*/
 
 	/*Print exit flag*/
 	InversionStatsFooter(num_cost_functions);
@@ -585,5 +586,5 @@ void controladm1qn3_core(FemModel* femmodel){/*{{{*/
 }/*}}}*/
 
 #else
-void controladm1qn3_core(FemModel* femmodel){_error_("M1QN3 or ADOLC/CoDiPack not installed");}
-#endif //_HAVE_M1QN3_
+void controladm1qn3_core(FemModel* femmodel){_error_("ADOLC/CoDiPack not installed");}
+#endif //_HAVE_AD_

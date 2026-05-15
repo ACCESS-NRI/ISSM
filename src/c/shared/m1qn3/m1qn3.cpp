@@ -281,22 +281,20 @@ static void mlis3(long n, M1qn3SimulFunc simul, double* x, double& f, double& fp
             need_advance = true;
          }
          else if (fp > tesd) {
-            /* first Wolfe ok, curvature condition satisfied: serious step → accept */
+            /* first Wolfe ok, curvature condition satisfied: serious step → accept.
+             * Fortran: fp > tesd → logic=0; go to 320 (accept). */
             logic = 0;
             fn = f;
             for (long i = 0; i < n; ++i) xn[i] = x[i];
             done = true;
          }
-         else if (logic == 0) {
-            /* first Wolfe ok, curvature not satisfied, not blocked on tmax:
-             * accept as "not serious" step (Fortran: if logic.eq.0 go to 350 → 320) */
-            fn = f;
-            for (long i = 0; i < n; ++i) xn[i] = x[i];
-            done = true;
-         }
          else {
-            /* first Wolfe ok, curvature not satisfied, blocked on tmax (logic==1):
-             * update left bracket and extrapolate/interpolate further */
+            /* first Wolfe ok, curvature condition NOT satisfied.
+             * Fortran label 350: tg=t; fg=f; fpg=fp; then extrapolate (td==0)
+             * or interpolate (td!=0) — regardless of whether logic==0 or logic==1.
+             * The old "else if (logic==0) accept" branch was WRONG: it caused the
+             * line search to return a step that doesn't satisfy the strong Wolfe
+             * curvature condition, corrupting (y,s) pairs and producing <y,s><=0. */
             tg = t; fg = f; fpg = fp;
 
             if (td != 0.0) {
@@ -404,7 +402,8 @@ static void m1qn3a(M1qn3SimulFunc simul,
                    double* alpha,/* length m */
                    double* ybar, /* length m*n */
                    double* sbar, /* length m*n */
-                   long izs[], float rzs[], void* dzs)
+                   long izs[], float rzs[], void* dzs,
+                   bool return_best = true)
 {
    const double rm1  = 0.0001;   /* Armijo constant */
    const double rm2  = 0.99;     /* curvature constant */
@@ -430,6 +429,12 @@ static void m1qn3a(M1qn3SimulFunc simul,
       return;
    }
 
+   /* best-point tracking: keep the (f,x,g) triplet with the lowest f seen */
+   double  f_best = f;
+   double* x_best = new double[n];
+   double* g_best = new double[n];
+   for(long i = 0; i < n; ++i){ x_best[i] = x[i]; g_best[i] = g[i]; }
+
    /* cold start: jmin=0, jmax=-1 (empty ring, 0-based) */
    jmin = 0;
    jmax = -1;
@@ -449,7 +454,7 @@ static void m1qn3a(M1qn3SimulFunc simul,
       omode = 7;
       if (impres >= 1)
          _printf0_("   >>> m1qn3 (iter 0): search direction is not descent: (g,d)=" << hp0 << "\n");
-      return;
+      goto m1qn3a_exit;
    }
 
    /* ---- main iteration loop ---- */
@@ -482,16 +487,16 @@ static void m1qn3a(M1qn3SimulFunc simul,
       /* handle line-search exit codes */
       if (moderl != 0) {
          if (moderl < 0) {
-            omode = moderl; return;
+            omode = moderl; goto m1qn3a_exit;
          }
          else if (moderl == 4) {
-            omode = 5; return;
+            omode = 5; goto m1qn3a_exit;
          }
          else if (moderl == 5) {
-            omode = 0; return;
+            omode = 0; goto m1qn3a_exit;
          }
          else if (moderl == 6) {
-            omode = 6; return;
+            omode = 6; goto m1qn3a_exit;
          }
          /* moderl == 1 (blocked on tmax): skip L-BFGS update, fall through */
       }
@@ -521,7 +526,7 @@ static void m1qn3a(M1qn3SimulFunc simul,
             if (impres >= 1)
                _printf0_("   >>> m1qn3 (iter " << niter
                          << "): (y,s) = " << ys << " is not positive\n");
-            return;
+            goto m1qn3a_exit;
          }
 
          /* normalise ybar and sbar by 1/sqrt(ys) */
@@ -561,6 +566,12 @@ static void m1qn3a(M1qn3SimulFunc simul,
          }
       }
 
+      /* --- update best point seen so far (after line search + L-BFGS update) --- */
+      if (return_best && f < f_best) {
+         f_best = f;
+         for (long i = 0; i < n; ++i) { x_best[i] = x[i]; g_best[i] = g[i]; }
+      }
+
       /* --- stopping tests --- */
       gnorm = sqrt(dot(n, g, g));
       eps1  = gnorm / gnorms;
@@ -574,21 +585,21 @@ static void m1qn3a(M1qn3SimulFunc simul,
          omode = 1;
          epsg  = eps1;
          nsim  = isim;
-         return;
+         goto m1qn3a_exit;
       }
       if (niter == itmax) {
          omode = 4;
          if (impres >= 1)
             _printf0_("   >>> m1qn3 (iter " << niter << "): max iterations reached\n");
          epsg = eps1; nsim = isim;
-         return;
+         goto m1qn3a_exit;
       }
       if (isim > nsim) {
          omode = 5;
          if (impres >= 1)
             _printf0_("   >>> m1qn3 (iter " << niter << "): max simulations reached\n");
          epsg = eps1; nsim = isim;
-         return;
+         goto m1qn3a_exit;
       }
 
       /* --- compute new descent direction d = -H * g --- */
@@ -612,9 +623,21 @@ static void m1qn3a(M1qn3SimulFunc simul,
             _printf0_("   >>> m1qn3 (iter " << niter
                       << "): d is not a descent direction: (g,d)=" << hp0 << "\n");
          epsg = eps1; nsim = isim;
-         return;
+         goto m1qn3a_exit;
       }
    } /* end main loop */
+
+m1qn3a_exit:
+   /* Restore the best (f, x, g) triplet seen during the run */
+   if (return_best && f_best < f) {
+      f = f_best;
+      for (long i = 0; i < n; ++i){
+			x[i] = x_best[i];
+			g[i] = g_best[i];
+		}
+   }
+   delete [] x_best;
+   delete [] g_best;
 }
 
 /* =========================================================================
@@ -626,7 +649,8 @@ void m1qn3_cpp(M1qn3SimulFunc simul,
                long* impres, long* /*io*/,
                long* omode, long* niter, long* nsim,
                long* iz, double* dz, long* ndz,
-               long izs[], float rzs[], void* dzs)
+               long izs[], float rzs[], void* dzs,
+               bool return_best)
 {
    long   n      = *n_ptr;
    double f      = *f_ptr;
@@ -694,7 +718,8 @@ void m1qn3_cpp(M1qn3SimulFunc simul,
           *omode, *niter, *nsim,
           m, jmin, jmax,
           d_vec, gg, diag, aux, alpha, ybar, sbar,
-          izs, rzs, dzs);
+          izs, rzs, dzs,
+          return_best);
 
    /* store final pointers */
    iz[3] = jmin;

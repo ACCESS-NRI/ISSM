@@ -121,34 +121,56 @@ if strcmpi(getfieldvalue(options,'checkconsistency','yes'),'yes')
 	ismodelselfconsistent(md);
 end
 
-%if running QMU analysis, some preprocessing of Dakota files using model fields needs to be carried out. 
+%Prepare directory in execution
+if strcmpi(cluster.name, oshostname())
+	localexecdir = cluster.executionpath;
+else
+	localexecdir = [issmdir() '/execution/'];
+end
+if ~exist(localexecdir, 'dir')
+	error(['Could not find directory ' issmdir() '/execution/']);
+elseif numel(dir(localexecdir))>200
+	warning([localexecdir ' has more than 200 subdirectories. Consider cleaning up your execution directory'])
+end
+root = [localexecdir '/' md.private.runtimename];
+if exist(root, 'dir')
+	rmdir(root, 's');
+end
+mkdir(root);
+
+%if running QMU analysis, some preprocessing of Dakota files using model fields needs to be carried out.
 if md.qmu.isdakota
 	md=preqmu(md,options);
+	movefile([md.miscellaneous.name '.qmu.in'], [root '/' md.miscellaneous.name '.qmu.in']);
 end
-
-%Prepare directory in execution
 
 %Write all input files
-marshall(md, [md.miscellaneous.name '.bin']);                    % bin file
-ToolkitsFile(md.toolkits,[md.miscellaneous.name '.toolkits']);   % toolkits file
-BuildQueueScript(cluster, md, [md.miscellaneous.name '.queue']); % queue file
+basename = [root '/' md.miscellaneous.name];
+marshall(md, [basename '.bin']);                    % bin file
+ToolkitsFile(md.toolkits, [basename '.toolkits']);  % toolkits file
+BuildQueueScript(cluster, md, [basename '.queue']); % queue file
 
-%Upload all required files
-modelname = md.miscellaneous.name;
-filelist  = {[modelname '.bin'] [modelname '.toolkits']};
+%List all required files
+filelist  = {[basename '.bin'] [basename '.toolkits']};
 if ispc
-	filelist{end+1}=[modelname '.bat'];
+	filelist{end+1} = [basename '.bat'];
 else
-	filelist{end+1}=[modelname '.queue'];
+	filelist{end+1} = [basename '.queue'];
 end
-
 if md.qmu.isdakota
-	filelist{end+1} = [modelname '.qmu.in'];
+	filelist{end+1} = [basename '.qmu.in'];
+end
+if isprop(cluster, 'interactive') && cluster.interactive
+	fid=fopen([basename '.errlog'],'w'); fclose(fid);
+	fid=fopen([basename '.outlog'],'w'); fclose(fid);
+	filelist{end+1} = [basename '.outlog'];
+	filelist{end+1} = [basename '.errlog'];
 end
 
-if isempty(restart)
-	disp('uploading input files')
-	UploadQueueJob(cluster,md.miscellaneous.name,md.private.runtimename,filelist);
+%Upload input files if necessary
+if isempty(restart) && ~strcmpi(cluster.name, oshostname())
+   disp('uploading input files')
+   UploadQueueJob(cluster, md.miscellaneous.name, md.private.runtimename, filelist);
 end
 
 %launch queue job: 

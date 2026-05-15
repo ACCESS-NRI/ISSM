@@ -108,6 +108,7 @@ classdef generic
 			end
 
 			if ~ispc()
+
 				% Check that executable exists at the right path
 				if ~exist([cluster.codepath '/' executable],'file')
 					error(['File ' cluster.codepath '/' executable ' does not exist']);
@@ -115,6 +116,7 @@ classdef generic
 
 				% Process codepath and prepend empty spaces with \ to avoid errors in queuing script
 				codepath=strrep(cluster.codepath,' ','\ ');
+				execpath = [cluster.executionpath '/' dirname];
 
 				% Write queuing script
 				fid=fopen(filename, 'w');
@@ -125,18 +127,18 @@ classdef generic
 					if ismac
 						if IssmConfig('_HAVE_MPI_')
 							fprintf(fid,'mpiexec -np %i %s --leak-check=full --leak-check=full --show-leak-kinds=all --error-limit=no --dsymutil=yes --suppressions=%s %s/%s %s %s %s 2> %s.errlog > %s.outlog ',...
-							cluster.np,cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution,[cluster.executionpath '/' dirname], modelname,modelname,modelname);
+							cluster.np,cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution,execpath, modelname,modelname,modelname);
 						else
 							fprintf(fid,'%s --leak-check=full --dsymutil=yes --error-limit=no --leak-check=full --show-leak-kinds=all --suppressions=%s %s/%s %s %s %s 2> %s.errlog > %s.outlog',...
-							cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution,[cluster.executionpath '/' dirname], modelname,modelname,modelname);
+							cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution, execpath, modelname,modelname,modelname);
 						end
 					else
 						if IssmConfig('_HAVE_MPI_')
 							fprintf(fid,'mpiexec -np %i %s --leak-check=full --error-limit=no --suppressions=%s %s/%s %s %s %s 2> %s.errlog > %s.outlog',...
-							cluster.np,cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname,modelname,modelname);
+							cluster.np,cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution, execpath,modelname,modelname,modelname);
 						else
 							fprintf(fid,'%s --leak-check=full --error-limit=no --suppressions=%s %s/%s %s %s %s 2> %s.errlog > %s.outlog',...
-							cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname,modelname,modelname);
+							cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution, execpath, modelname,modelname,modelname);
 						end
 					end
 				elseif isgprof
@@ -144,15 +146,15 @@ classdef generic
 				else
 					if cluster.interactive
 						if IssmConfig('_HAVE_MPI_')
-							fprintf(fid,'mpiexec -np %i %s/%s %s %s %s\n',cluster.np,cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
+							fprintf(fid,'mpiexec -np %i %s/%s %s %s %s\n',cluster.np,cluster.codepath,executable,solution, execpath, modelname);
 						else
-							fprintf(fid,'%s/%s %s %s %s',cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
+							fprintf(fid,'%s/%s %s %s %s',cluster.codepath,executable,solution, execpath, modelname);
 						end
 					else
 						if IssmConfig('_HAVE_MPI_')
-							fprintf(fid,'mpiexec -np %i %s/%s %s %s %s 2> %s.errlog > %s.outlog &',cluster.np,cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname,modelname,modelname);
+							fprintf(fid,'mpiexec -np %i %s/%s %s %s %s 2> %s/%s.errlog > %s/%s.outlog &',cluster.np,cluster.codepath,executable,solution,execpath,modelname,execpath,modelname,execpath,modelname);
 						else
-							fprintf(fid,'%s/%s %s %s %s 2> %s.errlog > %s.outlog &',cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname,modelname,modelname);
+							fprintf(fid,'%s/%s %s %s %s 2> %s.errlog > %s.outlog &',cluster.codepath,executable,solution, execpath,modelname,modelname,modelname);
 						end
 					end
 				end
@@ -162,21 +164,17 @@ classdef generic
 				fclose(fid);
 
 			else % Windows
-				fid=fopen([modelname '.bat'],'w');
+				batfilename=[filename(1:end-6) '.bat'];
+				fid=fopen(batfilename,'w');
 				fprintf(fid,'@echo off\n');
+				execdir=[cluster.executionpath '\' dirname];
 
 				if cluster.np>1
-					fprintf(fid,'"C:\\Program Files\\Microsoft MPI\\Bin\\mpiexec.exe" -n %i "%s/%s" %s ./ %s',cluster.np,cluster.codepath,executable,solution,modelname);
+					fprintf(fid,'"C:\\Program Files\\Microsoft MPI\\Bin\\mpiexec.exe" -n %i "%s\\%s" %s "%s" %s',cluster.np,cluster.codepath,executable,solution,execdir,modelname);
 				else
-					fprintf(fid,'"%s\\%s" %s ./ %s',cluster.codepath,executable,solution,modelname);
+					fprintf(fid,'"%s\\%s" %s "%s" %s',cluster.codepath,executable,solution,execdir,modelname);
 				end
 				fclose(fid);
-			end
-
-			%in interactive mode, create a run file, and errlog and outlog file
-			if cluster.interactive
-				fid=fopen([modelname '.errlog'],'w'); fclose(fid);
-				fid=fopen([modelname '.outlog'],'w'); fclose(fid);
 			end
 		end
 		%}}}
@@ -227,12 +225,6 @@ classdef generic
 			%write this long string to disk:
 			fprintf(fid,mpistring);
 			fclose(fid);
-
-			%in interactive mode, create a run file, and errlog and outlog file
-			if cluster.interactive
-				fid=fopen([modelname '.errlog'],'w'); fclose(fid);
-				fid=fopen([modelname '.outlog'],'w'); fclose(fid);
-			end
 		end
 		%}}}
 		function BuildQueueScriptIceOcean(cluster, md, filename) % {{{
@@ -260,12 +252,6 @@ classdef generic
 					cluster.np,cluster.valgrind,cluster.valgrindsup,cluster.codepath,executable,solution,cluster.executionpath,modelname,cluster.npocean);
 			end
 			fclose(fid);
-
-			%in interactive mode, create a run file, and errlog and outlog file
-			if cluster.interactive
-				fid=fopen([modelname '.errlog'],'w'); fclose(fid);
-				fid=fopen([modelname '.outlog'],'w'); fclose(fid);
-			end
 		end
 		%}}}
 		function BuildKrigingQueueScript(cluster, md, filename) % {{{
@@ -303,12 +289,6 @@ classdef generic
 			else % Windows
 				error('not supported');
 			end
-
-			%in interactive mode, create a run file, and errlog and outlog file
-			if cluster.interactive
-				fid=fopen([modelname '.errlog'],'w'); fclose(fid);
-				fid=fopen([modelname '.outlog'],'w'); fclose(fid);
-			end
 		end
 		%}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
@@ -316,15 +296,15 @@ classdef generic
 			if ~ispc
 
 				%compress the files into one zip.
-				compressstring=['tar -zcf ' dirname '.tar.gz '];
+				%filelist contains full paths; tar with -C so only basenames are stored in the archive
+				root=[issmdir() '/execution/' dirname];
+				compressstring=['tar -C ' root ' -zcf ' dirname '.tar.gz'];
 				for i=1:numel(filelist)
 					if ~exist(filelist{i},'file')
 						error(['File ' filelist{i} ' not found']);
 					end
-					compressstring = [compressstring ' ' filelist{i}];
-				end
-				if cluster.interactive
-					compressstring = [compressstring ' ' modelname '.errlog ' modelname '.outlog '];
+					[~,fname,fext]=fileparts(filelist{i});
+					compressstring=[compressstring ' ' fname fext];
 				end
 				system(compressstring);
 
@@ -345,16 +325,16 @@ classdef generic
 					launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && cd ' cluster.executionpath ' && cd ' dirname ' && source ' modelname '.queue '];
 				else
 					if ~batch
-						launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-						' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz  && source  ' modelname '.queue '];
+						launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && source ' cluster.executionpath '/' dirname '/'  modelname '.queue '];
 					else
 						launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-						' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz '];
+							' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz '];
 					end
 				end
 				issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
 			else
-				system([modelname '.bat']);
+				batfile=[cluster.executionpath '\' dirname '\' modelname '.bat'];
+				system(['"' batfile '"']);
 			end
 
 		end %}}}
@@ -381,16 +361,12 @@ classdef generic
 				end
 				issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
 			else
-				system([modelname '.bat']);
+				batfile=[cluster.executionpath '\' dirname '\' modelname '.bat'];
+				system(['"' batfile '"']);
 			end
 
 		end %}}}
 		function Download(cluster,dirname,filelist) % {{{
-
-			if ispc()
-				%do nothing
-				return;
-			end
 
 			%copy files from cluster to current directory
 			directory=[cluster.executionpath '/' dirname '/'];

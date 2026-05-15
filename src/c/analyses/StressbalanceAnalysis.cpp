@@ -15,6 +15,9 @@
 #include "../modules/IoModelToConstraintsx/IoModelToConstraintsx.h"
 #include "../modules/InputUpdateFromConstantx/InputUpdateFromConstantx.h"
 #include "../modules/SetActiveNodesLSMx/SetActiveNodesLSMx.h"
+#ifdef _HAVE_PyBind11_
+#include "../modules/StressBalanceEmulatorx/StressBalanceEmulatorx.h"
+#endif
 #include "../cores/cores.h"
 
 //#define FSANALYTICAL 10
@@ -844,6 +847,7 @@ void StressbalanceAnalysis::UpdateElements(Elements* elements,Inputs* inputs,IoM
 				iomodel->FetchDataToInput(inputs,elements,"md.basalforcings.deepwater_elevation",BasalforcingsSpatialDeepwaterElevationEnum);
 				iomodel->FetchDataToInput(inputs,elements,"md.basalforcings.upperwater_melting_rate",BasalforcingsSpatialUpperwaterMeltingRateEnum);
 				iomodel->FetchDataToInput(inputs,elements,"md.basalforcings.upperwater_elevation",BasalforcingsSpatialUpperwaterElevationEnum);
+				iomodel->FetchDataToInput(inputs,elements,"md.basalforcings.perturbation_melting_rate",BasalforcingsPerturbationMeltingRateEnum,0.);
 				if(isstochastic){
 					iomodel->FetchDataToInput(inputs,elements,"md.stochasticforcing.default_id",StochasticForcingDefaultIdEnum);
 					iomodel->FetchDataToInput(inputs,elements,"md.basalforcings.deepwater_melting_rate",BaselineBasalforcingsSpatialDeepwaterMeltingRateEnum);
@@ -887,6 +891,45 @@ void StressbalanceAnalysis::UpdateElements(Elements* elements,Inputs* inputs,IoM
 	xDelete<int>(finiteelement_list);
 }/*}}}*/
 void StressbalanceAnalysis::UpdateParameters(Parameters* parameters,IoModel* iomodel,int solution_enum,int analysis_enum){/*{{{*/
+
+	#ifdef _HAVE_PyBind11_
+	int isEmulator;
+	parameters->AddObject(iomodel->CopyConstantObject("md.stressbalance.isemulator",StressbalanceIsemulatorEnum));
+	iomodel->FetchData(&isEmulator,"md.stressbalance.isemulator");
+	if(isEmulator){
+		char* module_dir = NULL;
+		char* pt_name    = NULL;
+		char* py_name    = NULL;
+		int*  edge_src   = NULL;
+		int*  edge_dst   = NULL;
+		int   nsrc       = 0;
+		int   ndst       = 0;
+		int   nedges     = 0;
+		int   rank       = IssmComm::GetRank();
+
+		iomodel->FetchData(&module_dir,"md.stressbalance.module_dir");
+		iomodel->FetchData(&pt_name,"md.stressbalance.pt_name");
+		iomodel->FetchData(&py_name,"md.stressbalance.py_name");
+		if(rank==0){
+			parameters->FindParam(&nedges,EdgesNumberEnum);
+			parameters->FindParam(&edge_src,&nsrc,EdgesSrcEnum);
+			parameters->FindParam(&edge_dst,&ndst,EdgesDstEnum);
+			if(nsrc!=nedges || ndst!=nedges){
+				_error_("Stressbalance emulator edge arrays do not match EdgesNumberEnum");
+			}
+		}
+		if(parameters->Exist(StressbalanceEmulatorEnum)){
+			_error_("StressbalanceEmulatorEnum already exists in this process; EmulatorParam is process-local and must only be created once");
+		}
+		parameters->AddObject(new EmulatorParam(StressbalanceEmulatorEnum,module_dir,pt_name,py_name,edge_src,nsrc,edge_dst,ndst,iomodel->numberofvertices));
+
+		xDelete<int>(edge_src);
+		xDelete<int>(edge_dst);
+		xDelete<char>(module_dir);
+		xDelete<char>(pt_name);
+		xDelete<char>(py_name);
+	}
+	#endif
 
 	/*Intermediaries*/
 	int     fe_FS;
@@ -942,6 +985,16 @@ void StressbalanceAnalysis::UpdateParameters(Parameters* parameters,IoModel* iom
 
 /*Finite Element Analysis*/
 void           StressbalanceAnalysis::Core(FemModel* femmodel){/*{{{*/
+
+	/*Emulator*/
+	#ifdef _HAVE_PyBind11_
+	int isEmulator;
+	femmodel->parameters->FindParam(&isEmulator,StressbalanceIsemulatorEnum);
+	if(isEmulator==1){
+		StressBalanceEmulatorx(femmodel);
+		return;
+	}
+	#endif
 
 	/*Intermediaries*/
 	bool isSSA,isL1L2,isMOLHO,isHO,isFS;

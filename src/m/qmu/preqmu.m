@@ -1,6 +1,6 @@
 function md=preqmu(md,options)
-%QMU - apply Quantification of Margins and Uncertainties techniques 
-%      to a solution sequence (like stressbalance.m, progonstic.m, etc ...), 
+%QMU - apply Quantification of Margins and Uncertainties techniques
+%      to a solution sequence (like stressbalance.m, progonstic.m, etc ...),
 %      using the Dakota software from Sandia.
 %
 %   options come from the solve.m routine. They can include Dakota options:
