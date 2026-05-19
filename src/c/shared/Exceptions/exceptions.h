@@ -62,17 +62,27 @@ using namespace std;
 #define ExceptionTrapBegin(); \
 	try{
 
+/*Abort all MPI ranks immediately on error (no-op in serial builds)*/
+#ifdef _HAVE_MPI_
+#define _issm_abort_() MPI_Abort(MPI_COMM_WORLD,1)
+#else
+#define _issm_abort_() ((void)0)
+#endif
+
 #define ExceptionTrapEnd(); }\
 	catch(ErrorException &exception){\
 		exception.Report();\
+		_issm_abort_();\
 		return 1;\
 	}\
 	catch(exception& e) {\
 		_printf_("Standard exception: " << e.what() << "\n\n");\
+		_issm_abort_();\
 		return 1;\
 	}\
 	catch(...){\
 		_printf_("An unexpected error occurred \n\n");\
+		_issm_abort_();\
 		return 1;\
 	}
 /*}}}*/
