@@ -49,8 +49,8 @@ def demmap(ncolors, minZ, maxZ, colorscheme='dem'):
         ratio = land / sea
         errors = abs(ratio - maxminratio) / maxminratio
         indx = np.where(errors == min(errors))
-        nsea = sea[indx]
-        nland = land[indx]
+        nsea = int(sea[indx][0])
+        nland = int(land[indx][0])
 
     # determine color limits
         seaint = abs(minZ) / nsea
