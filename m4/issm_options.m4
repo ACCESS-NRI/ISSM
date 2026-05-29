@@ -1394,6 +1394,20 @@ AC_DEFUN([ISSM_OPTIONS],[
 		AC_DEFINE([_HAVE_PETSC_], [1], [with PETSc in ISSM src])
 		AC_SUBST([PETSCINCL])
 		AC_SUBST([PETSCLIB])
+
+		dnl Detect CUDA support in the configured PETSc install {{{
+		AC_MSG_CHECKING(whether PETSc was built with CUDA support)
+		PETSC_HAS_CUDA=no
+		if test -f "${PETSC_ROOT}/include/petscconf.h"; then
+			if grep -q "PETSC_HAVE_CUDA" "${PETSC_ROOT}/include/petscconf.h"; then
+				PETSC_HAS_CUDA=yes
+			fi
+		fi
+		AC_MSG_RESULT([${PETSC_HAS_CUDA}])
+		if test "x${PETSC_HAS_CUDA}" == "xyes"; then
+			AC_DEFINE([_HAVE_PETSC_CUDA_], [1], [PETSc built with CUDA support])
+		fi
+		dnl }}}
 	fi
 	dnl }}}
 	dnl MPI{{{
