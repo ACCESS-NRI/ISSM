@@ -30,7 +30,7 @@ def getcolormap(options):
     if type(map_name) == mpl.colors.ListedColormap:
         return map_name
     elif map_name in plt.colormaps():
-        return map_name
+        return plt.get_cmap(map_name)  # return object, not name string
     elif map_name == '':
         return cmap
 

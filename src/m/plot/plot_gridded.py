@@ -93,12 +93,11 @@ def plot_gridded(md,data,options,fig,axgrid,gridindex):
     #subplotmodel(plotlines,plotcols,i,options);
 
     #shading interp;
-    options.addfielddefault('colormap',plt.cm.turbo) # Synchronize colormap with Matlab version.
-
-    #TODO: Do we need to copy object?
-    #cmap = getcolormap(copy.deepcopy(options))
-    cmap = getcolormap(options)
-
+    options.addfielddefault('colormap',plt.cm.turbo)
+    #options.addfielddefault('colormap',plt.cm.viridis)
+    cmap = getcolormap(copy.deepcopy(options))
+    if isinstance(cmap, str):   # getcolormap may return a name string; convert
+        cmap = plt.get_cmap(cmap)
     #TODO: Matlab version
     #image_rgb = ind2rgb(uint16((data_grid - data_min)*(length(map)/(data_max-data_min))),cmap);
     #NOTE: Python version
