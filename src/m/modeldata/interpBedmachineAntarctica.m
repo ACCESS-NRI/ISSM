@@ -15,7 +15,7 @@ function output = interpBedmachineAntarctica(X,Y,string,method,ncdate)
 %             Supported interpolation methos: 'linear','cubic','nearest'
 %   - optional 5th input argument: path to dataset.
 %
-% Version 11/30/2018 Mathieu Morlighem mmorligh@uci.edu
+% Version 11/30/2018 Mathieu Morlighem mmorligh@dartmouth.edu
 
 if nargin<3, string = 'bed'; end
 if nargin<4
@@ -26,8 +26,10 @@ if nargin<4
 	end
 end
 if nargin<5
+	ncdate='2019-11-05'; %BedMachine v1
 	ncdate='2020-07-15'; %BedMachine v2
-	ncdate='v3.5';       %Official v3 release
+	ncdate='v3.5';       %BedMachine v3 
+	ncdate='v4.1';       %BedMachine v4
 end
 basename = 'BedMachineAntarctica';
 
@@ -76,7 +78,7 @@ if isempty(posy), posy=numel(ydata); end
 id1y=max(1,find(ydata<=ymax,1)-offset);
 id2y=min(numel(ydata),posy(end)+offset);
 
-if strcmp(string,'icemask'),
+if strcmp(string,'icemask')
 	disp(['   -- BedMachine Antarctica: loading ' string]);
 	%data  = double(ncread(ncfile,'mask'))';
 	data  = double(ncread(ncfile,'mask',[id1x id1y],[id2x-id1x+1 id2y-id1y+1],[1 1]))';
@@ -94,7 +96,7 @@ end
 
 disp(['   -- BedMachine Antarctica: interpolating ' string]);
 disp(['       -- Interpolation method: ' method]);
-if strcmp(string,'mask') | strcmp(string,'source'),
+if strcmp(string,'mask') | strcmp(string,'source')
 	%Need nearest neighbor to avoid interpolation between 0 and 2
 	output = InterpFromGrid(xdata,ydata,data,double(X),double(Y),'nearest');
 	%tic
@@ -128,7 +130,7 @@ function zi = FastInterp(x,y,data,xi,yi,method)
 	% Fill Zi with NaNs
 	zi = NaN(size(xi));
 
-	if strcmpi(method,'nearest'),
+	if strcmpi(method,'nearest')
 		% Find the nearest point in index space
 		rxi = round(xi)+1;  ryi = round(yi)+1;
 		% Find points that are in X,Y range

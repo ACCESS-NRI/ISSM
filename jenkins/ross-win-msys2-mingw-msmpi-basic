@@ -21,8 +21,6 @@ ISSM_CONFIG='\
 	--with-mumps-dir="${ISSM_DIR}/externalpackages/petsc/install" \
 	--with-petsc-dir="${ISSM_DIR}/externalpackages/petsc/install" \
 	--with-triangle-dir="${ISSM_DIR}/externalpackages/triangle/install" \
-	--with-m1qn3-dir="${ISSM_DIR}/externalpackages/m1qn3/install" \
-	--with-semic-dir="${ISSM_DIR}/externalpackages/semic/install" \
 '
 
 #-------------------#
@@ -33,8 +31,6 @@ EXTERNALPACKAGES="
 	msmpi		install.sh
 	petsc		install-3.14-win-msys2-mingw-msmpi.sh
 	triangle	install-win-msys2-mingw.sh
-	m1qn3		install-win-msys2-mingw-static.sh
-	semic		install.sh
 	shell2junit	install.sh
 "
 
@@ -63,9 +59,8 @@ NUMCPUS_RUN=2
 # See documentation in test/NightlyRun/runme.* for more information
 #
 # NOTE:
-# - Tests 125, 126, and 129 are skipped because restart is not yet implemented 
-#	for Windows (under MSYS2)
-# - test701 is skipped because it uses full Stokes equations
+# - Tests 125, 126, and 129 are skipped because restart is not yet implemented for Windows (under MSYS2)
+# - test701:703 is skipped because it uses full Stokes equations
 #
 MATLAB_NROPTIONS="'exclude',[IdFromString('Dakota'),125,126,129,435,701,702,703]"
 PYTHON_NROPTIONS=""

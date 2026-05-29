@@ -78,14 +78,10 @@ classdef lonestar
          modelname       = md.miscellaneous.name;
          solution        = md.private.solution;
          io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
 
          %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(md.debug.valgrind) disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof)    disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queuing script 
 			fid=fopen(filename, 'w');
@@ -107,34 +103,19 @@ classdef lonestar
 			fclose(fid);
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
+			%Get variables from md
+			dirname   = md.private.runtimename;
+			modelname = md.miscellaneous.name;
+			solution  = md.private.solution;
+			io_gather = md.settings.io_gather;
 
-         %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			%checks
+			if(md.debug.valgrind) disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof)    disp('gprof not supported by cluster, ignoring...'); end
 
-			executable='issm.exe';
-			if isdakota
-				version=IssmConfig('_DAKOTA_VERSION_'); version=str2num(version(1:3));
-				if (version>=6),
-					executable='issm_dakota.exe';
-				end
-			end
-			if isoceancoupling
-				executable='issm_ocean.exe';
-			end
-
-			%write queuing script 
+			%write queuing script
 			fid=fopen(filename,'w');
 
 			fprintf(fid,'#!/bin/bash\n');
@@ -145,19 +126,17 @@ classdef lonestar
 			fprintf(fid,'#SBATCH -n %i \n',cluster.numnodes*max(cluster.nprocs()/cluster.numnodes,24));
 			fprintf(fid,'#SBATCH -N %i \n',cluster.numnodes);
 			fprintf(fid,'#SBATCH -t %02i:%02i:00 \n\n',floor(cluster.time/3600),floor(mod(cluster.time,3600)/60));
-			for i=1:numel(cluster.modules),
+			for i=1:numel(cluster.modules)
 				fprintf(fid,['module load ' cluster.modules{i} '\n']);
 			end
 
-			if isdakota
+			if strcmp(executable,'issm_dakota.exe')
 				fprintf(fid,'export KMP_AFFINITY="granularity=fine,compact,verbose" \n\n');
 			end
 
 			if length(find(cluster.email=='@'))>0
 				fprintf(fid,'#SBATCH --mail-user=%s \n',cluster.email);
 				fprintf(fid,'#SBATCH --mail-type=end \n\n');
-
-				%fprintf(fid,'ssh login1 "mail -s ''SLURM Jobid=${SLURM_JOBID} Name=${SLURM_JOB_NAME} Began on Lonestar 5.'' %s <<< ''Job Started'' " \n\n',cluster.email);
 			end
 
 			fprintf(fid,'export PATH="$PATH:."\n\n');
@@ -174,7 +153,7 @@ classdef lonestar
 			%in interactive mode, create a run file, and errlog and outlog file
 			if cluster.interactive
 				fid=fopen([modelname '.run'],'w');
-				fprintf(fid,'ibrun -np %i %s/%s %s %s %s\n',cluster.nprocs(),executable,cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
+				fprintf(fid,'ibrun -np %i %s/%s %s %s %s\n',cluster.nprocs(),cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
 				if ~io_gather, %concatenate the output files:
 					fprintf(fid,'cat %s.outbin.* > %s.outbin',modelname,modelname);
 				end
@@ -184,38 +163,13 @@ classdef lonestar
 			end
 		end %}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
-
-			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz '];
-			for i=1:numel(filelist),
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			if cluster.interactive,
-				compressstring = [compressstring ' ' modelname '.errlog ' modelname '.outlog '];
-			end
-			system(compressstring);
-
-			%upload input files
-			issmscpout(cluster.name,cluster.executionpath,cluster.login,cluster.port,{[dirname '.tar.gz']});
-
+			cluster_defaults.UploadQueueJob(cluster,modelname,dirname,filelist);
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
-
-			%Execute Queue job
-			if ~isempty(restart)
-				launchcommand=['cd ' cluster.executionpath ' && cd ' dirname ' && hostname && sbatch ' modelname '.queue '];
-			else
-				launchcommand=['cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-					' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz  && hostname && sbatch ' modelname '.queue '];
-			end
-			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
+			cluster_defaults.LaunchQueueJobSbatch(cluster,modelname,dirname,filelist,restart,batch, 2);
 		end %}}}
 		function Download(cluster,dirname,filelist) % {{{
-
-			%copy files from cluster to current directory
-			directory=[cluster.executionpath '/' dirname '/'];
-			issmscpin(cluster.name,cluster.login,cluster.port,directory,filelist);
-
+			cluster_defaults.Download(cluster,dirname,filelist);
 		end %}}}
 	end
 end

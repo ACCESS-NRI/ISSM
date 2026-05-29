@@ -1,4 +1,4 @@
-%Test Name: SquareShelfSMBGembMapping
+%Test Name: SquareShelfSMBGembPrecipMapping
 md=triangle(model(),'../Exp/Square.exp',350000/2.);
 md=setmask(md,'all','');
 md=parameterize(md,'../Par/SquareShelf.par');
@@ -14,6 +14,8 @@ md2=parameterize(md2,'../Par/SquareShelf.par');
 md.smb = SMBgemb(md.mesh);
 md.smb.dsnowIdx = 1;
 md.smb.swIdx = 1;
+md.smb.teThresh = 2;
+md.smb.teValue(:) = .95;
 
 %load hourly surface forcing date from 1979 to 2009:
 inputs=load('../Data/gemb_input.mat');
@@ -37,6 +39,7 @@ ye=mean(md.mesh.y(md.mesh.elements),2);
 xe2=mean(md2.mesh.x(md2.mesh.elements),2);
 ye2=mean(md2.mesh.y(md2.mesh.elements),2);
 mpoints=1:md2.mesh.numberofelements;
+[md.smb.lat_mappedforcing md.smb.lon_mappedforcing]=xy2ll(xe2,ye2,+1);
 
 md.smb.ismappedforcing=1;
 md.smb.isprecipforcingremapped=1;
@@ -75,7 +78,7 @@ end
 
 %Fields and tolerances to track changes
 field_names      ={'Layers','SmbDz','SmbT','SmbD','SmbRe','SmbGdn','SmbGsp','SmbA' ,'SmbEC','SmbMassBalance','SmbMAdd','SmbDzAdd','SmbFAC','SmbMeanSHF','SmbMeanLHF','SmbMeanULW','SmbNetLW','SmbNetSW','SmbTs','SmbT10','SmbT30','SmbT50','SmbAccumulatedMassBalance','SmbAccumulatedRunoff','SmbAccumulatedMelt','SmbAccumulatedEC','SmbAccumulatedPrecipitation','SmbAccumulatedRain','SmbAccumulatedRefreeze','SmbRunoff','SmbMelt','SmbEC','SmbPrecipitation','SmbRain','SmbRefreeze','SmbWAdd'};
-field_tolerances ={1e-12,4e-11,2e-11,3e-11,6e-11,8e-11,8e-11,1e-12,5e-11,3e-12,1e-12,1e-12,4e-11,2e-11,5e-11,1e-11,9e-10,2e-11,2e-11,2e-11,2e-11,2e-11,1e-11,9e-10,2e-11,2e-09,1e-11,1e-11,1e-11,8e-10,2e-11,2e-11,1e-11,1e-11,2e-11,1e-11};
+field_tolerances ={1e-12,4e-11,2e-11,3e-11,6e-11,8e-11,8e-11,1e-12,5e-11,6e-12,1e-12,1e-12,4e-11,2e-11,5e-11,1e-11,9e-10,2e-11,2e-11,2e-11,2e-11,2e-11,1e-11,9e-10,2e-11,2e-09,1e-11,1e-11,1e-11,8e-10,2e-11,2e-11,1e-11,1e-11,2e-11,1e-11};
 
 field_values={...
 	(nlayers),...

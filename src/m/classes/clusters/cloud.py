@@ -1,9 +1,11 @@
+import os
 import subprocess
 
 try:
     from cloud_settings import cloud_settings
 except ImportError:
     print('You need cloud_settings.py to proceed, check presence and sys.path')
+from issmdir import issmdir
 
 class cloud(object):
     """CLOUD cluster class definition
@@ -54,7 +56,7 @@ class cloud(object):
         return self
     # }}}
 
-    def BuildQueueScript(self, md, filename):  # {{{
+    def BuildQueueScript(self, md, filename, executable):  # {{{
 
         # Get variables from md
         dirname         = md.private.runtimename
@@ -76,10 +78,14 @@ class cloud(object):
     # }}}
 
     def UploadQueueJob(self, modelname, dirname, filelist):  # {{{
-        # Compress the files into one zip
-        compressstring = 'tar -zcf {}.tar.gz'.format(dirname)
-        for file in filelist:
-            compressstring += ' {}'.format(file)
+        # Compress the files into one zip.
+        # filelist contains full paths; use -C so only basenames are stored in the archive.
+        root = issmdir() + '/execution/' + dirname
+        compressstring = 'tar -C {} -zcf {}.tar.gz'.format(root, dirname)
+        for filepath in filelist:
+            if not os.path.isfile(filepath):
+                raise Exception('File {} not found'.format(filepath))
+            compressstring += ' {}'.format(os.path.basename(filepath))
         subprocess.call(compressstring, shell=True)
 
         if isempty(self.login):

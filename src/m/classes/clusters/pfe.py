@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 from fielddisplay import fielddisplay
@@ -6,6 +7,7 @@ from IssmConfig import IssmConfig
 from issmscpin import issmscpin
 from issmscpout import issmscpout
 from issmssh import issmssh
+from issmdir import issmdir
 from MatlabFuncs import *
 from pairoptions import pairoptions
 try:
@@ -148,29 +150,16 @@ class pfe(object):
         return self
     # }}}
 
-    def BuildQueueScript(self, md, filename):  # {{{
+    def BuildQueueScript(self, md, filename, executable):  # {{{
 
         # Get variables from md
         dirname         = md.private.runtimename
         modelname       = md.miscellaneous.name
         solution        = md.private.solution
         io_gather       = md.settings.io_gather
-        isvalgrind      = md.debug.valgrind
-        isgprof         = md.debug.gprof
-        isdakota        = md.qmu.isdakota
-        isoceancoupling = md.transient.isoceancoupling
 
-        if isgprof:
+        if md.debug.gprof:
             print('gprof not supported by cluster, ignoring...')
-
-        executable = 'issm.exe'
-        if isdakota:
-            version = IssmConfig('_DAKOTA_VERSION_')[0:2]
-            version = float(version)
-            if version >= 6:
-                executable = 'issm_dakota.exe'
-        if isoceancoupling:
-            executable = 'issm_ocean.exe'
 
         # Write queuing script
         fid = open(filename, 'w')
@@ -199,16 +188,17 @@ class pfe(object):
     # }}}
 
     def UploadQueueJob(self, modelname, dirname, filelist):  # {{{
-        # Compress the files into one zip
-        compressstring = 'tar -zcf {}.tar.gz'.format(dirname)
-        for file in filelist:
-            compressstring += ' {}'.format(file)
+        # Compress the files into one zip.
+        # filelist contains full paths; use -C so only basenames are stored in the archive.
+        root = issmdir() + '/execution/' + dirname
+        compressstring = 'tar -C {} -zcf {}.tar.gz'.format(root, dirname)
+        for filepath in filelist:
+            if not os.path.isfile(filepath):
+                raise Exception('File {} not found'.format(filepath))
+            compressstring += ' {}'.format(os.path.basename(filepath))
         subprocess.call(compressstring, shell=True)
 
-        print('uploading input file and queueing script')
-        directory = self.executionpath
-        issmscpout(self.name, directory, self.login, self.port, [dirname + '.tar.gz'])
-
+        issmscpout(self.name, self.executionpath, self.login, self.port, [dirname + '.tar.gz'])
     # }}}
 
     def LaunchQueueJob(self, modelname, dirname, filelist, restart, batch):  # {{{

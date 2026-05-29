@@ -41,7 +41,7 @@ classdef matice
 					list2 = fieldnames(inputstruct);
 					for i=1:length(list1)
 						fieldname = list1{i};
-						if ismember(fieldname,list2),
+						if ismember(fieldname,list2)
 							self.(fieldname) = inputstruct.(fieldname);
 						end
 					end
@@ -104,7 +104,7 @@ classdef matice
 		end % }}}
 		function md = checkconsistency(self,md,solution,analyses) % {{{
 
-			if strcmpi(solution,'TransientSolution') & md.transient.isslc,
+			if strcmpi(solution,'TransientSolution') & md.transient.isslc
 				md = checkfield(md,'fieldname','materials.earth_density','>',0,'numel',1);
 			else
 				md = checkfield(md,'fieldname','materials.rho_ice','>',0);
@@ -179,7 +179,6 @@ classdef matice
 			writejsdouble(fid,[modelname '.materials.beta'],self.beta);
 			writejsdouble(fid,[modelname '.materials.mixed_layer_capacity'],self.mixed_layer_capacity);
 			writejsdouble(fid,[modelname '.materials.thermal_exchange_velocity'],self.thermal_exchange_velocity);
-			writejsdouble(fid,[modelname '.materials.mixed_layer_capacity'],self.mixed_layer_capacity);
 			writejs1Darray(fid,[modelname '.materials.rheology_B'],self.rheology_B);
 			writejs1Darray(fid,[modelname '.materials.rheology_n'],self.rheology_n);
 			writejsstring(fid,[modelname '.materials.rheology_law'],self.rheology_law);

@@ -54,7 +54,7 @@ classdef timesteppingadaptive
 			md = checkfield(md,'fieldname','timestepping.average_forcing','numel',[1],'values',[0 1]);
 			md = checkfield(md,'fieldname','timestepping.cycle_forcing','numel',[1],'values',[0 1]);
 			md = checkfield(md,'fieldname','timestepping.coupling_time','numel',[1],'>=',md.timestepping.coupling_time,'NaN',1,'Inf',1);
-			if self.final_time-self.start_time<0,
+			if self.final_time-self.start_time<0
 				md = checkmessage(md,'timestepping.final_time should be larger than timestepping.start_time');
 			end
 		end % }}}
@@ -95,9 +95,9 @@ classdef timesteppingadaptive
 			writejsdouble(fid,[modelname '.timesteppingadaptive.time_step_max'],self.time_step_max);
 			writejsdouble(fid,[modelname '.timesteppingadaptive.cfl_coefficient'],self.cfl_coefficient);
 			writejsdouble(fid,[modelname '.timesteppingadaptive.interp_forcing'],self.interp_forcing);
-			writejsdouble(fid,[modelname '.timesteppingadaptive.average_forcing'],self.interp_forcing);
+			writejsdouble(fid,[modelname '.timesteppingadaptive.average_forcing'],self.average_forcing);
 			writejsdouble(fid,[modelname '.timesteppingadaptive.cycle_forcing'],self.cycle_forcing);
-			writejsdouble(fid,[modelname '.timesteppingadaptive.coupling_time'],self.time_step_max);
+			writejsdouble(fid,[modelname '.timesteppingadaptive.coupling_time'],self.coupling_time);
 
 		end % }}}
 	end

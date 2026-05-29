@@ -27,7 +27,7 @@ classdef localpfe
 		function cluster=localpfe(varargin) % {{{
 
 			%Change the defaults if ispc and not ismingw
-			if ispc & ~ismingw,
+			if ispc & ~ismingw
 				cluster.codepath      = [issmdir() '\bin'];
 				cluster.etcpath       = [issmdir() '\etc'];
 				cluster.executionpath = [issmdir() '\execution'];
@@ -69,12 +69,12 @@ classdef localpfe
 			if cluster.np<1
 				md = checkmessage(md,['number of processors should be at least 1']);
 			end
-			if isnan(cluster.np),
+			if isnan(cluster.np)
 				md = checkmessage(md,'number of processors should not be NaN!');
 			end
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
          %Get variables from md
          dirname         = md.private.runtimename;
@@ -89,9 +89,9 @@ classdef localpfe
 			%write queuing script 
 			%what is the executable being called? 
 			executable='issm.exe';
-			if isdakota,
+			if isdakota
 				version=IssmConfig('_DAKOTA_VERSION_'); version=str2num(version(1:3));
-				if (version>=6),
+				if (version>=6)
 					executable='issm_dakota.exe';
 				end
 			end
@@ -158,7 +158,7 @@ classdef localpfe
 			mpistring=[mpistring sprintf(' %i ',length(dirnames))];
 			
 			%icecaps, glaciers and earth location, names and number of processors associated:
-			for i=1:length(dirnames),
+			for i=1:length(dirnames)
 				mpistring=[mpistring sprintf(' %s/%s %s %i ',cluster.executionpath,dirnames{i},modelnames{i},nps{i})];
 			end
 
@@ -250,12 +250,15 @@ classdef localpfe
 			if ~ispc || ismingw
 
 				%compress the files into one zip.
-				compressstring=['tar -zcf ' dirname '.tar.gz '];
-				for i=1:numel(filelist),
-					compressstring = [compressstring ' ' filelist{i}];
-				end
-				if cluster.interactive,
-					compressstring = [compressstring ' ' modelname '.run '  modelname '.errlog ' modelname '.outlog '];
+				%filelist contains full paths; tar with -C so only basenames are stored in the archive
+				root=[issmdir() '/execution/' dirname];
+				compressstring=['tar -C ' root ' -zcf ' dirname '.tar.gz'];
+				for i=1:numel(filelist)
+					if ~exist(filelist{i},'file')
+						error(['File ' filelist{i} ' not found']);
+					end
+					[~,fname,fext]=fileparts(filelist{i});
+					compressstring=[compressstring ' ' fname fext];
 				end
 				system(compressstring);
 
@@ -264,37 +267,13 @@ classdef localpfe
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch)% {{{
 
-			%figure out what shell extension we will use:
-			if isempty(strfind(cluster.shell,'csh')),
-				shellext='sh';
-			else
-				shellext='csh';
-			end
-
-			if cluster.verbose, %Execute Queue job end
-
 			launchcommand=['cd ' cluster.executionpath ' && rm -rf *.lock && rm -rf ADOLC* && tar -zxf ' dirname '.tar.gz  && rm -rf *.tar.gz'];
-			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
-
-		end %}}}
-		function LaunchQueueJobIceOcean(cluster,modelname,dirname,filelist,restart,batch)% {{{
-
-			%figure out what shell extension we will use:
-			if isempty(strfind(cluster.shell,'csh')),
-				shellext='sh';
-			else
-				shellext='csh';
-			end
-
-			if cluster.verbose, %Execute Queue job end
-
-			launchcommand=['cd ' cluster.executionpath ' && rm -rf *.lock && tar -zxf ' dirname '.tar.gz  && rm -rf *.tar.gz'];
 			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
 
 		end %}}}
 		function Download(cluster,dirname,filelist)% {{{
 
-			if ispc && ~ismingw,
+			if ispc && ~ismingw
 				%do nothing
 				return;
 			end

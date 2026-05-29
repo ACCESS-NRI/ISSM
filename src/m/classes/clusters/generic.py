@@ -1,3 +1,4 @@
+import os
 from subprocess import call
 
 from fielddisplay import fielddisplay
@@ -86,9 +87,9 @@ class generic(object):
         return md
     # }}}
 
-    def BuildQueueScript(self, md, filename):  # {{{
+    def BuildQueueScript(self, md, filename, executable):  # {{{
 
-        # Get variables from md
+        # Unpack fields used below
         dirname         = md.private.runtimename
         modelname       = md.miscellaneous.name
         solution        = md.private.solution
@@ -98,68 +99,63 @@ class generic(object):
         isdakota        = md.qmu.isdakota
         isoceancoupling = md.transient.isoceancoupling
 
-        # Which executable are we calling?
-        executable = 'issm.exe'  # default
+        # Determine which executable to call
+        executable = 'issm.exe'
         if isdakota:
-            version = IssmConfig('_DAKOTA_VERSION_')
-            version = float(version[0])
-            if version >= 6: executable = 'issm_dakota.exe'
+            if float(IssmConfig('_DAKOTA_VERSION_')[0]) >= 6:
+                executable = 'issm_dakota.exe'
         if isoceancoupling:
             executable = 'issm_ocean.exe'
 
-        # Write queuing script
         if not ispc():
-            fid = open(filename, 'w')
-            fid.write('#!/bin/sh\n')
-            if not isvalgrind:
-                if self.interactive:
-                    if IssmConfig('_HAVE_MPI_')[0]:
-                        fid.write('mpiexec -np {} {}/{} {} {}/{} {}'.format(self.np, self.codepath, executable, solution, self.executionpath, dirname, modelname))
-                    else:
-                        fid.write('{}/{} {} {}/{} {}'.format(self.codepath, executable, solution, self.executionpath, dirname, modelname))
-                else:
-                    if IssmConfig('_HAVE_MPI_')[0]:
-                        fid.write('mpiexec -np {} {}/{} {} {}/{} {} 2> {}.errlog > {}.outlog'.
-                                  format(self.np, self.codepath, executable, solution, self.executionpath, dirname, modelname, modelname, modelname))
-                    else:
-                        fid.write('{}/{} {} {}/{} {} 2> {}.errlog > {}.outlog '.
-                                  format(self.codepath, executable, solution, self.executionpath, dirname, modelname, modelname, modelname))
+
+            # Verify the executable exists
+            exepath = '{}/{}'.format(self.codepath, executable)
+            if not os.path.isfile(exepath):
+                raise RuntimeError('File {} does not exist'.format(exepath))
+
+            execpath   = '{}/{}'.format(self.executionpath, dirname)
+            mpiprefix  = 'mpiexec -np {} '.format(self.np) if IssmConfig('_HAVE_MPI_')[0] else ''
+
+            # Build the core command string
+            if isvalgrind:
+                supstring = ' '.join('--suppressions=' + s for s in self.valgrindsup)
+                cmd = '{}{} --leak-check=full {} {}/{} {} {} {} 2> {}.errlog > {}.outlog'.format(
+                    mpiprefix, self.valgrind, supstring,
+                    self.codepath, executable, solution, execpath, modelname,
+                    modelname, modelname)
+
             elif isgprof:
-                fid.write('\n gprof {}/{} gmon.out > {}.performance'.format(self.codepath, executable, modelname))
+                cmd = 'gprof {}/{} gmon.out > {}.performance'.format(self.codepath, executable, modelname)
+
+            elif self.interactive:
+                cmd = '{}{}/{} {} {} {}'.format(mpiprefix, self.codepath, executable, solution, execpath, modelname)
+
             else:
-                #Add --gen -suppressions = all to get suppression lines
-                #fid.write('LD_PRELOAD={} \\\n'.format(self.valgrindlib)) it could be deleted
-                supstring = ''
-                for supfile in self.valgrindsup:
-                    supstring += ' --suppressions=' + supfile
+                # Non-interactive: redirect output and run in background
+                cmd = '{}{}/{} {} {} {} 2> {}.errlog > {}.outlog &'.format(
+                    mpiprefix, self.codepath, executable, solution, execpath, modelname,
+                    modelname, modelname)
 
-                if IssmConfig('_HAVE_MPI_')[0]:
-                    fid.write('mpiexec -np {} {} --leak-check=full {} {}/{} {} {}/{} {} 2> {}.errlog > {}.outlog '.
-                              format(self.np, self.valgrind, supstring, self.codepath, executable, solution, self.executionpath, dirname, modelname, modelname, modelname))
-                else:
-                    fid.write('{} --leak-check=full {} {}/{} {} {}/{} {} 2> {}.errlog > {}.outlog '.
-                              format(self.valgrind, supstring, self.codepath, executable, solution, self.executionpath, dirname, modelname, modelname, modelname))
-
-            if not io_gather:  #concatenate the output files:
-                fid.write('\ncat {}.outbin .*>{}.outbin'.format(modelname, modelname))
-            fid.close()
+            # Write the queue script
+            with open(filename, 'w') as fid:
+                fid.write('#!{}\n'.format(self.shell))
+                fid.write(cmd)
+                if not io_gather:
+                    # Concatenate distributed output files into one
+                    fid.write('\ncat {}.outbin.* > {}.outbin'.format(modelname, modelname))
 
         else:  # Windows
-            fid = open(modelname + '.bat', 'w')
-            fid.write('@echo off\n')
-            if self.interactive:
-                fid.write('"{}/{}" {} "{}/{}" {} '.format(self.codepath, executable, solution, self.executionpath, dirname, modelname))
-            else:
-                fid.write('"{}/{}" {} "{}/{}" {} 2>{}.errlog>{}.outlog'.
-                          format(self.codepath, executable, solution, self.executionpath, dirname, modelname, modelname, modelname))
-            fid.close()
 
-            #in interactive mode, create a run file, and errlog and outlog file
-        if self.interactive:
-            fid = open(modelname + '.errlog', 'w')
-            fid.close()
-            fid = open(modelname + '.outlog', 'w')
-            fid.close()
+            batfilename = filename[:-6] + '.bat'
+            execdir     = '{}/{}'.format(self.executionpath, dirname)
+            with open(batfilename, 'w') as fid:
+                fid.write('@echo off\n')
+                if self.interactive:
+                    fid.write('"{}/{}" {} "{}" {}'.format(self.codepath, executable, solution, execdir, modelname))
+                else:
+                    fid.write('"{}/{}" {} "{}" {} 2> {}.errlog > {}.outlog'.format(
+                        self.codepath, executable, solution, execdir, modelname, modelname, modelname))
     # }}}
 
     def BuildKrigingQueueScript(self, md, filename):  # {{{
@@ -194,7 +190,8 @@ class generic(object):
             fid.close()
 
         else:    # Windows
-            fid = open(modelname + '.bat', 'w')
+            batfilename = filename[:-6] + '.bat'
+            fid = open(batfilename, 'w')
             fid.write('@echo off\n')
             if self.interactive:
                 fid.write('"{}/issm.exe" {} "{}/{}" {} '.format(self.codepath, solution, self.executionpath, modelname, modelname))
@@ -202,22 +199,15 @@ class generic(object):
                 fid.write('"{}/issm.exe" {} "{}/{}" {} 2>{}.errlog>{}.outlog'.format
                           (self.codepath, solution, self.executionpath, modelname, modelname, modelname, modelname))
             fid.close()
-
-        # In interactive mode, create a run file, and errlog and outlog file
-        if self.interactive:
-            fid = open(modelname + '.errlog', 'w')
-            fid.close()
-            fid = open(modelname + '.outlog', 'w')
-            fid.close()
     # }}}
 
     def UploadQueueJob(self, modelname, dirname, filelist):  # {{{
-        # Compress the files into one zip
-        compressstring = 'tar -zcf {}.tar.gz '.format(dirname)
-        for file in filelist:
-            compressstring += ' {}'.format(file)
-        if self.interactive:
-            compressstring += ' {}.errlog {}.outlog '.format(modelname, modelname)
+        # Compress the files into one zip.
+        # filelist contains full paths; use -C so only basenames are stored in the archive.
+        root = os.path.join(self.executionpath, dirname)
+        compressstring = 'tar -C {} -zcf {}.tar.gz'.format(root, dirname)
+        for filepath in filelist:
+            compressstring += ' {}'.format(os.path.basename(filepath))
         call(compressstring, shell=True)
 
         issmscpout(self.name, self.executionpath, self.login, self.port, [dirname + '.tar.gz'])
@@ -226,19 +216,16 @@ class generic(object):
 
     def LaunchQueueJob(self, modelname, dirname, filelist, restart, batch):  # {{{
         if not isempty(restart):
-            launchcommand = 'cd {} && cd {} chmod 755 {}.queue && ./{}.queue'.format(self.executionpath, dirname, modelname, modelname)
+            launchcommand = 'cd {} && cd {} && chmod 755 {}.queue && ./{}.queue'.format(self.executionpath, dirname, modelname, modelname)
         else:
             if batch:
-                launchcommand = 'cd {} && rm -rf ./{} && mkdir {} && cd {} && mv ../{}.tar.gz ./&& tar -zxf {}.tar.gz'.format(self.executionpath, dirname, dirname, dirname, dirname, dirname)
+                launchcommand = 'cd {} && rm -rf ./{} && mkdir {} && cd {} && mv ../{}.tar.gz ./ && tar -zxf {}.tar.gz'.format(self.executionpath, dirname, dirname, dirname, dirname, dirname)
             else:
-                launchcommand = 'cd {} && rm -rf ./{} && mkdir {} && cd {} && mv ../{}.tar.gz ./&& tar -zxf {}.tar.gz  && chmod 755 {}.queue && ./{}.queue'.format(self.executionpath, dirname, dirname, dirname, dirname, dirname, modelname, modelname)
+                launchcommand = 'chmod 755 {}/{}/{}.queue && {}/{}/{}.queue'.format(self.executionpath, dirname, modelname, self.executionpath, dirname, modelname)
         issmssh(self.name, self.login, self.port, launchcommand)
     # }}}
 
     def Download(self, dirname, filelist):  # {{{
-        if ispc():
-            # Do nothing
-            return
         # Copy files from cluster to current directory
         directory = '{}/{}/'.format(self.executionpath, dirname)
         issmscpin(self.name, self.login, self.port, directory, filelist)

@@ -15,10 +15,12 @@
 #include "./Exp/exp.h"
 #include "./Matrix/matrix.h"
 #include "./Numerics/numerics.h"
+#include "./Semic/Semic.h"
 #include "./Sorting/sorting.h"
 #include "./String/sharedstring.h"
 #include "./Threads/issm_threads.h"
 #include "./Triangle/triangle.h"
 #include "./LatLong/latlong.h"
+#include "./m1qn3/m1qn3.h"
 
 #endif

@@ -61,31 +61,17 @@ classdef aurora
 			QueueRequirements(available_queues,queue_requirements_time,queue_requirements_np,cluster.queue,cluster.numnodes.*cluster.cpuspernode,cluster.time)
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
+			%Get variables from md
+			dirname   = md.private.runtimename;
+			modelname = md.miscellaneous.name;
+			solution  = md.private.solution;
+			io_gather = md.settings.io_gather;
 
-         %checks
-			if(isvalgrind); disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof);    disp('gprof not supported by cluster, ignoring...'); end
-
-			executable='issm.exe'
-			if isdakota,
-				version=IssmConfig('_DAKOTA_VERSION_');
-				version=str2num(version(1:3));
-				if(version>=6) executable='issm_dakota.exe'; end
-			end
-			if isoceancoupling
-				executable='issm_ocean.exe';
-			end
+			%checks
+			if(md.debug.valgrind); disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof);    disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queuing script 
 			fid=fopen(filename, 'w');
@@ -111,37 +97,19 @@ classdef aurora
 		end
 		%}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
-
-			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz '];
-			for i=1:numel(filelist),
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			system(compressstring);
-
-			%upload input files
-			issmscpout(cluster.name,cluster.executionpath,cluster.login,cluster.port,{[dirname '.tar.gz']});
-
+			cluster_defaults.UploadQueueJob(cluster,modelname,dirname,filelist);
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
-
 			if ~isempty(restart)
 				launchcommand=['cd ' cluster.executionpath ' && cd ' dirname ' && qsub ' modelname '.queue '];
 			else
 				launchcommand=['cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
 					' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz  && qsub ' modelname '.queue '];
 			end
-
-			%Execute Queue job
 			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
-
 		end %}}}
 		function Download(cluster,dirname,filelist) % {{{
-
-			%copy files from cluster to current directory
-			directory=[cluster.executionpath '/' dirname '/'];
-			issmscpin(cluster.name,cluster.login,cluster.port,directory,filelist);
-
+			cluster_defaults.Download(cluster,dirname,filelist);
 		end %}}}
 	end
 end

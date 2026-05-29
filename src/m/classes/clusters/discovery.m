@@ -67,14 +67,10 @@ classdef discovery
          modelname       = md.miscellaneous.name;
          solution        = md.private.solution;
          io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
 
          %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(md.debug.valgrind) disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof)    disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queueing script 
 			fid=fopen(filename, 'w');
@@ -102,21 +98,17 @@ classdef discovery
 			fclose(fid);
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
          %Get variables from md
          dirname         = md.private.runtimename;
          modelname       = md.miscellaneous.name;
          solution        = md.private.solution;
          io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
 
          %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(md.debug.valgrind) disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof)    disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queuing script
 			fid = fopen(filename, 'w');
@@ -139,7 +131,7 @@ classdef discovery
 			fprintf(fid,'export ISSM_DIR="%s/../"\n',cluster.codepath);
 			fprintf(fid,'source $ISSM_DIR/etc/environment.sh\n');
 			fprintf(fid,'cd %s/%s\n\n',cluster.executionpath,dirname);
-			fprintf(fid,'mpirun -n %i %s/issm.exe %s %s %s\n',cluster.nprocs(), cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
+			fprintf(fid,'mpirun -n %i %s/%s %s %s %s\n',cluster.nprocs(), cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
 			if ~io_gather %concatenate the output files:
 				fprintf(fid,'cat %s.outbin.* > %s.outbin',modelname,modelname);
 			end
@@ -151,7 +143,7 @@ classdef discovery
 			%in interactive mode, create a run file, and errlog and outlog file
 			if cluster.interactive
 				fid=fopen([modelname '.run'],'w');
-				fprintf(fid,'mpirun -n %i %s/issm.exe %s %s %s\n',cluster.nprocs(), cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
+				fprintf(fid,'mpirun -n %i %s/%s %s %s %s\n',cluster.nprocs(), cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
 				if ~io_gather %concatenate the output files:
 					fprintf(fid,'cat %s.outbin.* > %s.outbin',modelname,modelname);
 				end
@@ -161,38 +153,13 @@ classdef discovery
 			end
 		end %}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
-
-			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz '];
-			for i=1:numel(filelist),
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			if cluster.interactive,
-				compressstring = [compressstring ' ' modelname '.errlog ' modelname '.outlog '];
-			end
-			system(compressstring);
-
-			%upload input files
-			issmscpout(cluster.name,cluster.executionpath,cluster.login,0,{[dirname '.tar.gz']});
-
+			cluster_defaults.UploadQueueJob(cluster,modelname,dirname,filelist);
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
-
-			%Execute Queue job
-			if ~isempty(restart)
-				launchcommand=['cd ' cluster.executionpath ' && cd ' dirname ' && hostname && sbatch ' modelname '.queue '];
-			else
-				launchcommand=['cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-					' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz  && hostname && sbatch ' modelname '.queue '];
-			end
-			issmssh(cluster.name,cluster.login,0,launchcommand);
+			cluster_defaults.LaunchQueueJobSbatch(cluster,modelname,dirname,filelist,restart,batch, 2);
 		end %}}}
 		function Download(cluster,dirname,filelist) % {{{
-
-			%copy files from cluster to current directory
-			directory=[cluster.executionpath '/' dirname '/'];
-			issmscpin(cluster.name,cluster.login,0,directory,filelist);
-
+			cluster_defaults.Download(cluster,dirname,filelist);
 		end %}}}
 	end
 end

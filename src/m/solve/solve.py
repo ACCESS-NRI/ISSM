@@ -1,7 +1,11 @@
 from datetime import datetime
 import os
+import shutil
+import warnings
 
+from IssmConfig import IssmConfig
 from ismodelselfconsistent import ismodelselfconsistent
+from issmdir import issmdir
 from loadresultsfromcluster import loadresultsfromcluster
 from marshall import marshall
 from pairoptions import pairoptions
@@ -39,6 +43,7 @@ def solve(md, solutionstring, *args):
     Extra options:
     - loadonly         : do not solve, only load results
     - runtimename      : true or false (default is true); makes name unique
+%   - batch            : create input files but do not submit job
     - checkconsistency : 'yes' or 'no' (default is 'yes'); checks consistency 
                          of model
     - restart          : directory name (relative to the execution directory) 
@@ -119,30 +124,53 @@ def solve(md, solutionstring, *args):
             print('checking model consistency')
         ismodelselfconsistent(md)
 
+    # Prepare directory in execution
+    if cluster.name == oshostname():
+        localexecdir = cluster.executionpath
+    else:
+        localexecdir = issmdir() + '/execution'
+    if not os.path.isdir(localexecdir):
+        raise RuntimeError('Could not find directory ' + localexecdir)
+    elif len(os.listdir(localexecdir)) > 200:
+        warnings.warn(localexecdir + ' has more than 200 subdirectories. Consider cleaning up your execution directory')
+    root = localexecdir + '/' + md.private.runtimename
+    if os.path.isdir(root):
+        shutil.rmtree(root)
+    os.mkdir(root)
 
-    # If running QMU analysis, some preprocessing of Dakota files using model 
-    # fields needs to be carried out
+    # Figure out executable
+    executable = 'issm.exe'
     if md.qmu.isdakota:
         md = preqmu(md, options)
+        os.rename(md.miscellaneous.name + '.qmu.in', root + '/' + md.miscellaneous.name + '.qmu.in')
+        if float(IssmConfig('_DAKOTA_VERSION_')[0]) >= 6:
+            executable = 'issm_dakota.exe'
 
     # Write all input files
-    marshall(md, md.miscellaneous.name + '.bin')                   # bin file
-    md.toolkits.ToolkitsFile(md.miscellaneous.name + '.toolkits')  # toolkits file
-    cluster.BuildQueueScript(md, md.miscellaneous.name + '.queue') # queue file
+    basename = root + '/' + md.miscellaneous.name
+    marshall(md, basename + '.bin')                   # bin file
+    md.toolkits.ToolkitsFile(basename + '.toolkits')  # toolkits file
+    cluster.BuildQueueScript(md, basename + '.queue', executable) # queue file
 
-    # Upload all required files
-    modelname = md.miscellaneous.name
-    filelist = [modelname + '.bin', modelname + '.toolkits']
+    # List all required files
+    filelist = [basename + '.bin', basename + '.toolkits']
 
     if ispc():
-        filelist.append(modelname + '.bat')
+        filelist.append(basename + '.bat')
     else:
-        filelist.append(modelname + '.queue')
+        filelist.append(basename + '.queue')
 
     if md.qmu.isdakota:
-        filelist.append(modelname + '.qmu.in')
+        filelist.append(basename + '.qmu.in')
 
-    if isempty(restart):
+    if hasattr(cluster, 'interactive') and cluster.interactive:
+        open(basename + '.errlog', 'w').close()
+        open(basename + '.outlog', 'w').close()
+        filelist.append(basename + '.outlog')
+        filelist.append(basename + '.errlog')
+
+    # Upload input files if necessary
+    if isempty(restart) and cluster.name != oshostname():
         print('uploading input files')
         cluster.UploadQueueJob(md.miscellaneous.name, md.private.runtimename, filelist)
 

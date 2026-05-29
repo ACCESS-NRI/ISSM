@@ -51,23 +51,18 @@ classdef pace
 		
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
          %Get variables from md
          dirname         = md.private.runtimename;
          modelname       = md.miscellaneous.name;
          solution        = md.private.solution;
          io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
 
          %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(md.debug.valgrind) disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof)    disp('gprof not supported by cluster, ignoring...'); end
 
-			executable = 'issm.exe';
 
 			%write queuing script 
 			fid=fopen(filename, 'w');
@@ -92,35 +87,13 @@ classdef pace
 		end
 		%}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
-
-			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz '];
-			for i=1:numel(filelist),
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			system(compressstring);
-
-			%upload input files
-			issmscpout(cluster.name,cluster.executionpath,cluster.login,cluster.port,{[dirname '.tar.gz']});
-
+			cluster_defaults.UploadQueueJob(cluster,modelname,dirname,filelist);
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
-
-			%Execute Queue job
-			if ~isempty(restart)
-				launchcommand=['cd ' cluster.executionpath ' && cd ' dirname ' && sbatch ' modelname '.queue '];
-			else
-				launchcommand=['cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-					' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz  && sbatch ' modelname '.queue '];
-			end
-			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
+			cluster_defaults.LaunchQueueJobSbatch(cluster,modelname,dirname,filelist,restart,batch, 2);
 		end %}}}
 		function Download(cluster,dirname,filelist) % {{{
-
-			%copy files from cluster to current directory
-			directory=[cluster.executionpath '/' dirname '/'];
-			issmscpin(cluster.name,cluster.login,cluster.port,directory,filelist);
-
+			cluster_defaults.Download(cluster,dirname,filelist);
 		end %}}}
 	end
 end

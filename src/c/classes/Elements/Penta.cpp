@@ -2444,9 +2444,6 @@ void       Penta::ControlInputExtrude(int enum_type,int start){/*{{{*/
 	ElementInput* input  = this->inputs->GetControlInputData(enum_type,"value");
 	if(input->ObjectEnum()!=PentaInputEnum) _error_("not supported yet");
 	PentaInput* pentainput = xDynamicCast<PentaInput*>(input);
-	ElementInput* input2 = this->inputs->GetControlInputData(enum_type,"savedvalues");
-	if(input->ObjectEnum()!=PentaInputEnum) _error_("not supported yet");
-	PentaInput* pentainput2= xDynamicCast<PentaInput*>(input2);
 	/*FIXME: this should not be necessary*/
 	ElementInput* input3 = this->inputs->GetControlInputData(enum_type,"gradient");
 	if(input->ObjectEnum()!=PentaInputEnum) _error_("not supported yet");
@@ -2455,29 +2452,24 @@ void       Penta::ControlInputExtrude(int enum_type,int start){/*{{{*/
 	int lidlist[NUMVERTICES];
 	this->GetVerticesLidList(&lidlist[0]);
 	pentainput->Serve(NUMVERTICES,&lidlist[0]);
-	pentainput2->Serve(NUMVERTICES,&lidlist[0]);
 	pentainput3->Serve(NUMVERTICES,&lidlist[0]);
 
 	if(pentainput->GetInterpolation()==P1Enum){
 
 		/*Extrude values first*/
 		IssmDouble extrudedvalues[NUMVERTICES];
-		IssmDouble extrudedvalues2[NUMVERTICES];
 		IssmDouble extrudedvalues3[NUMVERTICES];
 
 		this->GetInputListOnVertices(&extrudedvalues[0],pentainput,0.);
-		this->GetInputListOnVertices(&extrudedvalues2[0],pentainput2,0.);
 		this->GetInputListOnVertices(&extrudedvalues3[0],pentainput3,0.);
 
 		if(start==-1){
 			for(int i=0;i<NUMVERTICES2D;i++) extrudedvalues[i+NUMVERTICES2D]=extrudedvalues[i];
-			for(int i=0;i<NUMVERTICES2D;i++) extrudedvalues2[i+NUMVERTICES2D]=extrudedvalues2[i];
 			for(int i=0;i<NUMVERTICES2D;i++) extrudedvalues3[i+NUMVERTICES2D]=extrudedvalues3[i]/2.; /*FIXME: this is just for NR*/
 			for(int i=0;i<NUMVERTICES2D;i++) extrudedvalues3[i]=extrudedvalues3[i]/2.; /*FIXME: this is just for NR*/
 		}
 		else{
 			for(int i=0;i<NUMVERTICES2D;i++) extrudedvalues[i]=extrudedvalues[i+NUMVERTICES2D];
-			for(int i=0;i<NUMVERTICES2D;i++) extrudedvalues2[i]=extrudedvalues2[i+NUMVERTICES2D];
 		}
 
 		/*Propagate to other Pentas*/
@@ -2492,7 +2484,6 @@ void       Penta::ControlInputExtrude(int enum_type,int start){/*{{{*/
 			int vertexlids[NUMVERTICES];
 			penta->GetVerticesLidList(&vertexlids[0]);
 			pentainput->SetInput(P1Enum,NUMVERTICES,&vertexlids[0],&extrudedvalues[0]);
-			pentainput2->SetInput(P1Enum,NUMVERTICES,&vertexlids[0],&extrudedvalues2[0]);
 			if(start==-1 && !penta->IsOnBase()){
 				pentainput3->SetInput(P1Enum,NUMVERTICES,&vertexlids[0],&extrudedvalues3[0]);
 			}
@@ -2557,33 +2548,6 @@ void       Penta::InputExtrude(int enum_type,int start){/*{{{*/
 	}
 	else{
 		_error_("interpolation "<<EnumToStringx(pentainput->GetInterpolation())<<" not implemented yet (while trying to extrude "<<EnumToStringx(enum_type)<<")");
-	}
-}
-/*}}}*/
-void       Penta::InputUpdateFromIoModel(int index,IoModel* iomodel){ /*{{{*/
-
-	/*Intermediaries*/
-	int         i,j;
-	int         penta_vertex_ids[NUMVERTICES];
-	IssmDouble  nodeinputs[NUMVERTICES];
-	IssmDouble  cmmininputs[NUMVERTICES];
-	IssmDouble  cmmaxinputs[NUMVERTICES];
-
-	IssmDouble  yts;
-	bool    control_analysis;
-	char**  controls = NULL;
-	int     num_control_type,num_responses;
-
-	/*Fetch parameters: */
-	iomodel->FindConstant(&yts,"md.constants.yts");
-	iomodel->FindConstant(&control_analysis,"md.inversion.iscontrol");
-	if(control_analysis) iomodel->FindConstant(&num_control_type,"md.inversion.num_control_parameters");
-	if(control_analysis) iomodel->FindConstant(&num_responses,"md.inversion.num_cost_functions");
-
-	/*Recover vertices ids needed to initialize inputs*/
-	_assert_(iomodel->elements);
-	for(i=0;i<NUMVERTICES;i++){
-		penta_vertex_ids[i]=iomodel->elements[NUMVERTICES*index+i]; //ids for vertices are in the elements array from Matlab
 	}
 }
 /*}}}*/

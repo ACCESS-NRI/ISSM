@@ -54,10 +54,10 @@ classdef SMBdebrisEvatt
 			self.airhumidity=project3d(md,'vector',self.airhumidity,'type','node');
 			self.temperature_anomaly=project3d(md,'vector',self.temperature_anomaly,'type','node');
                         self.precipitation_anomaly=project3d(md,'vector',self.precipitation_anomaly,'type','node');
-			self.dsradiation_anomaly=project3d(md,'vector',self.temperature_anomaly,'type','node');
-	                self.dlradiation_anomaly=project3d(md,'vector',self.temperature_anomaly,'type','node');
-         	        self.windspeed_anomaly=project3d(md,'vector',self.temperature_anomaly,'type','node');
-                	self.airhumidity_anomaly=project3d(md,'vector',self.temperature_anomaly,'type','node');
+			self.dsradiation_anomaly=project3d(md,'vector',self.dsradiation_anomaly,'type','node');
+	                self.dlradiation_anomaly=project3d(md,'vector',self.dlradiation_anomaly,'type','node');
+         	        self.windspeed_anomaly=project3d(md,'vector',self.windspeed_anomaly,'type','node');
+                	self.airhumidity_anomaly=project3d(md,'vector',self.airhumidity_anomaly,'type','node');
 
 			self.s0t=project3d(md,'vector',self.s0t,'type','node');
 			self.snowheight=project3d(md,'vector',self.snowheight,'type','node');
@@ -68,7 +68,7 @@ classdef SMBdebrisEvatt
 		end % }}}
 		function self = initialize(self,md) % {{{
 
-			if isnan(self.s0t),
+			if isnan(self.s0t)
 				self.s0t=zeros(md.mesh.numberofvertices,1);
 				disp('      no SMBdebrisEvatt.s0t specified: values set as zero');
 			end
@@ -95,7 +95,7 @@ classdef SMBdebrisEvatt
 
 			if (strcmp(solution,'TransientSolution') & md.transient.issmb == 0), return; end
 
-			if ismember('MasstransportAnalysis',analyses),
+			if ismember('MasstransportAnalysis',analyses)
 				md = checkfield(md,'fieldname','smb.temperature','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 365]);
 				md = checkfield(md,'fieldname','smb.precipitation','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 365]);
 				md = checkfield(md,'fieldname','smb.dsradiation','NaN',1,'Inf',1,'size',[md.mesh.numberofvertices 365]);
@@ -193,7 +193,7 @@ classdef SMBdebrisEvatt
 			%process requested outputs
 			outputs = self.requested_outputs;
 			pos  = find(ismember(outputs,'default'));
-			if ~isempty(pos),
+			if ~isempty(pos)
 				outputs(pos) = [];                         %remove 'default' from outputs
 				outputs      = [outputs defaultoutputs(self,md)]; %add defaults
 			end

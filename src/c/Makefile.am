@@ -1,5 +1,5 @@
-AM_CPPFLAGS = @NEOPZINCL@ @DAKOTAINCL@ @TRIANGLEINCL@ @PETSCINCL@ @AMPIINCL@ @MEDIPACKINCL@ @MPIINCL@ @PARMETISINCL@ @METISINCL@ @CHACOINCL@ @PLAPACKINCL@ @MKLINCL@ @MUMPSINCL@ @SPAIINCL@ @HYPREINCL@ @PROMETHEUSINCL@ @SUPERLUINCL@ @SPOOLESINCL@ @PASTIXINCL@ @MLINCL@ @TAOINCL@ @ADOLCINCL@ @CODIPACKINCL@ @ADJOINTPETSCINCL@ @GSLINCL@ @BOOSTINCL@ @ESMFINCL@ @PROJINCL@ @MPLAPACKINCL@
-AM_FCFLAGS = @SEMICINCL@
+AM_CPPFLAGS = @NEOPZINCL@ @DAKOTAINCL@ @TRIANGLEINCL@ @PETSCINCL@ @AMPIINCL@ @MEDIPACKINCL@ @MPIINCL@ @PARMETISINCL@ @METISINCL@ @CHACOINCL@ @PLAPACKINCL@ @MKLINCL@ @MUMPSINCL@ @SPAIINCL@ @HYPREINCL@ @PROMETHEUSINCL@ @SUPERLUINCL@ @SPOOLESINCL@ @PASTIXINCL@ @MLINCL@ @TAOINCL@ @ADOLCINCL@ @CODIPACKINCL@ @ADJOINTPETSCINCL@ @GSLINCL@ @BOOSTINCL@ @ESMFINCL@ @PROJINCL@ @MPLAPACKINCL@ @PyBind11INCL@
+AM_FCFLAGS = 
 
 AUTOMAKE_OPTIONS = subdir-objects
 
@@ -170,6 +170,7 @@ issm_sources += \
 	./shared/Numerics/Interpolation.cpp \
 	./shared/Exceptions/Exceptions.cpp \
 	./shared/Sorting/binary_search.cpp \
+	./shared/Semic/Semic.cpp \
 	./shared/Elements/Cuffey.cpp \
 	./shared/Elements/BuddJacka.cpp \
 	./shared/Elements/CuffeyTemperate.cpp \
@@ -305,10 +306,12 @@ issm_sources += \
 	./modules/RheologyBbarAbsGradientx/RheologyBbarAbsGradientx.cpp \
 	./modules/RheologyBAbsGradientx/RheologyBAbsGradientx.cpp \
 	./shared/Numerics/BrentSearch.cpp \
+	./shared/m1qn3/m1qn3.cpp \
 	./cores/control_core.cpp \
 	./cores/controltao_core.cpp \
 	./cores/controlm1qn3_core.cpp \
 	./cores/controladm1qn3_core.cpp \
+	./cores/controlnudging_core.cpp \
 	./cores/controlvalidation_core.cpp \
 	./cores/adjointstressbalance_core.cpp \
 	./cores/adjointbalancethickness_core.cpp \
@@ -585,6 +588,12 @@ if OCEAN
 issm_sources += ./modules/OceanExchangeDatax/OceanExchangeDatax.cpp
 endif
 #}}}
+# PyBind11{{{
+if PyBind11
+issm_sources += ./classes/Params/EmulatorParam.cpp
+issm_sources += ./modules/StressBalanceEmulatorx/StressBalanceEmulatorx.cpp
+endif
+#}}}
 # Sampling sources {{{
 if SAMPLING
 issm_sources += \
@@ -624,14 +633,6 @@ endif
 # Esmf sources {{{
 if ESMF
 issm_sources += ./main/esmfbinders.cpp
-endif
-#}}}
-# SEMIC sources {{{
-if SEMIC
-if FORTRAN
-issm_sources += ./modules/SurfaceMassBalancex/run_semic.f90
-issm_sources += ./modules/SurfaceMassBalancex/run_semic_transient.f90
-endif
 endif
 #}}}
 # Wrapper sources
@@ -708,7 +709,7 @@ endif
 libISSMCore_la_SOURCES  = $(issm_sources)
 libISSMCore_la_CXXFLAGS = $(ALL_CXXFLAGS)
 libISSMCore_la_FFLAGS = $(AM_FFLAGS)
-libISSMCore_LIB_ADD = $(CHACOLIB) $(DAKOTALIB) $(PETSCLIB) $(MUMPSLIB) $(SCALAPACKLIB) $(BLASLAPACKLIB) $(PARMETISLIB) $(METISLIB) $(HDF5LIB) $(TAOLIB) $(M1QN3LIB) $(SEMICLIB) $(PLAPACKLIB) $(MPLAPACKLIB) $(SUPERLULIB) $(SPOOLESLIB) $(BLACSLIB) $(HYPRELIB) $(SPAILIB) $(PROMETHEUSLIB) $(PASTIXLIB) $(MLLIB) $(MKLLIB) $(MPILIB) $(MATHLIB) $(GRAPHICSLIB) $(MULTITHREADINGLIB) $(GSLLIB) $(ADOLCLIB) $(AMPILIB) $(PROJLIB) $(ADJOINTPETSCLIB)
+libISSMCore_LIB_ADD = $(CHACOLIB) $(DAKOTALIB) $(PETSCLIB) $(MUMPSLIB) $(SCALAPACKLIB) $(BLASLAPACKLIB) $(PARMETISLIB) $(METISLIB) $(HDF5LIB) $(TAOLIB) $(PLAPACKLIB) $(MPLAPACKLIB) $(SUPERLULIB) $(SPOOLESLIB) $(BLACSLIB) $(HYPRELIB) $(SPAILIB) $(PROMETHEUSLIB) $(PASTIXLIB) $(MLLIB) $(MKLLIB) $(MPILIB) $(MATHLIB) $(GRAPHICSLIB) $(MULTITHREADINGLIB) $(GSLLIB) $(ADOLCLIB) $(AMPILIB) $(PROJLIB) $(ADJOINTPETSCLIB)
 if FORTRAN
 libISSMCore_LIB_ADD += $(FLIBS) $(FORTRANLIB)
 endif
@@ -854,7 +855,7 @@ LDADD += ./libISSMModules.la $(TRIANGLELIB)
 endif
 
 # External packages
-LDADD += $(DAKOTALIB) $(SEMICLIB) $(M1QN3LIB) $(CHACOLIB) $(PETSCLIB) $(MUMPSLIB) $(SCALAPACKLIB) $(BLASLAPACKLIB) $(PARMETISLIB) $(METISLIB) $(NEOPZLIB) $(TAOLIB) $(PLAPACKLIB) $(MPLAPACKLIB) $(SUPERLULIB) $(SPOOLESLIB) $(BLACSLIB) $(HDF5LIB) $(HYPRELIB) $(SPAILIB) $(PROMETHEUSLIB) $(PASTIXLIB) $(MLLIB) $(MKLLIB) $(MATHLIB) $(GRAPHICSLIB) $(MULTITHREADINGLIB) $(GSLLIB) $(AMPILIB) $(ADOLCLIB) $(MPILIB) $(ESMFLIB)
+LDADD += $(DAKOTALIB) $(CHACOLIB) $(PETSCLIB) $(MUMPSLIB) $(SCALAPACKLIB) $(BLASLAPACKLIB) $(PARMETISLIB) $(METISLIB) $(NEOPZLIB) $(TAOLIB) $(PLAPACKLIB) $(MPLAPACKLIB) $(SUPERLULIB) $(SPOOLESLIB) $(BLACSLIB) $(HDF5LIB) $(HYPRELIB) $(SPAILIB) $(PROMETHEUSLIB) $(PASTIXLIB) $(MLLIB) $(MKLLIB) $(MATHLIB) $(GRAPHICSLIB) $(MULTITHREADINGLIB) $(GSLLIB) $(AMPILIB) $(ADOLCLIB) $(MPILIB) $(ESMFLIB)
 
 if FORTRAN
 LDADD += $(FLIBS) $(FORTRANLIB)

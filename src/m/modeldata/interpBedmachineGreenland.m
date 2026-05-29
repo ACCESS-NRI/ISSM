@@ -15,17 +15,14 @@ function output = interpBedmachineGreenland(X,Y,string,method,ncdate)
 %             Supported interpolation methos: 'linear','cubic','nearest'
 %   - optional 5th input argument: path to dataset.
 %
-% Version 11/30/2018 Mathieu Morlighem mmorligh@uci.edu
+% Version 11/30/2018 Mathieu Morlighem mmorligh@dartmouth.edu
 
 if nargin<5
-	%ncdate='2015-04-27'; %BedMachine v2
+	ncdate='2015-04-27'; %BedMachine v2
 	ncdate='2017-09-25'; %BedMachine v3
-	ncdate='2020-04-14';
-	ncdate='2021-08-27';
-	ncdate='2022-03-17';
-	ncdate='2022-05-18';
-	ncdate='2022-07-28';
-	ncdate='v6.6'; %BedMachine v6
+	ncdate='2021-01-09'; %BedMachine v4
+	ncdate='2022-07-28'; %BedMachine v5
+	ncdate='v6.6';       %BedMachine v6
 end
 if nargin<4
 	if strcmp(string,'mask') | strcmp(string,'source')
@@ -90,7 +87,7 @@ data(find(data==-9999))=NaN;
 
 disp(['   -- BedMachine Greenland: interpolating ' string]);
 disp(['       -- Interpolation method: ' method]);
-if strcmp(string,'mask') | strcmp(string,'source'),
+if strcmp(string,'mask') | strcmp(string,'source')
 	%Need nearest neighbor to avoid interpolation between 0 and 2
 	output = InterpFromGrid(xdata,ydata,data,double(X),double(Y),'nearest');
 else
@@ -113,7 +110,7 @@ function zi = FastInterp(x,y,data,xi,yi,method)
 	% Fill Zi with NaNs
 	zi = NaN(size(xi));
 
-	if strcmpi(method,'nearest'),
+	if strcmpi(method,'nearest')
 		% Find the nearest point in index space
 		rxi = round(xi)+1;  ryi = round(yi)+1;
 		% Find points that are in X,Y range

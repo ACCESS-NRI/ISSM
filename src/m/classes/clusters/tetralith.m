@@ -71,39 +71,19 @@ classdef tetralith
 			numprocs=self.numnodes*self.cpuspernode;
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
+			%Get variables from md
+			dirname   = md.private.runtimename;
+			modelname = md.miscellaneous.name;
+			solution  = md.private.solution;
+			io_gather = md.settings.io_gather;
 
-         %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			%checks
+			if(md.debug.valgrind) disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof)    disp('gprof not supported by cluster, ignoring...'); end
 
-			executable='issm.exe';
-			if isdakota,
-				version=IssmConfig('_DAKOTA_VERSION_'); version=str2num(version(1:3));
-				if (version>=6),
-					executable='issm_dakota.exe';
-				end
-			end
-			if isoceancoupling,
-				executable='issm_ocean.exe';
-			end
-
-			%compute number of processors
-% 			cluster.np=cluster.numnodes*cluster.cpuspernode;
-			nprocs(cluster);%=cluster.numnodes*cluster.cpuspernode;
-% 			shortname = substring(modelname,1,min(12,length(modelname)));
-
-			%write queuing script 
+			%write queuing script
 			fid=fopen(filename, 'w');
 			fprintf(fid,'#!/bin/bash\n');
 			fprintf(fid,'#\n');
@@ -128,7 +108,7 @@ classdef tetralith
 			fprintf(fid,'source $ISSM_DIR/etc/environment.sh\n');       %FIXME
 			fprintf(fid,'cd %s/%s\n\n',cluster.executionpath,dirname);
 % 			fprintf(fid,'mpiexec -np %i %s/%s %s %s %s\n',cluster.nprocs(),cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
-			fprintf(fid,'mpiexec -np %i %s/issm.exe %s %s %s\n',cluster.nprocs(),cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
+			fprintf(fid,'mpiexec -np %i %s/%s %s %s %s\n',cluster.nprocs(),cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
 % 			fprintf(fid,'mpirun -np %i %s/issm.exe %s %s %s\n',cluster.nprocs(),cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
 % 			fprintf(fid,'mpiexec_mpt -np %i %s/%s %s %s %s\n',cluster.nprocs(),cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
 
@@ -140,7 +120,7 @@ classdef tetralith
 			%in interactive mode, create a run file, and errlog and outlog file
 			if cluster.interactive
 				fid=fopen([filename '.run'],'w');
-				fprintf(fid,'mpiexec_mpt -np %i %s/issm.exe %s %s %s\n',cluster.nprocs(),cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
+				fprintf(fid,'mpiexec_mpt -np %i %s/%s %s %s %s\n',cluster.nprocs(),cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
 				if ~io_gather, %concatenate the output files:
 					fprintf(fid,'cat %s.outbin.* > %s.outbin',modelname,modelname);
 				end
@@ -150,34 +130,13 @@ classdef tetralith
 			end
 		end %}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
-
-			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz '];
-			for i=1:numel(filelist),
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			system(compressstring);
-			%upload input files
-			directory=cluster.executionpath;
-% 			issmbbftpout(cluster.name,directory,cluster.login,cluster.port,cluster.numstreams,{[dirname '.tar.gz']});
-			issmscpout(cluster.name,directory,cluster.login,cluster.port,{[dirname '.tar.gz']});
-
-		end
-		%}}}
+			cluster_defaults.UploadQueueJob(cluster,modelname,dirname,filelist);
+		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
-
-			%Execute Queue job
-			launchcommand=['cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-				' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz  && hostname && sbatch ' modelname '.queue '];
-
-			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
+			cluster_defaults.LaunchQueueJobSbatch(cluster,modelname,dirname,filelist,restart,batch, 2);
 		end %}}}
 		function Download(cluster,dirname,filelist) % {{{
-
-			%copy files from cluster to current directory
-			directory=[cluster.executionpath '/' dirname '/'];
-			issmscpin(cluster.name,cluster.login,cluster.port,directory,filelist);
-
+			cluster_defaults.Download(cluster,dirname,filelist);
 		end %}}}
 	end
 end

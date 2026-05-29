@@ -10,7 +10,8 @@ classdef frontera
 		% {{{
 		name          = 'frontera'
 		login         = '';
-		modules        = {'intel/23.1.0', 'impi/21.9.0', 'petsc/3.21'};
+		allocation    = ''
+		modules       = {'intel/23.1.0', 'impi/21.9.0', 'petsc/3.21'};
 		numnodes      = 4;
 		cpuspernode   = 56;
 		port          = 0;
@@ -38,6 +39,7 @@ classdef frontera
 			disp(sprintf('class ''%s'' object ''%s'' = ',class(cluster),inputname(1)));
 			disp(sprintf('    name: %s',cluster.name));
 			disp(sprintf('    login: %s',cluster.login));
+			disp(sprintf('    allocation: %s',cluster.allocation));
 			disp(sprintf('    modules: %s',strjoin(cluster.modules,', ')));
 			disp(sprintf('    port: %i',cluster.port));
 			disp(sprintf('    numnodes: %i',cluster.numnodes));
@@ -68,6 +70,7 @@ classdef frontera
 
 			%Miscellaneous
 			if isempty(cluster.login), md = checkmessage(md,'login empty'); end
+			if isempty(cluster.allocation), md = checkmessage(md,'allocation empty'); end
 			if isempty(cluster.codepath), md = checkmessage(md,'codepath empty'); end
 			if isempty(cluster.executionpath), md = checkmessage(md,'executionpath empty'); end
 		end
@@ -79,14 +82,12 @@ classdef frontera
          modelname       = md.miscellaneous.name;
          solution        = md.private.solution;
          io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
 
          %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			if(md.debug.valgrind) disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof)    disp('gprof not supported by cluster, ignoring...'); end
+
+			error('Needs to be updated, look at BuildQueueScript');
 
 			%write queuing script 
 			fid=fopen(filename, 'w');
@@ -108,52 +109,38 @@ classdef frontera
 			fclose(fid);
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
+			%Get variables from md
+			dirname   = md.private.runtimename;
+			modelname = md.miscellaneous.name;
+			solution  = md.private.solution;
+			io_gather = md.settings.io_gather;
 
-         %checks
-			if(isvalgrind) disp('valgrind not supported by cluster, ignoring...'); end
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			%checks
+			if(md.debug.valgrind) disp('valgrind not supported by cluster, ignoring...'); end
+			if(md.debug.gprof)    disp('gprof not supported by cluster, ignoring...'); end
 
-			executable='issm.exe';
-			if isdakota
-				version=IssmConfig('_DAKOTA_VERSION_'); version=str2num(version(1:3));
-				if (version>=6)
-					executable='issm_dakota.exe';
-				end
-			end
-			if isoceancoupling
-				executable='issm_ocean.exe';
-			end
-
-			%write queuing script 
+			%write queuing script
 			fid=fopen(filename, 'w');
 			fprintf(fid,'#!/bin/bash\n');
 			fprintf(fid,'#SBATCH -J %s \n',modelname);
+			fprintf(fid,'#SBATCH -A %s \n', cluster.allocation);
 			fprintf(fid,'#SBATCH -p %s \n',cluster.queue);
 			fprintf(fid,'#SBATCH -o %s.outlog \n',modelname);
 			fprintf(fid,'#SBATCH -e %s.errlog \n',modelname);
 			fprintf(fid,'#SBATCH -n %i \n',cluster.numnodes*max(cluster.nprocs()/cluster.numnodes,56));
 			fprintf(fid,'#SBATCH -N %i \n',cluster.numnodes);
-			fprintf(fid,'#SBATCH -t %02i:00:00 \n\n',ceil(cluster.time));
+			fprintf(fid,'#SBATCH -t %i:00:00 \n\n',ceil(cluster.time));
 			if length(find(cluster.email=='@'))>0
 				fprintf(fid,'#SBATCH --mail-user=%s \n',cluster.email);
 				fprintf(fid,'#SBATCH --mail-type=all \n\n');
 			end
-			for i=1:numel(cluster.modules),
+			for i=1:numel(cluster.modules)
 				fprintf(fid,['module load ' cluster.modules{i} '\n']);
 			end
 
-			if isdakota
+			if strcmp(executable,'issm_dakota.exe')
 				fprintf(fid,'export KMP_AFFINITY="granularity=fine,compact,verbose" \n\n');
 			end
 
@@ -170,7 +157,7 @@ classdef frontera
 			%in interactive mode, create a run file, and errlog and outlog file
 			if cluster.interactive
 				fid=fopen([modelname '.run'],'w');
-				fprintf(fid,'ibrun -np %i %s/%s %s %s %s\n',cluster.nprocs(),executable,cluster.codepath,solution,[cluster.executionpath '/' dirname],modelname);
+				fprintf(fid,'ibrun -np %i %s/%s %s %s %s\n',cluster.nprocs(),cluster.codepath,executable,solution,[cluster.executionpath '/' dirname],modelname);
 				if ~io_gather, %concatenate the output files:
 					fprintf(fid,'cat %s.outbin.* > %s.outbin',modelname,modelname);
 				end
@@ -180,38 +167,13 @@ classdef frontera
 			end
 		end %}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
-
-			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz '];
-			for i=1:numel(filelist),
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			if cluster.interactive,
-				compressstring = [compressstring ' ' modelname '.errlog ' modelname '.outlog '];
-			end
-			system(compressstring);
-
-			%upload input files
-			issmscpout(cluster.name,cluster.executionpath,cluster.login,cluster.port,{[dirname '.tar.gz']});
-
+			cluster_defaults.UploadQueueJob(cluster,modelname,dirname,filelist);
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
-
-			%Execute Queue job
-			if ~isempty(restart)
-				launchcommand=['cd ' cluster.executionpath ' && cd ' dirname ' && hostname && sbatch ' modelname '.queue '];
-			else
-				launchcommand=['cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-					' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz  && hostname && sbatch ' modelname '.queue '];
-			end
-			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
+			cluster_defaults.LaunchQueueJobSbatch(cluster,modelname,dirname,filelist,restart,batch);
 		end %}}}
 		function Download(cluster,dirname,filelist) % {{{
-
-			%copy files from cluster to current directory
-			directory=[cluster.executionpath '/' dirname '/'];
-			issmscpin(cluster.name,cluster.login,cluster.port,directory,filelist, 2);%use {} instead of \{\}
-
+			cluster_defaults.Download(cluster,dirname,filelist);
 		end %}}}
 	end
 end

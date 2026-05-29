@@ -71,28 +71,13 @@ classdef yellowstone
 
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
-
-			executable='issm.exe';
-			if isdakota
-				version=IssmConfig('_DAKOTA_VERSION_'); version=str2num(version(1:3));
-				if (version>=6),
-					executable='issm_dakota.exe';
-				end
-			end
-			if isoceancoupling
-				executable='issm_ocean.exe';
-			end
+			%Get variables from md
+			dirname   = md.private.runtimename;
+			modelname = md.miscellaneous.name;
+			solution  = md.private.solution;
+			io_gather = md.settings.io_gather;
 
 
 			%write queuing script 
@@ -107,7 +92,7 @@ classdef yellowstone
 			fprintf(fid,'#BSUB -q %s\n',cluster.queue);
 
 			fprintf(fid,'module purge\n');
-			for i=1:length(cluster.modules),
+			for i=1:length(cluster.modules)
 				fprintf(fid,'module load %s\n',cluster.modules{i});
 			end
 
@@ -128,21 +113,8 @@ classdef yellowstone
 			fclose(fid);
 		end %}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
-
-			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz '];
-			for i=1:numel(filelist),
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			system(compressstring);
-
-			%upload input files
-			directory=cluster.executionpath;
-
-			issmscpout(cluster.name,directory,cluster.login,cluster.port,{[dirname '.tar.gz']});
-
-		end
-		%}}}
+			cluster_defaults.UploadQueueJob(cluster,modelname,dirname,filelist);
+		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
 
 			%launch command, to be executed via ssh
@@ -154,11 +126,7 @@ classdef yellowstone
 		end
 		%}}}
 		function Download(cluster,dirname,filelist) % {{{
-
-			%copy files from cluster to current directory
-			directory=[cluster.executionpath '/' dirname '/'];
-			issmscpin(cluster.name,cluster.login,cluster.port,directory,filelist);
-
+			cluster_defaults.Download(cluster,dirname,filelist);
 		end %}}}
 	end
 end

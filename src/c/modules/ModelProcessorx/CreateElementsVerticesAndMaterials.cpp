@@ -43,7 +43,6 @@ void CreateElements(Elements* elements,IoModel* iomodel,const int nummodels){/*{
 	_assert_(elements->Size()==0);
 
 	/*Create elements*/
-	if(control_analysis && !adolc_analysis)iomodel->FetchData(2,"md.inversion.min_parameters","md.inversion.max_parameters");
 	if(iomodel->domaintype==Domain2DverticalEnum || iomodel->domaindim==3)  iomodel->FetchData(2,"md.mesh.vertexonbase","md.mesh.vertexonsurface");
 
 	int count = 0;
@@ -78,7 +77,7 @@ void CreateElements(Elements* elements,IoModel* iomodel,const int nummodels){/*{
 	}
 
 	/*Free data: */
-	iomodel->DeleteData(6,"md.mesh.upperelements","md.mesh.lowerelements","md.inversion.min_parameters","md.inversion.max_parameters","md.mesh.vertexonbase","md.mesh.vertexonsurface");
+	iomodel->DeleteData(4,"md.mesh.upperelements","md.mesh.lowerelements","md.mesh.vertexonbase","md.mesh.vertexonsurface");
 
 }/*}}}*/
 void CreateMaterials(Elements* elements,Inputs* inputs,Materials* materials,IoModel* iomodel,const int nummodels){/*{{{*/
@@ -450,12 +449,15 @@ void CreateVertices(Elements* elements,Vertices* vertices,IoModel* iomodel,int s
 	if(solution_type!=LoveSolutionEnum) CreateNumberNodeToElementConnectivity(iomodel);
 	if(!isamr){
 		int isoceancoupling;
+		int smb_model;
 		iomodel->FindConstant(&isoceancoupling,"md.transient.isoceancoupling");
+		iomodel->FindConstant(&smb_model,"md.smb.model");
 
 		//iomodel->FetchData(6,"md.mesh.x","md.mesh.y","md.mesh.z","md.geometry.base","md.geometry.thickness","md.mask.ice_levelset");
 		iomodel->FetchData(5,"md.mesh.x","md.mesh.y","md.mesh.z","md.geometry.base","md.geometry.thickness");
 		if (iomodel->domaintype == Domain3DsurfaceEnum) iomodel->FetchData(3,"md.mesh.lat","md.mesh.long","md.mesh.r");
 		if (isoceancoupling) iomodel->FetchData(2,"md.mesh.lat","md.mesh.long");
+		if (smb_model==SMBmariaEnum) iomodel->FetchData(2,"md.mesh.lat","md.mesh.long");
 
 		for(int i=0;i<iomodel->numberofvertices;i++){
 			if(vertices_offsets[i]!=-1){
@@ -469,6 +471,7 @@ void CreateVertices(Elements* elements,Vertices* vertices,IoModel* iomodel,int s
 		iomodel->DeleteData(5,"md.mesh.x","md.mesh.y","md.mesh.z","md.geometry.base","md.geometry.thickness");
 		if (iomodel->domaintype == Domain3DsurfaceEnum) iomodel->DeleteData(3,"md.mesh.lat","md.mesh.long","md.mesh.r");
 		if (isoceancoupling) iomodel->DeleteData(2,"md.mesh.lat","md.mesh.long");
+		if (smb_model==SMBmariaEnum) iomodel->DeleteData(2,"md.mesh.lat","md.mesh.long");
 	}
 	else{
 		for(int i=0;i<iomodel->numberofvertices;i++){

@@ -85,6 +85,8 @@ syn keyword cConstant BasalforcingsIsmip6Gamma0Enum
 syn keyword cConstant BasalforcingsIsmip6IsLocalEnum
 syn keyword cConstant BasalforcingsIsmip6NumBasinsEnum
 syn keyword cConstant BasalforcingsIsmip6TfDepthsEnum
+syn keyword cConstant BasalforcingsIsmip7DeltaTEnum
+syn keyword cConstant BasalforcingsIsmip7IsLocalEnum
 syn keyword cConstant BasalforcingsIsmip7TfDepthsEnum
 syn keyword cConstant BasalforcingsIsmip7NumBasinsEnum
 syn keyword cConstant BasalforcingsIsmip7GammaEnum
@@ -351,6 +353,7 @@ syn keyword cConstant InversionNumControlParametersEnum
 syn keyword cConstant InversionNumCostFunctionsEnum
 syn keyword cConstant InversionStepThresholdEnum
 syn keyword cConstant InversionStopFlagEnum
+syn keyword cConstant InversionTauCEnum
 syn keyword cConstant InversionTypeEnum
 syn keyword cConstant IoConstantEnum
 syn keyword cConstant IvinsEnum
@@ -488,6 +491,9 @@ syn keyword cConstant SealevelchangeGeometryDoneEnum
 syn keyword cConstant SealevelchangeViscousNumStepsEnum
 syn keyword cConstant SealevelchangeViscousTimesEnum
 syn keyword cConstant SealevelchangeViscousIndexEnum
+syn keyword cConstant SealevelchangeViscousSamplingEnum
+syn keyword cConstant SealevelchangeViscousSamplingLengthEnum
+syn keyword cConstant SealevelchangeViscousSamplingIndexEnum
 syn keyword cConstant SealevelchangeViscousPolarMotionEnum
 syn keyword cConstant SealevelchangeRunCountEnum
 syn keyword cConstant SealevelchangeTransitionsEnum
@@ -616,6 +622,8 @@ syn keyword cConstant SmbIsdeltaLWupEnum
 syn keyword cConstant SmbIsfirnwarmingEnum
 syn keyword cConstant SmbIsgraingrowthEnum
 syn keyword cConstant SmbIsmappedforcingEnum
+syn keyword cConstant SmbIsmappingusingneighborsEnum
+syn keyword cConstant SmbIsmappingneighborxyEnum
 syn keyword cConstant SmbIsmeltEnum
 syn keyword cConstant SmbIsmungsmEnum
 syn keyword cConstant SmbIsprecipforcingremappedEnum
@@ -629,6 +637,8 @@ syn keyword cConstant SmbKEnum
 syn keyword cConstant SmbLapsedlwrfValueEnum
 syn keyword cConstant SmbLapseRatesEnum
 syn keyword cConstant SmbLapseTaValueEnum
+syn keyword cConstant SmbLatMappedforcingEnum
+syn keyword cConstant SmbLonMappedforcingEnum
 syn keyword cConstant SmbLWgradEnum
 syn keyword cConstant SmbMappedforcingelevationEnum
 syn keyword cConstant SmbNumBasinsEnum
@@ -668,6 +678,7 @@ syn keyword cConstant SmbT0dryEnum
 syn keyword cConstant SmbT0wetEnum
 syn keyword cConstant SmbTaParamEnum
 syn keyword cConstant SmbTcIdxEnum
+syn keyword cConstant SmbTeDefaultEnum
 syn keyword cConstant SmbTeThreshEnum
 syn keyword cConstant SmbTdiffEnum
 syn keyword cConstant SmbThermoDeltaTScalingEnum
@@ -679,6 +690,8 @@ syn keyword cConstant SmbVParamEnum
 syn keyword cConstant SmbVmeanParamEnum
 syn keyword cConstant SmbVzParamEnum
 syn keyword cConstant SmbWindspeedgradEnum
+syn keyword cConstant SmbXMappedforcingEnum
+syn keyword cConstant SmbYMappedforcingEnum
 syn keyword cConstant SmoothThicknessMultiplierEnum
 syn keyword cConstant SolutionTypeEnum
 syn keyword cConstant SteadystateMaxiterEnum
@@ -691,6 +704,10 @@ syn keyword cConstant StressbalanceAbstolEnum
 syn keyword cConstant StressbalanceFSreconditioningEnum
 syn keyword cConstant StressbalanceIsHydrologyLayerEnum
 syn keyword cConstant StressbalanceIsnewtonEnum
+syn keyword cConstant StressbalanceIsemulatorEnum
+syn keyword cConstant EdgesNumberEnum
+syn keyword cConstant EdgesSrcEnum
+syn keyword cConstant EdgesDstEnum
 syn keyword cConstant StressbalanceMaxiterEnum
 syn keyword cConstant StressbalanceNumRequestedOutputsEnum
 syn keyword cConstant StressbalancePenaltyFactorEnum
@@ -755,6 +772,9 @@ syn keyword cConstant YyeEnum
 syn keyword cConstant ZzeEnum
 syn keyword cConstant AreaeEnum
 syn keyword cConstant WorldCommEnum
+syn keyword cConstant FrictionEmulatorEnum
+syn keyword cConstant SmbEmulatorEnum
+syn keyword cConstant StressbalanceEmulatorEnum
 syn keyword cConstant ParametersENDEnum
 syn keyword cConstant InputsSTARTEnum
 syn keyword cConstant AccumulatedDeltaBottomPressureEnum
@@ -798,6 +818,7 @@ syn keyword cConstant BasalforcingsIsmip6BasinIdEnum
 syn keyword cConstant BasalforcingsIsmip6TfEnum
 syn keyword cConstant BasalforcingsIsmip6TfShelfEnum
 syn keyword cConstant BasalforcingsIsmip6MeltAnomalyEnum
+syn keyword cConstant BasalforcingsIsmip7BasinIdEnum
 syn keyword cConstant BasalforcingsIsmip7TfEnum
 syn keyword cConstant BasalforcingsIsmip7TfShelfEnum
 syn keyword cConstant BasalforcingsIsmip7SalinityEnum
@@ -1195,7 +1216,10 @@ syn keyword cConstant SmbHSnowEnum
 syn keyword cConstant SmbHSnowInitEnum
 syn keyword cConstant SmbHrefEnum
 syn keyword cConstant SmbIsInitializedEnum
+syn keyword cConstant SmbLatEnum
+syn keyword cConstant SmbLonEnum
 syn keyword cConstant SmbMAddEnum
+syn keyword cConstant SmbMappedforcingneighborsEnum
 syn keyword cConstant SmbMappedforcingpointEnum
 syn keyword cConstant SmbMappedforcingprecipscalingEnum
 syn keyword cConstant SmbMassBalanceEnum
@@ -1204,12 +1228,16 @@ syn keyword cConstant SmbMassBalanceIceEnum
 syn keyword cConstant SmbMassBalanceSubstepEnum
 syn keyword cConstant SmbMassBalanceTransientEnum
 syn keyword cConstant SmbMaskEnum
+syn keyword cConstant SmbMaxXEnum
+syn keyword cConstant SmbMaxYEnum
 syn keyword cConstant SmbMeanLHFEnum
 syn keyword cConstant SmbMeanSHFEnum
 syn keyword cConstant SmbMeanULWEnum
 syn keyword cConstant SmbMeanTemperatureEnum
 syn keyword cConstant SmbMeltEnum
 syn keyword cConstant SmbMeltSubstepEnum
+syn keyword cConstant SmbMinXEnum
+syn keyword cConstant SmbMinYEnum
 syn keyword cConstant SmbMonthlytemperaturesEnum
 syn keyword cConstant SmbMonthlydsradiationEnum
 syn keyword cConstant SmbMonthlydlradiationEnum
@@ -1226,6 +1254,7 @@ syn keyword cConstant SmbPddfacSnowEnum
 syn keyword cConstant SmbPrecipitationEnum
 syn keyword cConstant SmbPrecipitationSubstepEnum
 syn keyword cConstant SmbPrecipitationsAnomalyEnum
+syn keyword cConstant SmbQinterpEnum
 syn keyword cConstant SmbDsradiationAnomalyEnum
 syn keyword cConstant SmbDlradiationAnomalyEnum
 syn keyword cConstant SmbWindspeedAnomalyEnum
@@ -1282,6 +1311,17 @@ syn keyword cConstant SmbZMaxEnum
 syn keyword cConstant SmbZMinEnum
 syn keyword cConstant SmbZTopEnum
 syn keyword cConstant SmbZYEnum
+syn keyword cConstant MariaSmbEnum
+syn keyword cConstant MariaElevEnum
+syn keyword cConstant MariaAlEnum
+syn keyword cConstant MariaStEnum
+syn keyword cConstant MariaTtEnum
+syn keyword cConstant MariaSwdEnum
+syn keyword cConstant MariaLwdEnum
+syn keyword cConstant MariaSwuEnum
+syn keyword cConstant MariaLwuEnum
+syn keyword cConstant MariaShfEnum
+syn keyword cConstant MariaLhfEnum
 syn keyword cConstant SolidearthExternalDisplacementEastRateEnum
 syn keyword cConstant SolidearthExternalDisplacementNorthRateEnum
 syn keyword cConstant SolidearthExternalDisplacementUpRateEnum
@@ -3476,6 +3516,7 @@ syn keyword cConstant DoubleVecParamEnum
 syn keyword cConstant ElementEnum
 syn keyword cConstant ElementHookEnum
 syn keyword cConstant ElementSIdEnum
+syn keyword cConstant EmulatorParamEnum
 syn keyword cConstant EnthalpyAnalysisEnum
 syn keyword cConstant EsaAnalysisEnum
 syn keyword cConstant EsaSolutionEnum
@@ -3704,6 +3745,7 @@ syn keyword cConstant SMBpddSicopolisEnum
 syn keyword cConstant SMBpddGCMEnum
 syn keyword cConstant SMBpddFastEnum
 syn keyword cConstant SMBsemicEnum
+syn keyword cConstant SMBmariaEnum
 syn keyword cConstant SSAApproximationEnum
 syn keyword cConstant SSAFSApproximationEnum
 syn keyword cConstant SSAHOApproximationEnum
@@ -3847,6 +3889,7 @@ syn keyword cType ElementInput
 syn keyword cType ElementMatrix
 syn keyword cType Elements
 syn keyword cType ElementVector
+syn keyword cType EmulatorParam
 syn keyword cType ExponentialVariogram
 syn keyword cType ExternalResult
 syn keyword cType FemModel
