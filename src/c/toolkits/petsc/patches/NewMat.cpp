@@ -109,13 +109,10 @@ PMat NewMat(int M,int N,int connectivity,int numberofdofspernode,ISSM_MPI_Comm c
 	MatSetFromOptions(outmatrix);
 	MatSetOption(outmatrix,MAT_IGNORE_ZERO_ENTRIES,PETSC_TRUE);
 
-	/*preallocation  according to type: */
-	MatGetType(outmatrix,&type);
+        /*preallocation according to type:
+         * Use strncmp("mpiaij",...) so that CUDA variants (mpiaijcusparse) also
+         * get preallocated — they inherit from MPIAIJ and accept the same call. */
+        MatGetType(outmatrix,&type);
 
-	if((strcmp(type,"mpiaij")==0) || (strcmp(type,"mpidense")==0)){
-		MatMPIAIJSetPreallocation(outmatrix,d_nz,NULL,o_nz,NULL);
-	}
-
-	return outmatrix;
-}
+        if((strncmp(type,"mpiaij",6)==0) || (strcmp(type,"mpidense")==0)){
 /*}}}*/
