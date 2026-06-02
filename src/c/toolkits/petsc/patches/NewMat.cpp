@@ -115,4 +115,9 @@ PMat NewMat(int M,int N,int connectivity,int numberofdofspernode,ISSM_MPI_Comm c
         MatGetType(outmatrix,&type);
 
         if((strncmp(type,"mpiaij",6)==0) || (strcmp(type,"mpidense")==0)){
+                MatMPIAIJSetPreallocation(outmatrix,d_nz,NULL,o_nz,NULL);
+        }
+
+        return outmatrix;
+}
 /*}}}*/
