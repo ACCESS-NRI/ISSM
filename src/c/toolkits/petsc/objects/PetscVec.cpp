@@ -170,16 +170,21 @@ void PetscVec<doubletype>::GetLocalVector(doubletype** pvector,int** pindices){/
 	/*Build indices*/
 	int* indices=xNew<int>(range);
 	for(int i=0;i<range;i++) indices[i]=lower_row+i;
-	/*Get vector: use VecGetArrayRead which is CUDA-aware (PETSc downloads from
-	 * device transparently) instead of VecGetValues which forces a stalling
-	 * GPU->CPU copy for every index lookup.*/
 	doubletype* values=xNew<doubletype>(range);
+#ifdef _HAVE_PETSC_CUDA_
+	/*CUDA build: VecGetArrayRead is GPU-aware; returns the local block after a
+	 * single device->host transfer. Safe here because +cuda implies ~ad, so
+	 * this->vector is plain Vec, never ADVecImpl. */
 	{
 		const PetscScalar* arr=NULL;
 		VecGetArrayRead(this->vector,&arr);
 		for(int i=0;i<range;i++) values[i]=(doubletype)arr[i];
 		VecRestoreArrayRead(this->vector,&arr);
 	}
+#else
+	/*Non-CUDA build (including +ad where this->vector may be ADVecImpl*). */
+	VecGetValues(this->vector,range,indices,values);
+#endif
 
 	*pvector  = values;
 	*pindices = indices;
