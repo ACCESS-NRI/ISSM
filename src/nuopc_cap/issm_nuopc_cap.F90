@@ -2,14 +2,14 @@ module ISSM_NUOPC_CapMod
 
 use, intrinsic :: iso_c_binding, only: c_associated, c_char, c_double, c_int, c_null_char, c_null_ptr, c_ptr
 
-use ESMF, only: ESMF_Clock, ESMF_ClockGet, ESMF_COORDSYS_CART
+use ESMF, only: ESMF_Clock, ESMF_ClockGet, ESMF_ClockSet, ESMF_COORDSYS_CART
 use ESMF, only: ESMF_Field, ESMF_FieldCreate, ESMF_FieldGet
 use ESMF, only: ESMF_GridComp, ESMF_GridCompGet, ESMF_GridCompSetEntryPoint
 use ESMF, only: ESMF_LOGMSG_ERROR, ESMF_LOGMSG_INFO, ESMF_LogWrite
 use ESMF, only: ESMF_Mesh, ESMF_MeshCreate
 use ESMF, only: ESMF_MESHLOC_NODE, ESMF_METHOD_INITIALIZE
 use ESMF, only: ESMF_State, ESMF_StateGet
-use ESMF, only: ESMF_SUCCESS, ESMF_TimeInterval, ESMF_TimeIntervalGet
+use ESMF, only: ESMF_SUCCESS, ESMF_TimeInterval, ESMF_TimeIntervalGet, ESMF_TimeIntervalSet
 use ESMF, only: ESMF_KIND_R8, ESMF_TYPEKIND_R8, ESMF_VM, ESMF_VMGet
 
 use NUOPC, only: NUOPC_Advertise, NUOPC_CompAttributeSet, NUOPC_CompDerive
@@ -296,15 +296,50 @@ subroutine DataInitialize(gcomp, rc)
   type(ESMF_GridComp) :: gcomp
   integer, intent(out) :: rc
 
+  type(ESMF_Clock) :: clock
   type(ESMF_State) :: exportState
 
   rc = ESMF_SUCCESS
-  call ESMF_GridCompGet(gcomp, exportState=exportState, rc=rc)
+  call ESMF_GridCompGet(gcomp, clock=clock, exportState=exportState, rc=rc)
+  if (rc /= ESMF_SUCCESS) return
+  call ApplyAdvanceSecondsClock(gcomp, clock, rc)
   if (rc /= ESMF_SUCCESS) return
   call RefreshExports(exportState, rc)
   if (rc /= ESMF_SUCCESS) return
   call NUOPC_CompAttributeSet(gcomp, name='InitializeDataComplete', value='true', rc=rc)
 end subroutine DataInitialize
+
+subroutine ApplyAdvanceSecondsClock(gcomp, clock, rc)
+  type(ESMF_GridComp) :: gcomp
+  type(ESMF_Clock), intent(inout) :: clock
+  integer, intent(out) :: rc
+
+  type(ESMF_TimeInterval) :: time_step
+  character(len=64) :: advance_seconds_text
+  integer :: advance_seconds
+  integer :: log_rc
+  integer :: read_status
+  logical :: is_present
+  logical :: is_set
+
+  rc = ESMF_SUCCESS
+
+  call NUOPC_CompAttributeGet(gcomp, name='advance_seconds', value=advance_seconds_text, &
+    isPresent=is_present, isSet=is_set, rc=rc)
+  if (rc /= ESMF_SUCCESS) return
+  if (.not. is_present .or. .not. is_set) return
+
+  read(advance_seconds_text, *, iostat=read_status) advance_seconds
+  if (read_status /= 0 .or. advance_seconds <= 0) then
+    rc = 1
+    call ESMF_LogWrite('ISSM_NUOPC: invalid advance_seconds attribute', ESMF_LOGMSG_ERROR, rc=log_rc)
+    return
+  end if
+
+  call ESMF_TimeIntervalSet(time_step, s=advance_seconds, rc=rc)
+  if (rc /= ESMF_SUCCESS) return
+  call ESMF_ClockSet(clock, timeStep=time_step, rc=rc)
+end subroutine ApplyAdvanceSecondsClock
 
 subroutine CheckImportNoOp(gcomp, rc)
   type(ESMF_GridComp) :: gcomp
@@ -323,7 +358,13 @@ subroutine ModelAdvance(gcomp, rc)
   type(ESMF_TimeInterval) :: timeStep
   type(ESMF_Field) :: field
   real(ESMF_KIND_R8), pointer :: field_ptr(:)
+  character(len=64) :: advance_seconds_text
   integer :: dt_seconds
+  integer :: attr_dt_seconds
+  integer :: log_rc
+  integer :: read_status
+  logical :: is_present
+  logical :: is_set
 
   rc = ESMF_SUCCESS
 
@@ -334,6 +375,19 @@ subroutine ModelAdvance(gcomp, rc)
   if (rc /= ESMF_SUCCESS) return
   call ESMF_TimeIntervalGet(timeStep, s=dt_seconds, rc=rc)
   if (rc /= ESMF_SUCCESS) return
+
+  call NUOPC_CompAttributeGet(gcomp, name='advance_seconds', value=advance_seconds_text, &
+    isPresent=is_present, isSet=is_set, rc=rc)
+  if (rc /= ESMF_SUCCESS) return
+  if (is_present .and. is_set) then
+    read(advance_seconds_text, *, iostat=read_status) attr_dt_seconds
+    if (read_status /= 0 .or. attr_dt_seconds <= 0) then
+      rc = 1
+      call ESMF_LogWrite('ISSM_NUOPC: invalid advance_seconds attribute', ESMF_LOGMSG_ERROR, rc=log_rc)
+      return
+    end if
+    dt_seconds = attr_dt_seconds
+  end if
 
   call ESMF_StateGet(importState, itemName=import_melt_name, field=field, rc=rc)
   if (rc /= ESMF_SUCCESS) return

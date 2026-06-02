@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include <ESMC.h>
 
@@ -170,10 +171,37 @@ void ISSM_NUOPC_Advance(void* model_handle, double dt_seconds){/*{{{*/
 	ISSM_NUOPC_Model* model = GetModel(model_handle);
 	IssmDouble start_time;
 	IssmDouble final_time;
+	IssmDouble internal_dt;
+	IssmDouble requested_internal_dt;
+	IssmDouble yts;
+	int checkpoint_frequency;
+	int step;
 
 	model->femmodel->parameters->FindParam(&start_time, TimeEnum);
+	model->femmodel->parameters->FindParam(&internal_dt, TimesteppingTimeStepEnum);
+	model->femmodel->parameters->FindParam(&yts, ConstantsYtsEnum);
+	model->femmodel->parameters->FindParam(&checkpoint_frequency, SettingsCheckpointFrequencyEnum);
+	model->femmodel->parameters->FindParam(&step, StepEnum);
+	if(dt_seconds <= 0.0 || !std::isfinite(dt_seconds)){
+		_error_("ISSM_NUOPC_Advance received an invalid dt_seconds value");
+	}
+	requested_internal_dt = internal_dt;
 	final_time = start_time + static_cast<IssmDouble>(dt_seconds);
+	_printf0_("ISSM_NUOPC_Advance start [yr]: "<<start_time/yts
+		<<" dt [s]: "<<dt_seconds
+		<<" dt [yr]: "<<dt_seconds/yts
+		<<" internal_dt [yr]: "<<internal_dt/yts
+		<<" checkpoint_frequency: "<<checkpoint_frequency
+		<<" start_step: "<<step
+		<<" final [yr]: "<<final_time/yts<<"\n");
 	model->femmodel->parameters->SetParam(final_time, TimesteppingFinalTimeEnum);
+	model->femmodel->parameters->SetParam(0, SettingsCheckpointFrequencyEnum);
 	model->femmodel->Solve();
+	model->femmodel->parameters->SetParam(requested_internal_dt, TimesteppingTimeStepEnum);
+	model->femmodel->parameters->SetParam(checkpoint_frequency, SettingsCheckpointFrequencyEnum);
+	model->femmodel->parameters->FindParam(&start_time, TimeEnum);
+	model->femmodel->parameters->FindParam(&step, StepEnum);
+	_printf0_("ISSM_NUOPC_Advance completed time [yr]: "<<start_time/yts
+		<<" step: "<<step<<"\n");
 	model->femmodel->parameters->SetParam(final_time, TimesteppingStartTimeEnum);
 }/*}}}*/
