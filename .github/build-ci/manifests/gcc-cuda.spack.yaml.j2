@@ -1,6 +1,6 @@
 spack:
   specs:
-  - issm @git.{{ ref }} +wrappers ~ad +cuda
+  - issm @git.{{ ref }} +wrappers ~ad +cuda cuda_arch=80
   packages:
     # Workaround due to https://github.com/spack/spack-packages/pull/3644
     re2c:
