@@ -718,6 +718,7 @@ int  StringToEnumx(const char* name,bool notfounderror){
 	      else if (strcmp(name,"Step")==0) return StepEnum;
 	      else if (strcmp(name,"Steps")==0) return StepsEnum;
 	      else if (strcmp(name,"StressbalanceAbstol")==0) return StressbalanceAbstolEnum;
+	      else if (strcmp(name,"StressbalanceAndersonDepth")==0) return StressbalanceAndersonDepthEnum;
 	      else if (strcmp(name,"StressbalanceFSreconditioning")==0) return StressbalanceFSreconditioningEnum;
 	      else if (strcmp(name,"StressbalanceIsHydrologyLayer")==0) return StressbalanceIsHydrologyLayerEnum;
 	      else if (strcmp(name,"StressbalanceIsnewton")==0) return StressbalanceIsnewtonEnum;

@@ -1,8 +1,13 @@
 /*!\file: solutionsequence_nonlinear.cpp
- * \brief: core of a non-linear solution, using fixed-point method 
- */ 
+ * \brief: core of a non-linear solution, using fixed-point method
+ *         with optional Anderson acceleration (depth m >= 1).
+ *
+ * Anderson depth is read from parameter StressbalanceAndersonDepthEnum
+ * (default 0 = pure Picard).  Recommended starting value: 5.
+ */
 
 #include "./solutionsequences.h"
+#include "./AndersonAccelerator.h"
 #include "../toolkits/toolkits.h"
 #include "../classes/classes.h"
 #include "../shared/shared.h"
@@ -27,6 +32,7 @@ void solutionsequence_nonlinear(FemModel* femmodel,bool conserve_loads){
 	int min_mechanical_constraints;
 	int max_nonlinear_iterations;
 	int configuration_type;
+	int anderson_depth;
 	IssmDouble eps_res,eps_rel,eps_abs;
 
 	/*Recover parameters: */
@@ -36,6 +42,10 @@ void solutionsequence_nonlinear(FemModel* femmodel,bool conserve_loads){
 	femmodel->parameters->FindParam(&eps_rel,StressbalanceReltolEnum);
 	femmodel->parameters->FindParam(&eps_abs,StressbalanceAbstolEnum);
 	femmodel->parameters->FindParam(&configuration_type,ConfigurationTypeEnum);
+	/*Anderson depth: 0 = pure Picard (default), >=1 enables acceleration*/
+	anderson_depth = 0;
+	if(femmodel->parameters->Exist(StressbalanceAndersonDepthEnum))
+		femmodel->parameters->FindParam(&anderson_depth,StressbalanceAndersonDepthEnum);
 	femmodel->UpdateConstraintsx();
 
 	/*Were loads requested as output? : */
@@ -46,6 +56,9 @@ void solutionsequence_nonlinear(FemModel* femmodel,bool conserve_loads){
 
 	int  count=0;
 	bool converged=false;
+
+	/*Anderson accelerator (no-op when anderson_depth==0)*/
+	AndersonAccelerator anderson(anderson_depth);
 
 	/*Start non-linear iteration using input velocity: */
 	GetSolutionFromInputsx(&ug,femmodel);
@@ -75,6 +88,11 @@ void solutionsequence_nonlinear(FemModel* femmodel,bool conserve_loads){
 		femmodel->profiler->Start(SOLVER);
 		Solverx(&uf, Kff, pf, old_uf, df, femmodel->parameters);
 		femmodel->profiler->Stop(SOLVER);
+
+		/*Anderson acceleration: replaces uf with the depth-m accelerated update.
+		 * old_uf = u^(k), uf = G(u^(k)) from linear solve.
+		 * No-op when anderson_depth==0 (pure Picard).                           */
+		anderson.Apply(&uf, old_uf);
 
 		Mergesolutionfromftogx(&ug, uf,ys,femmodel->nodes,femmodel->parameters);delete ys;
 

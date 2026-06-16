@@ -695,6 +695,7 @@ enum definitions{
 	StepEnum,
 	StepsEnum,
 	StressbalanceAbstolEnum,
+	StressbalanceAndersonDepthEnum,
 	StressbalanceFSreconditioningEnum,
 	StressbalanceIsHydrologyLayerEnum,
 	StressbalanceIsnewtonEnum,
