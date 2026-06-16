@@ -1,4 +1,4 @@
 {
     "gcc_compiler_version": "13.2.0",
-    "target": " x86_64"
+    "target": "x86_64"
 }
