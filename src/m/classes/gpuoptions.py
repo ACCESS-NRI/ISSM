@@ -53,6 +53,13 @@ def gpuoptions(*args):
     gpu['pc_gamg_coarse_eq_limit'] = options.getfieldvalue('pc_gamg_coarse_eq_limit', 2000)
     # Aggressive dropping of weak connections improves coarse grid quality
     gpu['pc_gamg_threshold']  = options.getfieldvalue('pc_gamg_threshold',  0.08)
+    # Prolongator smoothing.  Default to smoothed aggregation (nsmooths=1), which
+    # is the stronger preconditioner and works on single-GPU.  In PARALLEL the
+    # multi-GPU driver overrides this to '0' (unsmoothed) for robustness.
+    # NB: values are STRINGS -- toolkits.py marshals with `if not optionvalue:`,
+    # so an integer 0 would be written as a bare valueless flag (PETSc keeps its
+    # default of 1).  A non-empty string serialises correctly.
+    gpu['pc_gamg_agg_nsmooths'] = options.getfieldvalue('pc_gamg_agg_nsmooths', '1')
     # ksp_rtol is the relative reduction of the *preconditioned* residual at which
     # GMRES stops.  Empirically a 1e-10 reduction leaves the *true* residual
     # ||KU-F||/||F|| at ~1.5e-6 on the 1.6M-DOF case -- just above ISSM's 1e-6
