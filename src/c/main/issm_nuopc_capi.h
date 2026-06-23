@@ -16,6 +16,8 @@ void  ISSM_NUOPC_GetMeshNodes(void* model_handle, int* node_ids, int* node_owner
 void  ISSM_NUOPC_GetMeshElements(void* model_handle, int* elem_ids, int* elem_types, int* elem_conn);
 
 void  ISSM_NUOPC_ImportFloatingMelt(void* model_handle, const double* melt_rate, int size);
+void  ISSM_NUOPC_RequireExternalFloatingMelt(void* model_handle);
+void  ISSM_NUOPC_ExportFloatingMelt(void* model_handle, double* melt_rate, int size);
 void  ISSM_NUOPC_ExportThickness(void* model_handle, double* thickness, int size);
 void  ISSM_NUOPC_ExportSurface(void* model_handle, double* surface, int size);
 void  ISSM_NUOPC_ExportMask(void* model_handle, double* mask, int size);

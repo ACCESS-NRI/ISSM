@@ -140,6 +140,24 @@ void ISSM_NUOPC_ImportFloatingMelt(void* model_handle, const double* melt_rate, 
 	xDelete<IssmDouble>(local_values);
 }/*}}}*/
 
+void ISSM_NUOPC_RequireExternalFloatingMelt(void* model_handle){/*{{{*/
+	ISSM_NUOPC_Model* model = GetModel(model_handle);
+	int basalforcing_model;
+	model->femmodel->parameters->FindParam(&basalforcing_model, BasalforcingsEnum);
+	if(basalforcing_model != FloatingMeltRateEnum){
+		_error_("ISSM_NUOPC active melt import requires generic basalforcings "
+			"(FloatingMeltRateEnum), but case uses " << EnumToStringx(basalforcing_model));
+	}
+}/*}}}*/
+
+void ISSM_NUOPC_ExportFloatingMelt(void* model_handle, double* melt_rate, int size){/*{{{*/
+	ISSM_NUOPC_Model* model = GetModel(model_handle);
+	if(size != model->femmodel->vertices->Size()){
+		_error_("ISSM_NUOPC_ExportFloatingMelt received an array with the wrong size");
+	}
+	ExportVertexField(model->femmodel, BasalforcingsFloatingiceMeltingRateEnum, melt_rate, size);
+}/*}}}*/
+
 void ISSM_NUOPC_ExportThickness(void* model_handle, double* thickness, int size){/*{{{*/
 	ISSM_NUOPC_Model* model = GetModel(model_handle);
 	if(size != model->femmodel->vertices->Size()){
