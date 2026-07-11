@@ -190,7 +190,7 @@ extern "C" {
 			nodeCoord[sdim*i+0] = vertex->x;
 			nodeCoord[sdim*i+1] = vertex->y;
 		}
-		rc = ESMC_MeshAddNodes(mesh,numnodes,nodeId,nodeCoord,nodeOwner);
+		rc = ESMC_MeshAddNodes(mesh,numnodes,nodeId,nodeCoord,nodeOwner,NULL);
 		if(rc!=ESMF_SUCCESS) _error_("could not add nodes to EMSC_Mesh");
 		xDelete<int>(nodeId);
 		xDelete<int>(nodeOwner);
