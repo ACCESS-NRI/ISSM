@@ -9,6 +9,7 @@
 #include "./solutionsequences.h"
 #include "./AndersonAccelerator.h"
 #include "../toolkits/toolkits.h"
+#include <vector>
 #include "../classes/classes.h"
 #include "../shared/shared.h"
 #include "../modules/modules.h"
@@ -56,6 +57,8 @@ void solutionsequence_nonlinear(FemModel* femmodel,bool conserve_loads){
 
 	int  count=0;
 	bool converged=false;
+	std::vector<IssmDouble> res_norms;  /* force residual at each Picard step */
+	IssmDouble res_iter = 0.0;
 
 	/*Anderson accelerator (no-op when anderson_depth==0)*/
 	AndersonAccelerator anderson(anderson_depth);
@@ -96,7 +99,8 @@ void solutionsequence_nonlinear(FemModel* femmodel,bool conserve_loads){
 
 		Mergesolutionfromftogx(&ug, uf,ys,femmodel->nodes,femmodel->parameters);delete ys;
 
-		convergence(&converged,Kff,pf,uf,old_uf,eps_res,eps_rel,eps_abs);
+		convergence(&converged,Kff,pf,uf,old_uf,eps_res,eps_rel,eps_abs,&res_iter);
+		res_norms.push_back(res_iter);
 		InputUpdateFromConstantx(femmodel,converged,ConvergedEnum);
 		InputUpdateFromSolutionx(femmodel,ug);
 
@@ -138,6 +142,18 @@ void solutionsequence_nonlinear(FemModel* femmodel,bool conserve_loads){
 			df->Set(0);
 			pf->Set(0);
 		}
+	}
+
+	/*write per-iteration force residual history as a result*/
+	if(!res_norms.empty()){
+		int nsteps = (int)res_norms.size();
+		IssmPDouble* pnorms = xNew<IssmPDouble>(nsteps);
+		for(int i=0; i<nsteps; i++) pnorms[i] = reCast<IssmPDouble>(res_norms[i]);
+		femmodel->results->AddResult(new GenericExternalResult<IssmPDouble*>(
+			femmodel->results->Size()+1,
+			StressbalanceResidualNormsEnum,
+			pnorms, nsteps, 1, UNDEF, UNDEF));
+		xDelete<IssmPDouble>(pnorms);
 	}
 
 	/*delete matrices after the iteration loop*/

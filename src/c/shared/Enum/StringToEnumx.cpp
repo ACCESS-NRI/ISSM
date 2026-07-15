@@ -3875,6 +3875,7 @@ int  StringToEnumx(const char* name,bool notfounderror){
 	      else if (strcmp(name,"StressIntensityFactor")==0) return StressIntensityFactorEnum;
 	      else if (strcmp(name,"StressbalanceAnalysis")==0) return StressbalanceAnalysisEnum;
 	      else if (strcmp(name,"StressbalanceConvergenceNumSteps")==0) return StressbalanceConvergenceNumStepsEnum;
+	      else if (strcmp(name,"StressbalanceResidualNorms")==0) return StressbalanceResidualNormsEnum;
 	      else if (strcmp(name,"StressbalanceSIAAnalysis")==0) return StressbalanceSIAAnalysisEnum;
 	      else if (strcmp(name,"StressbalanceSolution")==0) return StressbalanceSolutionEnum;
 	      else if (strcmp(name,"StressbalanceVerticalAnalysis")==0) return StressbalanceVerticalAnalysisEnum;

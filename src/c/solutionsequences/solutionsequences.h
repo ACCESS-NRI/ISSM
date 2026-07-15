@@ -27,6 +27,6 @@ void solutionsequence_schurcg(FemModel* femmodel);
 void solutionsequence_sampling(FemModel* femmodel);
 
 /*convergence*/
-void convergence(bool* pconverged, Matrix<IssmDouble>* K_ff,Vector<IssmDouble>* p_f,Vector<IssmDouble>* u_f,Vector<IssmDouble>* u_f_old,IssmDouble eps_res,IssmDouble eps_rel,IssmDouble eps_abs);
+void convergence(bool* pconverged, Matrix<IssmDouble>* K_ff,Vector<IssmDouble>* p_f,Vector<IssmDouble>* u_f,Vector<IssmDouble>* u_f_old,IssmDouble eps_res,IssmDouble eps_rel,IssmDouble eps_abs,IssmDouble* pres=NULL);
 
 #endif

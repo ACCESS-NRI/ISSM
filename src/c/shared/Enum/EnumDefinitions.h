@@ -3779,6 +3779,7 @@ enum definitions{
 	StressIntensityFactorEnum,
 	StressbalanceAnalysisEnum,
 	StressbalanceConvergenceNumStepsEnum,
+	StressbalanceResidualNormsEnum,
 	StressbalanceSIAAnalysisEnum,
 	StressbalanceSolutionEnum,
 	StressbalanceVerticalAnalysisEnum,

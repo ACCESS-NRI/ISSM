@@ -3782,6 +3782,7 @@ const char* EnumToStringx(int en){
 		case StressIntensityFactorEnum : return "StressIntensityFactor";
 		case StressbalanceAnalysisEnum : return "StressbalanceAnalysis";
 		case StressbalanceConvergenceNumStepsEnum : return "StressbalanceConvergenceNumSteps";
+		case StressbalanceResidualNormsEnum : return "StressbalanceResidualNorms";
 		case StressbalanceSIAAnalysisEnum : return "StressbalanceSIAAnalysis";
 		case StressbalanceSolutionEnum : return "StressbalanceSolution";
 		case StressbalanceVerticalAnalysisEnum : return "StressbalanceVerticalAnalysis";
