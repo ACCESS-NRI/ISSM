@@ -266,6 +266,7 @@ issm_sources += \
 	./solutionsequences/solutionsequence_la_theta.cpp \
 	./solutionsequences/solutionsequence_linear.cpp \
 	./solutionsequences/solutionsequence_nonlinear.cpp \
+	./solutionsequences/AndersonAccelerator.cpp \
 	./solutionsequences/solutionsequence_newton.cpp \
 	./solutionsequences/solutionsequence_fct.cpp \
 	./solutionsequences/solutionsequence_schurcg.cpp \

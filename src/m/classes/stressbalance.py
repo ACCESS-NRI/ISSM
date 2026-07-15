@@ -32,6 +32,7 @@ class stressbalance(object):
         self.FSreconditioning = 0
         #self.icefront = np.nan -- no longer in use
         self.maxiter = 0
+        self.anderson_depth = 0
         self.shelf_dampening = 0
         self.vertex_pairing = np.nan
         self.penalty_factor = np.nan
@@ -54,6 +55,7 @@ class stressbalance(object):
         s += '{}\n'.format(fielddisplay(self, 'abstol', 'velocity absolute convergence criterion, NaN: not applied'))
         s += '{}\n'.format(fielddisplay(self, 'isnewton', '0: Picard\'s fixed point, 1: Newton\'s method, 2: hybrid'))
         s += '{}\n'.format(fielddisplay(self, 'maxiter', 'maximum number of nonlinear iterations'))
+        s += '{}\n'.format(fielddisplay(self, 'anderson_depth', 'Anderson acceleration window m (0: pure Picard, recommended: 5)'))
         s += '      boundary conditions:\n'
         s += '{}\n'.format(fielddisplay(self, 'spcvx', 'x-axis velocity constraint (NaN means no constraint) [m / yr]'))
         s += '{}\n'.format(fielddisplay(self, 'spcvy', 'y-axis velocity constraint (NaN means no constraint) [m / yr]'))
@@ -100,6 +102,7 @@ class stressbalance(object):
     def setdefaultparameters(self):  # {{{
         # Maximum of non-linear iterations
         self.maxiter = 100
+        self.anderson_depth = 0
 
         # Convergence criterion: absolute, relative and residual
         self.restol = pow(10, -4)
@@ -151,6 +154,7 @@ class stressbalance(object):
         md = checkfield(md, 'fieldname', 'stressbalance.isnewton', 'numel', [1], 'values', [0, 1, 2])
         md = checkfield(md, 'fieldname', 'stressbalance.FSreconditioning', 'size', [1], 'NaN', 1, 'Inf', 1)
         md = checkfield(md, 'fieldname', 'stressbalance.maxiter', 'size', [1], '>=', 1)
+        md = checkfield(md, 'fieldname', 'stressbalance.anderson_depth', 'size', [1], '>=', 0)
         md = checkfield(md, 'fieldname', 'stressbalance.referential', 'size', [md.mesh.numberofvertices, 6])
         md = checkfield(md, 'fieldname', 'stressbalance.loadingforce', 'size', [md.mesh.numberofvertices, 3])
         md = checkfield(md, 'fieldname', 'stressbalance.requested_outputs', 'stringrow', 1)
@@ -197,6 +201,7 @@ class stressbalance(object):
         WriteData(fid, prefix, 'object', self, 'class', 'stressbalance', 'fieldname', 'isnewton', 'format', 'Integer')
         WriteData(fid, prefix, 'object', self, 'class', 'stressbalance', 'fieldname', 'FSreconditioning', 'format', 'Double')
         WriteData(fid, prefix, 'object', self, 'class', 'stressbalance', 'fieldname', 'maxiter', 'format', 'Integer')
+        WriteData(fid, prefix, 'object', self, 'class', 'stressbalance', 'fieldname', 'anderson_depth', 'format', 'Integer')
         WriteData(fid, prefix, 'object', self, 'class', 'stressbalance', 'fieldname', 'shelf_dampening', 'format', 'Integer')
         WriteData(fid, prefix, 'object', self, 'class', 'stressbalance', 'fieldname', 'penalty_factor', 'format', 'Double')
         WriteData(fid, prefix, 'object', self, 'class', 'stressbalance', 'fieldname', 'rift_penalty_lock', 'format', 'Integer')

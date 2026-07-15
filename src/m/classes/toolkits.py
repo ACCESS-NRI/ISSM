@@ -1,4 +1,5 @@
 from fielddisplay import fielddisplay
+from gpuoptions import gpuoptions
 from iluasmoptions import iluasmoptions
 from IssmConfig import IssmConfig
 from issmgslsolver import issmgslsolver

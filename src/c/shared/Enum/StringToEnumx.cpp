@@ -718,6 +718,7 @@ int  StringToEnumx(const char* name,bool notfounderror){
 	      else if (strcmp(name,"Step")==0) return StepEnum;
 	      else if (strcmp(name,"Steps")==0) return StepsEnum;
 	      else if (strcmp(name,"StressbalanceAbstol")==0) return StressbalanceAbstolEnum;
+	      else if (strcmp(name,"StressbalanceAndersonDepth")==0) return StressbalanceAndersonDepthEnum;
 	      else if (strcmp(name,"StressbalanceFSreconditioning")==0) return StressbalanceFSreconditioningEnum;
 	      else if (strcmp(name,"StressbalanceIsHydrologyLayer")==0) return StressbalanceIsHydrologyLayerEnum;
 	      else if (strcmp(name,"StressbalanceIsnewton")==0) return StressbalanceIsnewtonEnum;
@@ -3874,6 +3875,7 @@ int  StringToEnumx(const char* name,bool notfounderror){
 	      else if (strcmp(name,"StressIntensityFactor")==0) return StressIntensityFactorEnum;
 	      else if (strcmp(name,"StressbalanceAnalysis")==0) return StressbalanceAnalysisEnum;
 	      else if (strcmp(name,"StressbalanceConvergenceNumSteps")==0) return StressbalanceConvergenceNumStepsEnum;
+	      else if (strcmp(name,"StressbalanceResidualNorms")==0) return StressbalanceResidualNormsEnum;
 	      else if (strcmp(name,"StressbalanceSIAAnalysis")==0) return StressbalanceSIAAnalysisEnum;
 	      else if (strcmp(name,"StressbalanceSolution")==0) return StressbalanceSolutionEnum;
 	      else if (strcmp(name,"StressbalanceVerticalAnalysis")==0) return StressbalanceVerticalAnalysisEnum;

@@ -6,7 +6,7 @@
 #include "../modules/modules.h"
 #include "../shared/shared.h"
 
-void convergence(bool* pconverged, Matrix<IssmDouble>* Kff,Vector<IssmDouble>* pf,Vector<IssmDouble>* uf,Vector<IssmDouble>* old_uf,IssmDouble eps_res,IssmDouble eps_rel,IssmDouble eps_abs){
+void convergence(bool* pconverged, Matrix<IssmDouble>* Kff,Vector<IssmDouble>* pf,Vector<IssmDouble>* uf,Vector<IssmDouble>* old_uf,IssmDouble eps_res,IssmDouble eps_rel,IssmDouble eps_abs,IssmDouble* pres){
 
 	/*output*/
 	bool converged=false;
@@ -54,6 +54,9 @@ void convergence(bool* pconverged, Matrix<IssmDouble>* Kff,Vector<IssmDouble>* p
 	//clean up
 	delete KUold;
 	delete KUoldF;
+
+	/*return force residual to caller if requested*/
+	if(pres) *pres = res;
 
 	//print
 	if(res<eps_res){

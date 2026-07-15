@@ -24,6 +24,21 @@ if [ ! -d "${CUDA_DIR}" ]; then
     exit 1
 fi
 
+# Build PETSc against the SAME MPI that ISSM uses (system OpenMPI), rather than
+# letting PETSc download its own MPICH.  A mismatched MPI causes issm.exe to be
+# linked against two MPI runtimes at once, which breaks any np>1 (multi-rank)
+# run: each rank initialises as its own standalone MPI_COMM_WORLD rank-0.
+# The OpenMPI compiler wrappers must be on PATH (module load openmpi/4.1.3).
+for w in mpicc mpicxx mpif90; do
+    if ! command -v ${w} &>/dev/null; then
+        echo "ERROR: ${w} not found. Load OpenMPI first: module load openmpi/4.1.3"
+        exit 1
+    fi
+done
+if ! mpicc --showme:version 2>/dev/null | grep -qi "open mpi"; then
+    echo "WARNING: mpicc does not appear to be OpenMPI; check your modules."
+fi
+
 # Environment
 if [ -z ${LDFLAGS+x} ]; then
     LDFLAGS=""
@@ -51,14 +66,17 @@ cd ${PETSC_DIR}
     --prefix="${PREFIX}" \
     --PETSC_DIR="${PETSC_DIR}" \
     --LDFLAGS="${LDFLAGS}" \
+    --CFLAGS="-g -O2" --CXXFLAGS="-g -O2" --FFLAGS="-g -O2" \
     --with-debugging=0 \
     --with-valgrind=0 \
     --with-x=0 \
     --with-ssl=0 \
     --with-pic=1 \
+    --with-cc=mpicc \
+    --with-cxx=mpicxx \
+    --with-fc=mpif90 \
     --download-fblaslapack=1 \
     --download-metis=1 \
-    --download-mpich=1 \
     --download-mumps=1 \
     --download-parmetis=1 \
     --download-scalapack=1 \

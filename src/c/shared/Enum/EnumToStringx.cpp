@@ -703,6 +703,7 @@ const char* EnumToStringx(int en){
 		case StepEnum : return "Step";
 		case StepsEnum : return "Steps";
 		case StressbalanceAbstolEnum : return "StressbalanceAbstol";
+		case StressbalanceAndersonDepthEnum : return "StressbalanceAndersonDepth";
 		case StressbalanceFSreconditioningEnum : return "StressbalanceFSreconditioning";
 		case StressbalanceIsHydrologyLayerEnum : return "StressbalanceIsHydrologyLayer";
 		case StressbalanceIsnewtonEnum : return "StressbalanceIsnewton";
@@ -3781,6 +3782,7 @@ const char* EnumToStringx(int en){
 		case StressIntensityFactorEnum : return "StressIntensityFactor";
 		case StressbalanceAnalysisEnum : return "StressbalanceAnalysis";
 		case StressbalanceConvergenceNumStepsEnum : return "StressbalanceConvergenceNumSteps";
+		case StressbalanceResidualNormsEnum : return "StressbalanceResidualNorms";
 		case StressbalanceSIAAnalysisEnum : return "StressbalanceSIAAnalysis";
 		case StressbalanceSolutionEnum : return "StressbalanceSolution";
 		case StressbalanceVerticalAnalysisEnum : return "StressbalanceVerticalAnalysis";

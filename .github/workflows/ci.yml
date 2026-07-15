@@ -31,5 +31,6 @@ jobs:
       spack-manifest-path: ${{ matrix.file }}
       allow-ssh-into-spack-install: false  # If true, PR author must ssh into instance to complete job
       spack-manifest-data-path: .github/build-ci/data/standard.json
+      access-spack-packages-ref: justinh2002/cuda_issm_gpu
       # Default args (including explicit spack/spack-packages/spack-config versions)
       # are specified in https://github.com/ACCESS-NRI/build-ci/tree/v3/.github/workflows#inputs
