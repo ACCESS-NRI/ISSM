@@ -1,4 +1,6 @@
 spack:
+  definitions:
+  - _pytest-args: ['-v', '--tb=short']
   specs:
   - issm @git.{{ ref }} +wrappers ~ad
   packages:
