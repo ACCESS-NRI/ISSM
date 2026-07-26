@@ -352,11 +352,8 @@ void FemModel::CleanUp(void){/*{{{*/
 } /*}}}*/
 FemModel* FemModel::copy(void){/*{{{*/
 
-	FemModel* output=NULL;
-	int       i;
-	int       analysis_type;
-
-	output=new FemModel(*this); //Use default copy constructor.
+	/*Instantiate output*/
+	FemModel* output=new FemModel(*this); //Use default copy constructor.
 
 	output->nummodels = this->nummodels;
 	output->solution_type = this->solution_type;
@@ -386,11 +383,11 @@ FemModel* FemModel::copy(void){/*{{{*/
 	output->materials->ResetHooks();
 
 	/*do the post-processing of the datasets to get an FemModel that can actually run analyses: */
-	for(i=0;i<nummodels;i++){
+	for(int i=0;i<nummodels;i++){
 		output->constraints_list[i] = static_cast<Constraints*>(this->constraints_list[i]->Copy());
 		output->loads_list[i] = static_cast<Loads*>(this->loads_list[i]->Copy());
 		output->nodes_list[i] = static_cast<Nodes*>(this->nodes_list[i]->Copy());
-		analysis_type=output->analysis_type_list[i];
+		int analysis_type=output->analysis_type_list[i];
 		output->SetCurrentConfiguration(analysis_type);
 		SpcNodesx(output->nodes_list[i],output->constraints_list[i],output->parameters);
 		NodesDofx(output->nodes_list[i],output->parameters);
@@ -406,7 +403,7 @@ FemModel* FemModel::copy(void){/*{{{*/
 	#endif
 
 	/*Reset current configuration: */
-	analysis_type=output->analysis_type_list[analysis_counter];
+	int analysis_type=output->analysis_type_list[analysis_counter];
 	output->SetCurrentConfiguration(analysis_type);
 
 	return output;
@@ -1483,7 +1480,7 @@ void FemModel::GetLocalVectorWithClonesVertices(IssmDouble** plocal_vector,Vecto
 }/*}}}*/
 void FemModel::SyncLocalVectorWithClonesVertices(IssmDouble* local_vector){/*{{{*/
 
-	/*recover my_rank:*/
+	/*Get communication properties:*/
 	ISSM_MPI_Status status;
 	int my_rank   = IssmComm::GetRank();
 	int num_procs = IssmComm::GetSize();
@@ -2523,6 +2520,7 @@ void FemModel::RequestedOutputsx(Results **presults,char** requested_outputs, in
 					case ThicknessAlongGradientEnum:    ThicknessAlongGradientx(&double_result,elements,nodes,vertices,loads,materials,parameters);     break;
 					case ThicknessAcrossGradientEnum:   ThicknessAcrossGradientx(&double_result,elements,nodes,vertices,loads,materials,parameters);    break;
 					case ThicknessPositiveEnum:         this->ThicknessPositivex(&double_result);                                                       break;
+					case FluxDivergenceEnum:            this->FluxDivergencex(&double_result);                                                          break;
 					case RheologyBbarAbsGradientEnum:   RheologyBbarAbsGradientx(&double_result,elements,nodes,vertices,loads,materials,parameters);    break;
 					case RheologyBAbsGradientEnum:      RheologyBAbsGradientx(&double_result,elements,nodes,vertices,loads,materials,parameters);       break;
 					case RheologyBInitialguessMisfitEnum:  RheologyBInitialguessMisfitx(&double_result,elements,nodes,vertices,loads,materials,parameters);       break;
@@ -3053,6 +3051,71 @@ void FemModel::ThicknessPositivex(IssmDouble* pJ){/*{{{*/
 			if(H<=0){
 				J+=weight*H*H*Jdet*gauss->weight;
 			}
+		}
+
+		/*clean up and Return: */
+		xDelete<IssmDouble>(xyz_list);
+		delete gauss;
+	}
+
+	/*Sum all J from all cpus of the cluster:*/
+	ISSM_MPI_Reduce (&J,&J_sum,1,ISSM_MPI_DOUBLE,ISSM_MPI_SUM,0,IssmComm::GetComm() );
+	ISSM_MPI_Bcast(&J_sum,1,ISSM_MPI_DOUBLE,0,IssmComm::GetComm());
+	J=J_sum;
+
+	/*Assign output pointers: */
+	*pJ=J;
+}
+/*}}}*/
+void FemModel::FluxDivergencex(IssmDouble* pJ){/*{{{*/
+
+	/*output: */
+	IssmDouble J=0.;
+	IssmDouble J_sum;
+
+	IssmDouble  H,dH[2],vx,dvx[2],vy,dvy[2],weight;
+	IssmDouble  Jdet;
+	IssmDouble* xyz_list = NULL;
+
+	/*Compute Misfit: */
+	for(Object* & object : this->elements->objects){
+		Element* element = xDynamicCast<Element*>(object);
+
+		/*If on water, return 0: */
+		if(!element->IsIceInElement()) continue;
+
+		/* Get node coordinates*/
+		element->GetVerticesCoordinates(&xyz_list);
+
+		/*Retrieve all inputs we will be needing: */
+		DatasetInput* weights_input   =element->GetDatasetInput(InversionCostFunctionsCoefficientsEnum); _assert_(weights_input);
+		Input* H_input  = element->GetInput(ThicknessEnum); _assert_(H_input);
+		Input* vx_input = element->GetInput(VxEnum);        _assert_(vx_input);
+		Input* vy_input = element->GetInput(VyEnum);        _assert_(vy_input);
+
+		/**DEBUGGING*/
+		Input* vxobs_input = element->GetInput(InversionVxObsEnum);	_assert_(vxobs_input);
+		Input* vyobs_input = element->GetInput(InversionVyObsEnum);	_assert_(vyobs_input);
+		IssmDouble vxobs, vyobs;
+
+		/* Start  looping on the number of gaussian points: */
+		Gauss* gauss=element->NewGauss(2);
+		while(gauss->next()){
+
+			/* Get Jacobian determinant: */
+			element->JacobianDeterminant(&Jdet,xyz_list,gauss);
+
+			/*Get all parameters at gaussian point*/
+			weights_input->GetInputValue(&weight,gauss,FluxDivergenceEnum);
+			H_input->GetInputValue(&H,gauss);
+			H_input->GetInputDerivativeValue(&dH[0],xyz_list,gauss);
+			vx_input->GetInputValue(&vx,gauss);
+			vy_input->GetInputValue(&vy,gauss);
+			vx_input->GetInputDerivativeValue(&dvx[0],xyz_list,gauss);
+			vy_input->GetInputDerivativeValue(&dvy[0],xyz_list,gauss);
+
+			IssmDouble fluxdiv2 = pow(vx*dH[0] + vy*dH[1] + H*(dvx[0] + dvy[1]),2);
+			J+= weight*fluxdiv2*Jdet*gauss->weight;
 		}
 
 		/*clean up and Return: */

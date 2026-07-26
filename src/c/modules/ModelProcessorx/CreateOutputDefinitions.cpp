@@ -604,8 +604,8 @@ void CreateOutputDefinitions(Elements* elements,Parameters* parameters,Inputs* i
 
 						Element* element=xDynamicCast<Element*>(object);
 
-						element->DatasetInputAdd(StringToEnumx(cfsurfacelogvel_definitionstring[j]),cfsurfacelogvel_vxobs[j],inputs,iomodel,cfsurfacelogvel_observation_M[j],cfsurfacelogvel_observation_N[j],obs_vector_type,StringToEnumx(cfsurfacelogvel_vxobs_string[j]),VxObsEnum);
-							element->DatasetInputAdd(StringToEnumx(cfsurfacelogvel_definitionstring[j]),cfsurfacelogvel_vyobs[j],inputs,iomodel,cfsurfacelogvel_observation_M[j],cfsurfacelogvel_observation_N[j],obs_vector_type,StringToEnumx(cfsurfacelogvel_vyobs_string[j]),VyObsEnum);
+						element->DatasetInputAdd(StringToEnumx(cfsurfacelogvel_definitionstring[j]),cfsurfacelogvel_vxobs[j],inputs,iomodel,cfsurfacelogvel_observation_M[j],cfsurfacelogvel_observation_N[j],obs_vector_type,StringToEnumx(cfsurfacelogvel_vxobs_string[j]),InversionVxObsEnum);
+							element->DatasetInputAdd(StringToEnumx(cfsurfacelogvel_definitionstring[j]),cfsurfacelogvel_vyobs[j],inputs,iomodel,cfsurfacelogvel_observation_M[j],cfsurfacelogvel_observation_N[j],obs_vector_type,StringToEnumx(cfsurfacelogvel_vyobs_string[j]),InversionVyObsEnum);
 						element->DatasetInputAdd(StringToEnumx(cfsurfacelogvel_definitionstring[j]),cfsurfacelogvel_weights[j],inputs,iomodel,cfsurfacelogvel_weights_M[j],cfsurfacelogvel_weights_N[j],weight_vector_type,StringToEnumx(cfsurfacelogvel_weightstring[j]),WeightsSurfaceObservationEnum);
 
 					}
@@ -958,24 +958,6 @@ void CreateOutputDefinitions(Elements* elements,Parameters* parameters,Inputs* i
 				xDelete<IssmDouble*>(cost_functions_weights);
 
 			/*}}}*/
-			}
-			else if (output_definition_enums[i]==RadarEnum){		
-				/*Deal with radar: {{{*/
-				int    numout;
-				char **radar_name_s             = NULL;
-				char **radar_definitionstring_s = NULL;
-				int  **radar_ice_period_s       = NULL;
-
-				/*Fetch name and definition, etc ... (see src/m/classes/radar.m): */
-				iomodel->FetchMultipleData(&radar_definitionstring_s,&numout,"md.radar.definitionstring");
-				iomodel->FetchMultipleData(&radar_name_s,&numout,"md.radar.name");
-				if(numout>1) _error_("not suppored yet"); 
-				/*Fetch necessary inputs for calculation*/
-				//iomodel->FetchDataToInput(elements,"md.ice_period",RadarIcePeriodEnum);
-
-				/*Add to output definitions*/
-				output_definitions->AddObject(new Radar(radar_name_s[0],StringToEnumx(radar_definitionstring_s[0])));
-				/*}}}*/ 
 			}
 		else _error_("output definition enum " << EnumToStringx(output_definition_enums[i]) << " not supported yet!");
 		}		

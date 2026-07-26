@@ -83,7 +83,7 @@ classdef generic
 			end
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
 			% Unpack fields used below
 			dirname         = md.private.runtimename;
@@ -130,9 +130,9 @@ classdef generic
 					else
 						vgflags = '--leak-check=full --error-limit=no';
 					end
-					cmd = sprintf('%s%s %s --suppressions=%s %s/%s %s %s %s 2> %s.errlog > %s.outlog', ...
+					cmd = sprintf('%s%s %s --suppressions=%s %s/%s %s %s %s 2> %s/%s.errlog > %s/%s.outlog', ...
 						mpiprefix, cluster.valgrind, vgflags, cluster.valgrindsup, ...
-						codepath, executable, solution, execpath, modelname, modelname, modelname);
+						codepath, executable, solution, execpath, modelname, execpath, modelname, execpath, modelname);
 
 				elseif isgprof
 					cmd = sprintf('gprof %s/issm.exe gmon.out > %s.performance', cluster.codepath, modelname);
@@ -314,52 +314,7 @@ classdef generic
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch) % {{{
 
 			if ~ispc
-				%figure out what shell extension we will use:
-				if isempty(strfind(cluster.shell,'csh'))
-					shellext='sh';
-				else
-					shellext='csh';
-				end
-
-				if ~isempty(restart)
-					launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && cd ' cluster.executionpath ' && cd ' dirname ' && source ' modelname '.queue '];
-				else
-					if ~batch
-						launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && source ' cluster.executionpath '/' dirname '/'  modelname '.queue '];
-					else
-						launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-							' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz '];
-					end
-				end
-				issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
-			else
-				batfile=[cluster.executionpath '\' dirname '\' modelname '.bat'];
-				system(['"' batfile '"']);
-			end
-
-		end %}}}
-		function LaunchQueueJobIceOcean(cluster,modelname,dirname,filelist,restart,batch) % {{{
-
-			if ~ispc
-
-				%figure out what shell extension we will use:
-				if isempty(strfind(cluster.shell,'csh'))
-					shellext='sh';
-				else
-					shellext='csh';
-				end
-
-				if ~isempty(restart)
-					launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && cd ' cluster.executionpath ' && cd ' dirname ' && source ' modelname '.queue '];
-				else
-					if ~batch
-					launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && cd ' cluster.executionpath ' && tar -zxf ' dirname '.tar.gz  && source  ' modelname '.queue '];
-					else
-					launchcommand=['source ' cluster.etcpath '/environment.' shellext ' && cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-						' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz '];
-					end
-				end
-				issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
+				cluster_defaults.LaunchQueueJobSbatch(cluster,modelname,dirname,filelist,restart,batch, 1);
 			else
 				batfile=[cluster.executionpath '\' dirname '\' modelname '.bat'];
 				system(['"' batfile '"']);

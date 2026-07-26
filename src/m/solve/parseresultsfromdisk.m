@@ -252,6 +252,8 @@ else
 		field = field*yts;
 	elseif strcmp(fieldname,'BasalforcingsSpatialUpperwaterMeltingRate')
 		field = field*yts;
+	elseif strcmp(fieldname,'BasalforcingsPerturbationMeltingRate')
+		field = field*yts;
 	elseif strcmp(fieldname,'TotalFloatingBmb')
 		field = field/10.^12*yts; %(GigaTon/year)
 	elseif strcmp(fieldname,'TotalFloatingBmbScaled')
@@ -273,6 +275,8 @@ else
 	elseif strcmp(fieldname,'IcefrontMassFlux')
 		field = field/10.^12*yts; %(GigaTon/year)
 	elseif strcmp(fieldname,'IcefrontMassFluxLevelset')
+		field = field/10.^12*yts; %(GigaTon/year)
+	elseif strcmp(fieldname,'TotalHydrologyBasalFlux')
 		field = field/10.^12*yts; %(GigaTon/year)
 	elseif strcmp(fieldname,'SmbMassBalance')
 		field = field*yts;
@@ -300,9 +304,7 @@ else
 		field = field*yts;
 	elseif strcmp(fieldname,'CalvingCalvingrate')
 		field = field*yts;
-	elseif strcmp(fieldname,'Calvingratex')
-		field = field*yts;
-	elseif strcmp(fieldname,'Calvingratey')
+	elseif strncmp(fieldname,'Calvingrate',11)
 		field = field*yts;
 	elseif strcmp(fieldname,'CalvingMeltingrate')
 		field = field*yts;

@@ -188,6 +188,7 @@ const char* EnumToStringx(int en){
 		case DebugProfilingEnum : return "DebugProfiling";
 		case DomainDimensionEnum : return "DomainDimension";
 		case DomainTypeEnum : return "DomainType";
+		case DoNotSaveResultsEnum : return "DoNotSaveResults";
 		case DslModelEnum : return "DslModel";
 		case DslModelidEnum : return "DslModelid";
 		case DslNummodelsEnum : return "DslNummodels";
@@ -263,6 +264,7 @@ const char* EnumToStringx(int en){
 		case GrdModelEnum : return "GrdModel";
 		case GroundinglineFrictionInterpolationEnum : return "GroundinglineFrictionInterpolation";
 		case GroundinglineMeltInterpolationEnum : return "GroundinglineMeltInterpolation";
+		case GroundinglineNomeltUnderLakesEnum : return "GroundinglineNomeltUnderLakes";
 		case GroundinglineMigrationEnum : return "GroundinglineMigration";
 		case GroundinglineNumRequestedOutputsEnum : return "GroundinglineNumRequestedOutputs";
 		case GroundinglineRequestedOutputsEnum : return "GroundinglineRequestedOutputs";
@@ -336,6 +338,7 @@ const char* EnumToStringx(int en){
 		case InputToL2ProjectEnum : return "InputToL2Project";
 		case InputToSmoothEnum : return "InputToSmooth";
 		case InversionAlgorithmEnum : return "InversionAlgorithm";
+		case InversionC0Enum : return "InversionC0";
 		case InversionControlParametersEnum : return "InversionControlParameters";
 		case InversionControlScalingFactorsEnum : return "InversionControlScalingFactors";
 		case InversionCostFunctionsEnum : return "InversionCostFunctions";
@@ -347,14 +350,23 @@ const char* EnumToStringx(int en){
 		case InversionGttolEnum : return "InversionGttol";
 		case InversionIncompleteAdjointEnum : return "InversionIncompleteAdjoint";
 		case InversionIscontrolEnum : return "InversionIscontrol";
+		case InversionH0CEnum : return "InversionH0C";
+		case InversionH0MeltEnum : return "InversionH0Melt";
+		case InversionMaxIncrementCEnum : return "InversionMaxIncrementC";
+		case InversionMaxIncrementMeltEnum : return "InversionMaxIncrementMelt";
 		case InversionMaxiterEnum : return "InversionMaxiter";
 		case InversionMaxiterPerStepEnum : return "InversionMaxiterPerStep";
 		case InversionMaxstepsEnum : return "InversionMaxsteps";
+		case InversionMelt0Enum : return "InversionMelt0";
 		case InversionNstepsEnum : return "InversionNsteps";
 		case InversionNumControlParametersEnum : return "InversionNumControlParameters";
 		case InversionNumCostFunctionsEnum : return "InversionNumCostFunctions";
+		case InversionRelaxationCEnum : return "InversionRelaxationC";
+		case InversionRelaxationMeltEnum : return "InversionRelaxationMelt";
 		case InversionStepThresholdEnum : return "InversionStepThreshold";
 		case InversionStopFlagEnum : return "InversionStopFlag";
+		case InversionTauCEnum : return "InversionTauC";
+		case InversionTauMeltEnum : return "InversionTauMelt";
 		case InversionTypeEnum : return "InversionType";
 		case IoConstantEnum : return "IoConstant";
 		case IvinsEnum : return "Ivins";
@@ -867,6 +879,7 @@ const char* EnumToStringx(int en){
 		case CalvingrateyEnum : return "Calvingratey";
 		case CalvingFluxLevelsetEnum : return "CalvingFluxLevelset";
 		case CalvingMeltingFluxLevelsetEnum : return "CalvingMeltingFluxLevelset";
+		case ConnectedToOceanEnum : return "ConnectedToOcean";
 		case ConvergedEnum : return "Converged";
 		case CrevasseDepthEnum : return "CrevasseDepth";
 		case DamageDEnum : return "DamageD";
@@ -1007,6 +1020,12 @@ const char* EnumToStringx(int en){
 		case IceMaskNodeActivationEnum : return "IceMaskNodeActivation";
 		case InputEnum : return "Input";
 		case InversionCostFunctionsCoefficientsEnum : return "InversionCostFunctionsCoefficients";
+		case InversionMaxCEnum : return "InversionMaxC";
+		case InversionMinCEnum : return "InversionMinC";
+		case InversionMaxMeltEnum : return "InversionMaxMelt";
+		case InversionMinMeltEnum : return "InversionMinMelt";
+		case InversionMaxParameterEnum : return "InversionMaxParameter";
+		case InversionMinParameterEnum : return "InversionMinParameter";
 		case InversionSurfaceObsEnum : return "InversionSurfaceObs";
 		case InversionThicknessObsEnum : return "InversionThicknessObs";
 		case InversionVelObsEnum : return "InversionVelObs";
@@ -1052,7 +1071,6 @@ const char* EnumToStringx(int en){
 		case P1Enum : return "P1";
 		case PartitioningEnum : return "Partitioning";
 		case PressureEnum : return "Pressure";
-		case RadarEnum : return "Radar";
 		case RadarAttenuationMacGregorEnum : return "RadarAttenuationMacGregor";
 		case RadarAttenuationWolffEnum : return "RadarAttenuationWolff";
 		case RadarIcePeriodEnum : return "RadarIcePeriod";
@@ -1072,6 +1090,12 @@ const char* EnumToStringx(int en){
 		case SealevelEnum : return "Sealevel";
 		case SealevelGRDEnum : return "SealevelGRD";
 		case SatGraviGRDEnum : return "SatGraviGRD";
+		case SealevelchangeOldThicknessEnum : return "SealevelchangeOldThickness";
+		case SealevelchangeOldOceanLevelsetEnum : return "SealevelchangeOldOceanLevelset";
+		case SealevelchangeOldIceLevelsetEnum : return "SealevelchangeOldIceLevelset";
+		case SealevelchangeOldIceHeightAboveFloatationEnum : return "SealevelchangeOldIceHeightAboveFloatation";
+		case SealevelchangeOldWaterColumnEnum : return "SealevelchangeOldWaterColumn";
+		case SealevelchangeOldBottomPressureEnum : return "SealevelchangeOldBottomPressure";
 		case SealevelBarystaticMaskEnum : return "SealevelBarystaticMask";
 		case SealevelBarystaticIceMaskEnum : return "SealevelBarystaticIceMask";
 		case SealevelBarystaticIceWeightsEnum : return "SealevelBarystaticIceWeights";
@@ -1079,6 +1103,7 @@ const char* EnumToStringx(int en){
 		case SealevelBarystaticIceLatbarEnum : return "SealevelBarystaticIceLatbar";
 		case SealevelBarystaticIceLongbarEnum : return "SealevelBarystaticIceLongbar";
 		case SealevelBarystaticIceLoadEnum : return "SealevelBarystaticIceLoad";
+		case SealevelBarystaticOceanMigrationLoadEnum : return "SealevelBarystaticOceanMigrationLoad";
 		case SealevelBarystaticHydroMaskEnum : return "SealevelBarystaticHydroMask";
 		case SealevelBarystaticHydroWeightsEnum : return "SealevelBarystaticHydroWeights";
 		case SealevelBarystaticHydroAreaEnum : return "SealevelBarystaticHydroArea";
@@ -1379,6 +1404,7 @@ const char* EnumToStringx(int en){
 		case ThicknessEnum : return "Thickness";
 		case ThicknessOldEnum : return "ThicknessOld";
 		case ThicknessPositiveEnum : return "ThicknessPositive";
+		case ThicknessPreviousNudgingStepEnum : return "ThicknessPreviousNudgingStep";
 		case ThicknessResidualEnum : return "ThicknessResidual";
 		case TransientAccumulatedDeltaIceThicknessEnum : return "TransientAccumulatedDeltaIceThickness";
 		case VelEnum : return "Vel";
@@ -3536,6 +3562,7 @@ const char* EnumToStringx(int en){
 		case FloatingAreaEnum : return "FloatingArea";
 		case FloatingAreaScaledEnum : return "FloatingAreaScaled";
 		case FloatingMeltRateEnum : return "FloatingMeltRate";
+		case FluxDivergenceEnum : return "FluxDivergence";
 		case FreeEnum : return "Free";
 		case FreeSurfaceBaseAnalysisEnum : return "FreeSurfaceBaseAnalysis";
 		case FreeSurfaceTopAnalysisEnum : return "FreeSurfaceTopAnalysis";
@@ -3847,7 +3874,7 @@ const char* EnumToStringx(int en){
 		case SubelementMigration4Enum : return "SubelementMigration4";
 		case TimesteppingTimeAdaptEnum : return "TimesteppingTimeAdapt";
 		case TriangleInterpEnum : return "TriangleInterp";
-		case MaximumNumberOfDefinitionsEnum : return "MaximumNumberOfDefinitions";
+		case MaximumNumberOfDefinitionsEnum : return "MaximumNumberOfDefinitionsE";
 		default : return "unknown";
 
 	}

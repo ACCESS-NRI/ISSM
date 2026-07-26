@@ -98,9 +98,13 @@ void CreateParametersControl(Parameters* parameters,IoModel* iomodel,int solutio
 			xDelete<char*>(cm_responses);
 			parameters->AddObject(new IntVecParam(InversionCostFunctionsEnum,costfunc_enums,num_costfunc));
 			xDelete<int>(costfunc_enums);
-
+				  }
 			break;
-			}
+			case 5:/*Nudging*/
+				  {
+					/*Nothing to do here*/
+					break;
+				  }
 			default:
 				_error_("not supported");
 		}
@@ -147,7 +151,20 @@ void CreateParametersControl(Parameters* parameters,IoModel* iomodel,int solutio
 				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.gttol",InversionGttolEnum));
 				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.maxsteps",InversionMaxstepsEnum));
 				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.maxiter",InversionMaxiterEnum));
-			break;
+				break;
+			case 5: /*Nudging*/
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.maxiter",InversionMaxiterEnum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.C0",InversionC0Enum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.melt0",InversionMelt0Enum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.max_increment_C",InversionMaxIncrementCEnum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.max_increment_melt",InversionMaxIncrementMeltEnum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.H0_C",InversionH0CEnum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.H0_melt",InversionH0MeltEnum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.relaxation_C",InversionRelaxationCEnum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.relaxation_melt",InversionRelaxationMeltEnum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.tau_C",InversionTauCEnum));
+				parameters->AddObject(iomodel->CopyConstantObject("md.inversion.tau_melt",InversionTauMeltEnum));
+				break;
 			default:
 				_error_("not supported");
 		}

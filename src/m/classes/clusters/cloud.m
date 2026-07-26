@@ -47,40 +47,37 @@ classdef cloud
 			end
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
          %Get variables from md
          dirname         = md.private.runtimename;
          modelname       = md.miscellaneous.name;
          solution        = md.private.solution;
          io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
 
 			%write queuing script 
 			fid=fopen(filename, 'w');
 			fprintf(fid,'#!/bin/bash\n');
 			fprintf(fid,'source %s%s\n',cluster.codepath,'/../etc/environment.sh');
 			fprintf(fid,'cd %s\n',[cluster.executionpath '/' dirname]);
-			fprintf(fid,'mpiexec -np %i -f /home/mpich2.hosts %s/issm.exe %s %s/%s %s 2> %s.errlog > /dev/stdout | tee %s.outlog',cluster.np,cluster.codepath,solution,cluster.executionpath,dirname,modelname,modelname,modelname);
+			fprintf(fid,'mpiexec -np %i -f /home/mpich2.hosts %s/%s %s %s/%s %s 2> %s.errlog > /dev/stdout | tee %s.outlog',cluster.np,cluster.codepath,executable,solution,cluster.executionpath,dirname,modelname,modelname,modelname);
 		end
 		%}}}
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
-
 			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz '];
+			%filelist contains full paths; tar with -C so only basenames are stored in the archive
+			root=[issmdir() '/execution/' dirname];
+			compressstring=['tar -C ' root ' -zcf ' dirname '.tar.gz'];
 			for i=1:numel(filelist)
-				compressstring = [compressstring ' ' filelist{i}];
+				if ~exist(filelist{i},'file')
+					error(['File ' filelist{i} ' not found']);
+				end
+				[~,fname,fext]=fileparts(filelist{i});
+				compressstring=[compressstring ' ' fname fext];
 			end
 			system(compressstring);
 
-			if isempty(cluster.login)
-				error('cloud BuildQueueScript: login should be supplied!');
-			end
-			%upload input files
-			issmstscpout(cluster.name,cluster.executionpath,cluster.login,{[dirname '.tar.gz']});
+			issmscpout(cluster.name,cluster.executionpath,cluster.login,0,{[dirname '.tar.gz']});
 
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart) % {{{

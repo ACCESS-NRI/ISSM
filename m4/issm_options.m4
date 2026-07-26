@@ -234,7 +234,7 @@ AC_DEFUN([ISSM_OPTIONS],[
 			AC_DEFINE([_IS_MSYS2_], [1], [is Windows (MSYS2 MinGW)])
 			export CXXFLAGS="-D_MSYS2_ -std=c++11"
 			export LDFLAGS="-no-undefined"
-			export OSLIBS="-Wl,-L/c/msys64/mingw64/lib -Wl,-lstdc++ -Wl,-lmingw32 -Wl,-lgcc_s -Wl,-lmoldname -Wl,-lmingwex -Wl,-lmsvcrt -Wl,-lm -Wl,-lpthread -Wl,-lshell32 -Wl,-luser32 -Wl,-lgdi32 -Wl,-luser32 -Wl,-ladvapi32 -Wl,-lkernel32 -Wl,-lgcc"
+			export OSLIBS="-Wl,-L/c/msys64/mingw64/lib -Wl,-lstdc++ -Wl,-lmingw32 -Wl,-lgcc_s -Wl,-lmoldname -Wl,-lmsvcrt -Wl,-L/mingw64/lib -Wl,-lmingwex -Wl,-lmsvcrt -Wl,-lm -Wl,-lpthread -Wl,-lshell32 -Wl,-luser32 -Wl,-lgdi32 -Wl,-ladvapi32 -Wl,-lkernel32 -Wl,-lgcc"
 		;;
 		*)
 			AC_MSG_ERROR([unsupported operating system type])
@@ -1976,38 +1976,6 @@ AC_DEFUN([ISSM_OPTIONS],[
 		AC_SUBST([PROMETHEUSINCL])
 		AC_SUBST([PROMETHEUSLIB])
 	fi
-	dnl }}}
-	dnl SEMIC{{{
-	AC_MSG_CHECKING([for SEMIC])
-	AC_ARG_WITH(
-		[semic-dir],
-		AS_HELP_STRING([--with-semic-dir=DIR], [SEMIC root directory]),
-		[SEMIC_ROOT=${withval}],
-		[SEMIC_ROOT="no"]
-	)
-	if test "x${SEMIC_ROOT}" == "xno"; then
-		HAVE_SEMIC=no
-	else
-		HAVE_SEMIC=yes
-		if ! test -d "${SEMIC_ROOT}"; then
-			AC_MSG_ERROR([SEMIC directory provided (${SEMIC_ROOT}) does not exist!]);
-		fi
-	fi
-	AC_MSG_RESULT([${HAVE_SEMIC}])
-
-	dnl SEMIC libraries and header files
-	if test "x${HAVE_SEMIC}" == "xyes"; then
-		SEMICINCL="-I${SEMIC_ROOT}"
-		if test "x${IS_MSYS2}" == "xyes"; then
-			SEMICLIB="-Wl,-L${SEMIC_ROOT}/lib -Wl,-lsurface_physics -Wl,-lutils"
-		else
-			SEMICLIB="-L${SEMIC_ROOT}/lib -lsurface_physics -lutils"
-		fi
-		AC_DEFINE([_HAVE_SEMIC_], [1], [with SEMIC in ISSM src])
-		AC_SUBST([SEMICLIB])
-		AC_SUBST([SEMICINCL])
-	fi
-	AM_CONDITIONAL([SEMIC], [test "x${HAVE_SEMIC}" == "xyes"])
 	dnl }}}
 	dnl SPAI{{{
 	AC_MSG_CHECKING([for SPAI])

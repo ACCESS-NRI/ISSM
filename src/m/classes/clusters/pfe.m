@@ -153,33 +153,19 @@ classdef pfe
 
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
+			%Get variables from md
+			dirname    = md.private.runtimename;
+			modelname  = md.miscellaneous.name;
+			solution   = md.private.solution;
+			io_gather  = md.settings.io_gather;
+			isvalgrind = md.debug.valgrind;
 
-         %checks
-			if(isgprof) disp('gprof not supported by cluster, ignoring...'); end
+			%checks
+			if(md.debug.gprof) disp('gprof not supported by cluster, ignoring...'); end
 
-			executable='issm.exe';
-			if isdakota
-				version=IssmConfig('_DAKOTA_VERSION_'); version=str2num(version(1:3));
-				if (version>=6)
-					executable='issm_dakota.exe';
-				end
-			end
-			if isoceancoupling
-				executable='issm_ocean.exe';
-			end
-
-			%write queuing script 
+			%write queuing script
 			fid=fopen(filename, 'w');
 			fprintf(fid,'#PBS -S /bin/bash\n');
 %			fprintf(fid,'#PBS -N %s\n',modelname);
@@ -322,22 +308,19 @@ classdef pfe
 			end
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
+			%Get variables from md
+			dirname    = md.private.runtimename;
+			modelname  = md.miscellaneous.name;
+			solution   = md.private.solution;
+			io_gather  = md.settings.io_gather;
+			isvalgrind = md.debug.valgrind;
 
-         %checks
-			if(isgprof)    disp('gprof not supported by cluster, ignoring...'); end
+			%checks
+			if(md.debug.gprof) disp('gprof not supported by cluster, ignoring...'); end
 
-			%write queuing script 
+			%write queuing script
 			fid=fopen(filename, 'w');
 			fprintf(fid,'#PBS -S /bin/bash\n');
 			%			fprintf(fid,'#PBS -N %s\n',modelname);
@@ -430,12 +413,15 @@ classdef pfe
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
 
 			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz'];
+			%filelist contains full paths; tar with -C so only basenames are stored in the archive
+			root=[issmdir() '/execution/' dirname];
+			compressstring=['tar -C ' root ' -zcf ' dirname '.tar.gz'];
 			for i=1:numel(filelist)
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			if cluster.interactive
-				compressstring = [compressstring ' ' modelname '.run '  modelname '.errlog ' modelname '.outlog '];
+				if ~exist(filelist{i},'file')
+					error(['File ' filelist{i} ' not found']);
+				end
+				[~,fname,fext]=fileparts(filelist{i});
+				compressstring=[compressstring ' ' fname fext];
 			end
 			system(compressstring);
 
@@ -469,17 +455,12 @@ classdef pfe
 						launchcommand=['cd ' cluster.executionpath '/Interactive' num2str(cluster.interactive) ' && tar -zxf ' dirname '.tar.gz'];
 					end
 				end
+				issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
+
 			else
-				if ~isempty(restart)
-					launchcommand=['cd ' cluster.executionpath ' && cd ' dirname ' && /PBS/bin/qsub ' modelname '.queue '];
-				else
-					launchcommand=['cd ' cluster.executionpath ' && rm -rf ./' dirname ' && mkdir ' dirname ...
-						' && cd ' dirname ' && mv ../' dirname '.tar.gz ./ && tar -zxf ' dirname '.tar.gz && /PBS/bin/qsub ' modelname '.queue '];
-				end
+				cluster_defaults.LaunchQueueJobSbatch(cluster,modelname,dirname,filelist,restart,batch, 3);
 			end
 
-			%Execute Queue job
-			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
 		end
 		%}}}
 		function Download(cluster,dirname,filelist) % {{{

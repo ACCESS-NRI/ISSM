@@ -1,5 +1,5 @@
 AM_CPPFLAGS = @NEOPZINCL@ @DAKOTAINCL@ @TRIANGLEINCL@ @PETSCINCL@ @AMPIINCL@ @MEDIPACKINCL@ @MPIINCL@ @PARMETISINCL@ @METISINCL@ @CHACOINCL@ @PLAPACKINCL@ @MKLINCL@ @MUMPSINCL@ @SPAIINCL@ @HYPREINCL@ @PROMETHEUSINCL@ @SUPERLUINCL@ @SPOOLESINCL@ @PASTIXINCL@ @MLINCL@ @TAOINCL@ @ADOLCINCL@ @CODIPACKINCL@ @ADJOINTPETSCINCL@ @GSLINCL@ @BOOSTINCL@ @ESMFINCL@ @PROJINCL@ @MPLAPACKINCL@ @PyBind11INCL@
-AM_FCFLAGS = @SEMICINCL@
+AM_FCFLAGS = 
 
 AUTOMAKE_OPTIONS = subdir-objects
 
@@ -93,7 +93,6 @@ issm_sources += \
 	./classes/Node.cpp \
 	./classes/Vertex.cpp \
 	./classes/Hook.cpp \
-	./classes/Radar.cpp \
 	./classes/BarystaticContributions.cpp \
 	./classes/ExternalResults/Results.cpp \
 	./classes/Elements/Element.cpp \
@@ -170,6 +169,7 @@ issm_sources += \
 	./shared/Numerics/Interpolation.cpp \
 	./shared/Exceptions/Exceptions.cpp \
 	./shared/Sorting/binary_search.cpp \
+	./shared/Semic/Semic.cpp \
 	./shared/Elements/Cuffey.cpp \
 	./shared/Elements/BuddJacka.cpp \
 	./shared/Elements/CuffeyTemperate.cpp \
@@ -310,6 +310,7 @@ issm_sources += \
 	./cores/controltao_core.cpp \
 	./cores/controlm1qn3_core.cpp \
 	./cores/controladm1qn3_core.cpp \
+	./cores/controlnudging_core.cpp \
 	./cores/controlvalidation_core.cpp \
 	./cores/adjointstressbalance_core.cpp \
 	./cores/adjointbalancethickness_core.cpp \
@@ -539,6 +540,7 @@ if LEVELSET
 issm_sources += ./analyses/LevelsetAnalysis.cpp
 issm_sources += ./modules/Calvingx/Calvingx.cpp
 issm_sources += ./modules/KillIcebergsx/KillIcebergsx.cpp
+issm_sources += ./modules/MapOceanConnectivityx/MapOceanConnectivityx.cpp
 endif
 if EXTRAPOLATION
 issm_sources += ./analyses/ExtrapolationAnalysis.cpp
@@ -633,14 +635,6 @@ if ESMF
 issm_sources += ./main/esmfbinders.cpp
 endif
 #}}}
-# SEMIC sources {{{
-if SEMIC
-if FORTRAN
-issm_sources += ./modules/SurfaceMassBalancex/run_semic.f90
-issm_sources += ./modules/SurfaceMassBalancex/run_semic_transient.f90
-endif
-endif
-#}}}
 # Wrapper sources
 # NEOPZ sources {{{
 neopz_sources = ./classes/AmrNeopz.cpp
@@ -715,7 +709,7 @@ endif
 libISSMCore_la_SOURCES  = $(issm_sources)
 libISSMCore_la_CXXFLAGS = $(ALL_CXXFLAGS)
 libISSMCore_la_FFLAGS = $(AM_FFLAGS)
-libISSMCore_LIB_ADD = $(CHACOLIB) $(DAKOTALIB) $(PETSCLIB) $(MUMPSLIB) $(SCALAPACKLIB) $(BLASLAPACKLIB) $(PARMETISLIB) $(METISLIB) $(HDF5LIB) $(TAOLIB) $(SEMICLIB) $(PLAPACKLIB) $(MPLAPACKLIB) $(SUPERLULIB) $(SPOOLESLIB) $(BLACSLIB) $(HYPRELIB) $(SPAILIB) $(PROMETHEUSLIB) $(PASTIXLIB) $(MLLIB) $(MKLLIB) $(MPILIB) $(MATHLIB) $(GRAPHICSLIB) $(MULTITHREADINGLIB) $(GSLLIB) $(ADOLCLIB) $(AMPILIB) $(PROJLIB) $(ADJOINTPETSCLIB)
+libISSMCore_LIB_ADD = $(CHACOLIB) $(DAKOTALIB) $(PETSCLIB) $(MUMPSLIB) $(SCALAPACKLIB) $(BLASLAPACKLIB) $(PARMETISLIB) $(METISLIB) $(HDF5LIB) $(TAOLIB) $(PLAPACKLIB) $(MPLAPACKLIB) $(SUPERLULIB) $(SPOOLESLIB) $(BLACSLIB) $(HYPRELIB) $(SPAILIB) $(PROMETHEUSLIB) $(PASTIXLIB) $(MLLIB) $(MKLLIB) $(MPILIB) $(MATHLIB) $(GRAPHICSLIB) $(MULTITHREADINGLIB) $(GSLLIB) $(ADOLCLIB) $(AMPILIB) $(PROJLIB) $(ADJOINTPETSCLIB)
 if FORTRAN
 libISSMCore_LIB_ADD += $(FLIBS) $(FORTRANLIB)
 endif
@@ -861,7 +855,7 @@ LDADD += ./libISSMModules.la $(TRIANGLELIB)
 endif
 
 # External packages
-LDADD += $(DAKOTALIB) $(SEMICLIB) $(CHACOLIB) $(PETSCLIB) $(MUMPSLIB) $(SCALAPACKLIB) $(BLASLAPACKLIB) $(PARMETISLIB) $(METISLIB) $(NEOPZLIB) $(TAOLIB) $(PLAPACKLIB) $(MPLAPACKLIB) $(SUPERLULIB) $(SPOOLESLIB) $(BLACSLIB) $(HDF5LIB) $(HYPRELIB) $(SPAILIB) $(PROMETHEUSLIB) $(PASTIXLIB) $(MLLIB) $(MKLLIB) $(MATHLIB) $(GRAPHICSLIB) $(MULTITHREADINGLIB) $(GSLLIB) $(AMPILIB) $(ADOLCLIB) $(MPILIB) $(ESMFLIB)
+LDADD += $(DAKOTALIB) $(CHACOLIB) $(PETSCLIB) $(MUMPSLIB) $(SCALAPACKLIB) $(BLASLAPACKLIB) $(PARMETISLIB) $(METISLIB) $(NEOPZLIB) $(TAOLIB) $(PLAPACKLIB) $(MPLAPACKLIB) $(SUPERLULIB) $(SPOOLESLIB) $(BLACSLIB) $(HDF5LIB) $(HYPRELIB) $(SPAILIB) $(PROMETHEUSLIB) $(PASTIXLIB) $(MLLIB) $(MKLLIB) $(MATHLIB) $(GRAPHICSLIB) $(MULTITHREADINGLIB) $(GSLLIB) $(AMPILIB) $(ADOLCLIB) $(MPILIB) $(ESMFLIB)
 
 if FORTRAN
 LDADD += $(FLIBS) $(FORTRANLIB)

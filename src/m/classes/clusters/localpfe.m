@@ -74,7 +74,7 @@ classdef localpfe
 			end
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
          %Get variables from md
          dirname         = md.private.runtimename;
@@ -250,12 +250,15 @@ classdef localpfe
 			if ~ispc || ismingw
 
 				%compress the files into one zip.
-				compressstring=['tar -zcf ' dirname '.tar.gz '];
+				%filelist contains full paths; tar with -C so only basenames are stored in the archive
+				root=[issmdir() '/execution/' dirname];
+				compressstring=['tar -C ' root ' -zcf ' dirname '.tar.gz'];
 				for i=1:numel(filelist)
-					compressstring = [compressstring ' ' filelist{i}];
-				end
-				if cluster.interactive
-					compressstring = [compressstring ' ' modelname '.run '  modelname '.errlog ' modelname '.outlog '];
+					if ~exist(filelist{i},'file')
+						error(['File ' filelist{i} ' not found']);
+					end
+					[~,fname,fext]=fileparts(filelist{i});
+					compressstring=[compressstring ' ' fname fext];
 				end
 				system(compressstring);
 
@@ -264,31 +267,7 @@ classdef localpfe
 		end %}}}
 		function LaunchQueueJob(cluster,modelname,dirname,filelist,restart,batch)% {{{
 
-			%figure out what shell extension we will use:
-			if isempty(strfind(cluster.shell,'csh'))
-				shellext='sh';
-			else
-				shellext='csh';
-			end
-
-			if cluster.verbose, %Execute Queue job end
-
 			launchcommand=['cd ' cluster.executionpath ' && rm -rf *.lock && rm -rf ADOLC* && tar -zxf ' dirname '.tar.gz  && rm -rf *.tar.gz'];
-			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
-
-		end %}}}
-		function LaunchQueueJobIceOcean(cluster,modelname,dirname,filelist,restart,batch)% {{{
-
-			%figure out what shell extension we will use:
-			if isempty(strfind(cluster.shell,'csh'))
-				shellext='sh';
-			else
-				shellext='csh';
-			end
-
-			if cluster.verbose, %Execute Queue job end
-
-			launchcommand=['cd ' cluster.executionpath ' && rm -rf *.lock && tar -zxf ' dirname '.tar.gz  && rm -rf *.tar.gz'];
 			issmssh(cluster.name,cluster.login,cluster.port,launchcommand);
 
 		end %}}}

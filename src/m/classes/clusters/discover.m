@@ -94,31 +94,17 @@ classdef discover
 
 		end
 		%}}}
-		function BuildQueueScript(cluster, md, filename) % {{{
+		function BuildQueueScript(cluster, md, filename, executable) % {{{
 
-         %Get variables from md
-         dirname         = md.private.runtimename;
-         modelname       = md.miscellaneous.name;
-         solution        = md.private.solution;
-         io_gather       = md.settings.io_gather;
-         isvalgrind      = md.debug.valgrind;
-         isgprof         = md.debug.gprof;
-         isdakota        = md.qmu.isdakota;
-         isoceancoupling = md.transient.isoceancoupling;
+			%Get variables from md
+			dirname    = md.private.runtimename;
+			modelname  = md.miscellaneous.name;
+			solution   = md.private.solution;
+			io_gather  = md.settings.io_gather;
+			isvalgrind = md.debug.valgrind;
 
-         %checks
-			if(isgprof) disp('gprof not supported by cluster, ignoring...'); end
-
-			executable='issm.exe';
-			if isdakota
-				version=IssmConfig('_DAKOTA_VERSION_'); version=str2num(version(1:3));
-				if (version>=6)
-					executable='issm_dakota.exe';
-				end
-			end
-			if isoceancoupling
-				executable='issm_ocean.exe';
-			end
+			%checks
+			if(md.debug.gprof) disp('gprof not supported by cluster, ignoring...'); end
 
 			%write queuing script
 			fid=fopen(filename, 'w');
@@ -172,12 +158,15 @@ classdef discover
 		function UploadQueueJob(cluster,modelname,dirname,filelist) % {{{
 
 			%compress the files into one zip.
-			compressstring=['tar -zcf ' dirname '.tar.gz'];
+			%filelist contains full paths; tar with -C so only basenames are stored in the archive
+			root=[issmdir() '/execution/' dirname];
+			compressstring=['tar -C ' root ' -zcf ' dirname '.tar.gz'];
 			for i=1:numel(filelist)
-				compressstring = [compressstring ' ' filelist{i}];
-			end
-			if cluster.interactive
-				compressstring = [compressstring ' ' modelname '.run '  modelname '.errlog ' modelname '.outlog '];
+				if ~exist(filelist{i},'file')
+					error(['File ' filelist{i} ' not found']);
+				end
+				[~,fname,fext]=fileparts(filelist{i});
+				compressstring=[compressstring ' ' fname fext];
 			end
 			system(compressstring);
 

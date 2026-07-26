@@ -203,6 +203,8 @@ def ReadData(fid, md):  # {{{
             field = field * yts
         elif fieldname == 'BasalforcingsSpatialUpperwaterMeltingRate':
             field = field * yts
+        elif fieldname == 'BasalforcingsPerturbationMeltingRate':
+            field = field * yts
         elif fieldname == 'TotalFloatingBmb':
             field = field / pow(10.0, 12) * yts # (GigaTon/year)
         elif fieldname == 'TotalFloatingBmbScaled':
@@ -224,6 +226,8 @@ def ReadData(fid, md):  # {{{
         elif fieldname == 'IcefrontMassFlux':
             field = field / pow(10.0, 12) * yts # (GigaTon/year)
         elif fieldname == 'IcefrontMassFluxLevelset':
+            field = field / pow(10.0, 12) * yts # (GigaTon/year)
+        elif fieldname == 'TotalHydrologyBasalFlux':
             field = field / pow(10.0, 12) * yts # (GigaTon/year)
         elif fieldname == 'SmbMassBalance':
             field = field * yts

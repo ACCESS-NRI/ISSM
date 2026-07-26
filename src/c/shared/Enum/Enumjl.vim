@@ -179,6 +179,7 @@ syn keyword juliaConstC DebrisPackingFractionEnum
 syn keyword juliaConstC DebugProfilingEnum
 syn keyword juliaConstC DomainDimensionEnum
 syn keyword juliaConstC DomainTypeEnum
+syn keyword juliaConstC DoNotSaveResultsEnum
 syn keyword juliaConstC DslModelEnum
 syn keyword juliaConstC DslModelidEnum
 syn keyword juliaConstC DslNummodelsEnum
@@ -254,6 +255,7 @@ syn keyword juliaConstC FrontalForcingsSdpolyparamsEnum
 syn keyword juliaConstC GrdModelEnum
 syn keyword juliaConstC GroundinglineFrictionInterpolationEnum
 syn keyword juliaConstC GroundinglineMeltInterpolationEnum
+syn keyword juliaConstC GroundinglineNomeltUnderLakesEnum
 syn keyword juliaConstC GroundinglineMigrationEnum
 syn keyword juliaConstC GroundinglineNumRequestedOutputsEnum
 syn keyword juliaConstC GroundinglineRequestedOutputsEnum
@@ -327,6 +329,7 @@ syn keyword juliaConstC InputToExtrudeEnum
 syn keyword juliaConstC InputToL2ProjectEnum
 syn keyword juliaConstC InputToSmoothEnum
 syn keyword juliaConstC InversionAlgorithmEnum
+syn keyword juliaConstC InversionC0Enum
 syn keyword juliaConstC InversionControlParametersEnum
 syn keyword juliaConstC InversionControlScalingFactorsEnum
 syn keyword juliaConstC InversionCostFunctionsEnum
@@ -338,14 +341,23 @@ syn keyword juliaConstC InversionGrtolEnum
 syn keyword juliaConstC InversionGttolEnum
 syn keyword juliaConstC InversionIncompleteAdjointEnum
 syn keyword juliaConstC InversionIscontrolEnum
+syn keyword juliaConstC InversionH0CEnum
+syn keyword juliaConstC InversionH0MeltEnum
+syn keyword juliaConstC InversionMaxIncrementCEnum
+syn keyword juliaConstC InversionMaxIncrementMeltEnum
 syn keyword juliaConstC InversionMaxiterEnum
 syn keyword juliaConstC InversionMaxiterPerStepEnum
 syn keyword juliaConstC InversionMaxstepsEnum
+syn keyword juliaConstC InversionMelt0Enum
 syn keyword juliaConstC InversionNstepsEnum
 syn keyword juliaConstC InversionNumControlParametersEnum
 syn keyword juliaConstC InversionNumCostFunctionsEnum
+syn keyword juliaConstC InversionRelaxationCEnum
+syn keyword juliaConstC InversionRelaxationMeltEnum
 syn keyword juliaConstC InversionStepThresholdEnum
 syn keyword juliaConstC InversionStopFlagEnum
+syn keyword juliaConstC InversionTauCEnum
+syn keyword juliaConstC InversionTauMeltEnum
 syn keyword juliaConstC InversionTypeEnum
 syn keyword juliaConstC IoConstantEnum
 syn keyword juliaConstC IvinsEnum
@@ -858,6 +870,7 @@ syn keyword juliaConstC CalvingratexEnum
 syn keyword juliaConstC CalvingrateyEnum
 syn keyword juliaConstC CalvingFluxLevelsetEnum
 syn keyword juliaConstC CalvingMeltingFluxLevelsetEnum
+syn keyword juliaConstC ConnectedToOceanEnum
 syn keyword juliaConstC ConvergedEnum
 syn keyword juliaConstC CrevasseDepthEnum
 syn keyword juliaConstC DamageDEnum
@@ -998,6 +1011,12 @@ syn keyword juliaConstC IceEnum
 syn keyword juliaConstC IceMaskNodeActivationEnum
 syn keyword juliaConstC InputEnum
 syn keyword juliaConstC InversionCostFunctionsCoefficientsEnum
+syn keyword juliaConstC InversionMaxCEnum
+syn keyword juliaConstC InversionMinCEnum
+syn keyword juliaConstC InversionMaxMeltEnum
+syn keyword juliaConstC InversionMinMeltEnum
+syn keyword juliaConstC InversionMaxParameterEnum
+syn keyword juliaConstC InversionMinParameterEnum
 syn keyword juliaConstC InversionSurfaceObsEnum
 syn keyword juliaConstC InversionThicknessObsEnum
 syn keyword juliaConstC InversionVelObsEnum
@@ -1043,7 +1062,6 @@ syn keyword juliaConstC P0Enum
 syn keyword juliaConstC P1Enum
 syn keyword juliaConstC PartitioningEnum
 syn keyword juliaConstC PressureEnum
-syn keyword juliaConstC RadarEnum
 syn keyword juliaConstC RadarAttenuationMacGregorEnum
 syn keyword juliaConstC RadarAttenuationWolffEnum
 syn keyword juliaConstC RadarIcePeriodEnum
@@ -1063,6 +1081,12 @@ syn keyword juliaConstC SamplingTauEnum
 syn keyword juliaConstC SealevelEnum
 syn keyword juliaConstC SealevelGRDEnum
 syn keyword juliaConstC SatGraviGRDEnum
+syn keyword juliaConstC SealevelchangeOldThicknessEnum
+syn keyword juliaConstC SealevelchangeOldOceanLevelsetEnum
+syn keyword juliaConstC SealevelchangeOldIceLevelsetEnum
+syn keyword juliaConstC SealevelchangeOldIceHeightAboveFloatationEnum
+syn keyword juliaConstC SealevelchangeOldWaterColumnEnum
+syn keyword juliaConstC SealevelchangeOldBottomPressureEnum
 syn keyword juliaConstC SealevelBarystaticMaskEnum
 syn keyword juliaConstC SealevelBarystaticIceMaskEnum
 syn keyword juliaConstC SealevelBarystaticIceWeightsEnum
@@ -1070,6 +1094,7 @@ syn keyword juliaConstC SealevelBarystaticIceAreaEnum
 syn keyword juliaConstC SealevelBarystaticIceLatbarEnum
 syn keyword juliaConstC SealevelBarystaticIceLongbarEnum
 syn keyword juliaConstC SealevelBarystaticIceLoadEnum
+syn keyword juliaConstC SealevelBarystaticOceanMigrationLoadEnum
 syn keyword juliaConstC SealevelBarystaticHydroMaskEnum
 syn keyword juliaConstC SealevelBarystaticHydroWeightsEnum
 syn keyword juliaConstC SealevelBarystaticHydroAreaEnum
@@ -1370,6 +1395,7 @@ syn keyword juliaConstC ThicknessAlongGradientEnum
 syn keyword juliaConstC ThicknessEnum
 syn keyword juliaConstC ThicknessOldEnum
 syn keyword juliaConstC ThicknessPositiveEnum
+syn keyword juliaConstC ThicknessPreviousNudgingStepEnum
 syn keyword juliaConstC ThicknessResidualEnum
 syn keyword juliaConstC TransientAccumulatedDeltaIceThicknessEnum
 syn keyword juliaConstC VelEnum
@@ -3527,6 +3553,7 @@ syn keyword juliaConstC FixedTimesteppingEnum
 syn keyword juliaConstC FloatingAreaEnum
 syn keyword juliaConstC FloatingAreaScaledEnum
 syn keyword juliaConstC FloatingMeltRateEnum
+syn keyword juliaConstC FluxDivergenceEnum
 syn keyword juliaConstC FreeEnum
 syn keyword juliaConstC FreeSurfaceBaseAnalysisEnum
 syn keyword juliaConstC FreeSurfaceTopAnalysisEnum

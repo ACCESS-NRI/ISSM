@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 try:
@@ -11,6 +12,7 @@ from IssmConfig import IssmConfig
 from issmscpin import issmscpin
 from issmscpout import issmscpout
 from issmssh import issmssh
+from issmdir import issmdir
 from MatlabFuncs import *
 from pairoptions import pairoptions
 from QueueRequirements import QueueRequirements
@@ -88,29 +90,16 @@ class ub_ccr_from_ghub(object):
         return self
     # }}}
 
-    def BuildQueueScript(self, md, filename):  # {{{
+    def BuildQueueScript(self, md, filename, executable):  # {{{
 
         # Get variables from md
         dirname         = md.private.runtimename
         modelname       = md.miscellaneous.name
         solution        = md.private.solution
         io_gather       = md.settings.io_gather
-        isvalgrind      = md.debug.valgrind
-        isgprof         = md.debug.gprof
-        isdakota        = md.qmu.isdakota
-        isoceancoupling = md.transient.isoceancoupling
 
-        if isgprof:
+        if md.debug.gprof:
             print('gprof not supported by cluster, ignoring...')
-
-        executable = 'issm.exe'
-        if isdakota:
-            version = IssmConfig('_DAKOTA_VERSION_')[0:2]
-            version = float(str(version[0]))
-            if version >= 6:
-                executable = 'issm_dakota.exe'
-        if isoceancoupling:
-            executable = 'issm_ocean.exe'
 
         # Write queuing script
         fid = open(filename, 'w')
@@ -160,18 +149,20 @@ class ub_ccr_from_ghub(object):
     # }}}
 
     def UploadQueueJob(self, modelname, dirname, filelist):  # {{{
-        # Compress the files into one zip
-        compressstring = 'tar -zcf {}.tar.gz'.format(dirname)
-        for file in filelist:
-            compressstring += ' {}'.format(file)
-        if self.interactive:
-            compressstring += ' {}.run {}.errlog {}.outlog'.format(modelname, modelname, modelname)
+        # Compress the files into one zip.
+        # filelist contains full paths; use -C so only basenames are stored in the archive.
+        root = issmdir() + '/execution/' + dirname
+        compressstring = 'tar -C {} -zcf {}.tar.gz'.format(root, dirname)
+        for filepath in filelist:
+            if not os.path.isfile(filepath):
+                raise Exception('File {} not found'.format(filepath))
+            compressstring += ' {}'.format(os.path.basename(filepath))
         subprocess.call(compressstring, shell=True)
 
         #upload input files
         directory = issmexecdir
 
-        issmscpout(self.name, directory, self.login, self.port, ['{}.tar.gz'.format(dirname)])
+        issmscpout(self.name, directory, self.login, 0, ['{}.tar.gz'.format(dirname)])
     # }}}
 
     def LaunchQueueJob(self, modelname, dirname, filelist, restart, batch):  # {{{

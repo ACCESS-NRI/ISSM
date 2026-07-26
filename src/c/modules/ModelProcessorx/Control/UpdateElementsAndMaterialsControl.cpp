@@ -8,8 +8,35 @@
 #include "../ModelProcessorx.h"
 
 void	UpdateElementsAndMaterialsControl(Elements* elements,Parameters* parameters,Inputs* inputs,Materials* materials, IoModel* iomodel){
-	/*Intermediary*/
+
+	/*Return if iscontrol is 0*/
 	bool       control_analysis;
+	iomodel->FindConstant(&control_analysis,"md.inversion.iscontrol");
+	if(!control_analysis) return;
+
+	/*Use dedicated function if AD*/
+	bool isautodiff;
+	iomodel->FindConstant(&isautodiff,"md.autodiff.isautodiff");
+	if(isautodiff){
+		UpdateElementsAndMaterialsControlAD(elements,parameters,inputs,materials,iomodel);
+		return;
+	}
+
+	/*Simple case for nudging*/
+	int inversiontype;
+	iomodel->FindConstant(&inversiontype,"md.inversion.type");
+	if(inversiontype==5){
+		iomodel->FetchDataToInput(inputs,elements,"md.inversion.max_C",InversionMaxCEnum);
+		iomodel->FetchDataToInput(inputs,elements,"md.inversion.min_C",InversionMinCEnum);
+		iomodel->FetchDataToInput(inputs,elements,"md.inversion.max_melt",InversionMaxMeltEnum);
+		iomodel->FetchDataToInput(inputs,elements,"md.inversion.min_melt",InversionMinMeltEnum);
+		iomodel->FetchDataToInput(inputs,elements,"md.inversion.dhdt_obs",BalancethicknessThickeningRateEnum, 0.);
+		iomodel->FetchDataToInput(inputs,elements,"md.inversion.vx_obs",InversionVxObsEnum, 0.);
+		iomodel->FetchDataToInput(inputs,elements,"md.inversion.vy_obs",InversionVyObsEnum, 0.); 
+		return;
+	}
+
+	/*General case*/
 	int        M,N;
 	int        control,cost_function,domaintype;
 	int        num_controls,num_cost_functions;
@@ -23,18 +50,6 @@ void	UpdateElementsAndMaterialsControl(Elements* elements,Parameters* parameters
 	IssmDouble  *independents_min = NULL;
 	IssmDouble  *independents_max = NULL;
 	IssmDouble  *weights          = NULL;
-
-	/*Fetch parameters: */
-	iomodel->FindConstant(&control_analysis,"md.inversion.iscontrol");
-	if(!control_analysis) return;
-
-	/*Fetch parameters: */
-	bool isautodiff;
-	iomodel->FindConstant(&isautodiff,"md.autodiff.isautodiff");
-	if(isautodiff){
-		UpdateElementsAndMaterialsControlAD(elements,parameters,inputs,materials,iomodel);
-		return;
-	}
 
 	/*Process controls and convert from string to enums*/
 	iomodel->FindConstant(&num_controls,"md.inversion.num_control_parameters");
@@ -76,6 +91,7 @@ void	UpdateElementsAndMaterialsControl(Elements* elements,Parameters* parameters
 		else if(cost_function==SurfaceAbsVelMisfitEnum
 			  || cost_function==SurfaceRelVelMisfitEnum
 			  || cost_function==SurfaceLogVelMisfitEnum
+			  || cost_function==FluxDivergenceEnum
 			  || cost_function==SurfaceLogVxVyMisfitEnum
 			  || cost_function==SurfaceAverageVelMisfitEnum){
 			iomodel->FetchDataToInput(inputs,elements,"md.inversion.vx_obs",InversionVxObsEnum);

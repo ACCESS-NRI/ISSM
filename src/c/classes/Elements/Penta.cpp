@@ -2551,33 +2551,6 @@ void       Penta::InputExtrude(int enum_type,int start){/*{{{*/
 	}
 }
 /*}}}*/
-void       Penta::InputUpdateFromIoModel(int index,IoModel* iomodel){ /*{{{*/
-
-	/*Intermediaries*/
-	int         i,j;
-	int         penta_vertex_ids[NUMVERTICES];
-	IssmDouble  nodeinputs[NUMVERTICES];
-	IssmDouble  cmmininputs[NUMVERTICES];
-	IssmDouble  cmmaxinputs[NUMVERTICES];
-
-	IssmDouble  yts;
-	bool    control_analysis;
-	char**  controls = NULL;
-	int     num_control_type,num_responses;
-
-	/*Fetch parameters: */
-	iomodel->FindConstant(&yts,"md.constants.yts");
-	iomodel->FindConstant(&control_analysis,"md.inversion.iscontrol");
-	if(control_analysis) iomodel->FindConstant(&num_control_type,"md.inversion.num_control_parameters");
-	if(control_analysis) iomodel->FindConstant(&num_responses,"md.inversion.num_cost_functions");
-
-	/*Recover vertices ids needed to initialize inputs*/
-	_assert_(iomodel->elements);
-	for(i=0;i<NUMVERTICES;i++){
-		penta_vertex_ids[i]=iomodel->elements[NUMVERTICES*index+i]; //ids for vertices are in the elements array from Matlab
-	}
-}
-/*}}}*/
 void       Penta::InputUpdateFromSolutionOneDof(IssmDouble* solution,int enum_type){/*{{{*/
 
 	/*Intermediary*/
@@ -4165,9 +4138,10 @@ IssmDouble Penta::TotalFloatingBmb(bool scaled){/*{{{*/
 
 	/*The fbmb[kg yr-1] of one element is area[m2] * melting_rate [kg m^-2 yr^-1]*/
 	int        point1;
-	bool       mainlyfloating;
+	bool       mainlyfloating,nomeltunderlakes;
 	IssmDouble fbmb=0;
-	IssmDouble rho_ice,fraction1,fraction2,floatingmelt,Jdet,scalefactor;
+	IssmDouble rho_ice,fraction1,fraction2,Jdet,scalefactor;
+	IssmDouble floatingmelt,connected,groundedmelt;
 	IssmDouble Total_Fbmb=0;
 	IssmDouble xyz_list[NUMVERTICES][3];
 	Gauss*     gauss     = NULL;
@@ -4176,11 +4150,18 @@ IssmDouble Penta::TotalFloatingBmb(bool scaled){/*{{{*/
 
 	/*Get material parameters :*/
 	rho_ice=FindParam(MaterialsRhoIceEnum);
+	this->parameters->FindParam(&nomeltunderlakes,GroundinglineNomeltUnderLakesEnum);
 	Input* floatingmelt_input = this->GetInput(BasalforcingsFloatingiceMeltingRateEnum); _assert_(floatingmelt_input);
 	Input* gllevelset_input = this->GetInput(MaskOceanLevelsetEnum); _assert_(gllevelset_input);
 	Input* scalefactor_input = NULL;
 	if(scaled==true){
 		scalefactor_input = this->GetInput(MeshScaleFactorEnum); _assert_(scalefactor_input);
+	}
+	Input* connectedtoocean_input = NULL;
+	Input* groundedmelt_input     = NULL;
+	if(nomeltunderlakes){
+		connectedtoocean_input = GetInput(ConnectedToOceanEnum);	  _assert_(connectedtoocean_input);
+		groundedmelt_input = GetInput(BasalforcingsGroundediceMeltingRateEnum);  _assert_(groundedmelt_input);
 	}
 	::GetVerticesCoordinates(&xyz_list[0][0],vertices,NUMVERTICES);
 
@@ -4190,6 +4171,11 @@ IssmDouble Penta::TotalFloatingBmb(bool scaled){/*{{{*/
 	while(gauss->next()){
 		this->JacobianDeterminantBase(&Jdet,&xyz_list[0][0],gauss);
 		floatingmelt_input->GetInputValue(&floatingmelt,gauss);
+		if(nomeltunderlakes){
+			groundedmelt_input->GetInputValue(&groundedmelt,gauss);
+			connectedtoocean_input->GetInputValue(&connected,gauss);
+			if(connected<0.01) floatingmelt = groundedmelt;
+		}
 		if(scaled==true){
 			scalefactor_input->GetInputValue(&scalefactor,gauss);
 		}

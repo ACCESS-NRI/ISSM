@@ -186,6 +186,7 @@ syn keyword cConstant DebrisPackingFractionEnum
 syn keyword cConstant DebugProfilingEnum
 syn keyword cConstant DomainDimensionEnum
 syn keyword cConstant DomainTypeEnum
+syn keyword cConstant DoNotSaveResultsEnum
 syn keyword cConstant DslModelEnum
 syn keyword cConstant DslModelidEnum
 syn keyword cConstant DslNummodelsEnum
@@ -261,6 +262,7 @@ syn keyword cConstant FrontalForcingsSdpolyparamsEnum
 syn keyword cConstant GrdModelEnum
 syn keyword cConstant GroundinglineFrictionInterpolationEnum
 syn keyword cConstant GroundinglineMeltInterpolationEnum
+syn keyword cConstant GroundinglineNomeltUnderLakesEnum
 syn keyword cConstant GroundinglineMigrationEnum
 syn keyword cConstant GroundinglineNumRequestedOutputsEnum
 syn keyword cConstant GroundinglineRequestedOutputsEnum
@@ -334,6 +336,7 @@ syn keyword cConstant InputToExtrudeEnum
 syn keyword cConstant InputToL2ProjectEnum
 syn keyword cConstant InputToSmoothEnum
 syn keyword cConstant InversionAlgorithmEnum
+syn keyword cConstant InversionC0Enum
 syn keyword cConstant InversionControlParametersEnum
 syn keyword cConstant InversionControlScalingFactorsEnum
 syn keyword cConstant InversionCostFunctionsEnum
@@ -345,14 +348,23 @@ syn keyword cConstant InversionGrtolEnum
 syn keyword cConstant InversionGttolEnum
 syn keyword cConstant InversionIncompleteAdjointEnum
 syn keyword cConstant InversionIscontrolEnum
+syn keyword cConstant InversionH0CEnum
+syn keyword cConstant InversionH0MeltEnum
+syn keyword cConstant InversionMaxIncrementCEnum
+syn keyword cConstant InversionMaxIncrementMeltEnum
 syn keyword cConstant InversionMaxiterEnum
 syn keyword cConstant InversionMaxiterPerStepEnum
 syn keyword cConstant InversionMaxstepsEnum
+syn keyword cConstant InversionMelt0Enum
 syn keyword cConstant InversionNstepsEnum
 syn keyword cConstant InversionNumControlParametersEnum
 syn keyword cConstant InversionNumCostFunctionsEnum
+syn keyword cConstant InversionRelaxationCEnum
+syn keyword cConstant InversionRelaxationMeltEnum
 syn keyword cConstant InversionStepThresholdEnum
 syn keyword cConstant InversionStopFlagEnum
+syn keyword cConstant InversionTauCEnum
+syn keyword cConstant InversionTauMeltEnum
 syn keyword cConstant InversionTypeEnum
 syn keyword cConstant IoConstantEnum
 syn keyword cConstant IvinsEnum
@@ -865,6 +877,7 @@ syn keyword cConstant CalvingratexEnum
 syn keyword cConstant CalvingrateyEnum
 syn keyword cConstant CalvingFluxLevelsetEnum
 syn keyword cConstant CalvingMeltingFluxLevelsetEnum
+syn keyword cConstant ConnectedToOceanEnum
 syn keyword cConstant ConvergedEnum
 syn keyword cConstant CrevasseDepthEnum
 syn keyword cConstant DamageDEnum
@@ -1005,6 +1018,12 @@ syn keyword cConstant IceEnum
 syn keyword cConstant IceMaskNodeActivationEnum
 syn keyword cConstant InputEnum
 syn keyword cConstant InversionCostFunctionsCoefficientsEnum
+syn keyword cConstant InversionMaxCEnum
+syn keyword cConstant InversionMinCEnum
+syn keyword cConstant InversionMaxMeltEnum
+syn keyword cConstant InversionMinMeltEnum
+syn keyword cConstant InversionMaxParameterEnum
+syn keyword cConstant InversionMinParameterEnum
 syn keyword cConstant InversionSurfaceObsEnum
 syn keyword cConstant InversionThicknessObsEnum
 syn keyword cConstant InversionVelObsEnum
@@ -1050,7 +1069,6 @@ syn keyword cConstant P0Enum
 syn keyword cConstant P1Enum
 syn keyword cConstant PartitioningEnum
 syn keyword cConstant PressureEnum
-syn keyword cConstant RadarEnum
 syn keyword cConstant RadarAttenuationMacGregorEnum
 syn keyword cConstant RadarAttenuationWolffEnum
 syn keyword cConstant RadarIcePeriodEnum
@@ -1070,6 +1088,12 @@ syn keyword cConstant SamplingTauEnum
 syn keyword cConstant SealevelEnum
 syn keyword cConstant SealevelGRDEnum
 syn keyword cConstant SatGraviGRDEnum
+syn keyword cConstant SealevelchangeOldThicknessEnum
+syn keyword cConstant SealevelchangeOldOceanLevelsetEnum
+syn keyword cConstant SealevelchangeOldIceLevelsetEnum
+syn keyword cConstant SealevelchangeOldIceHeightAboveFloatationEnum
+syn keyword cConstant SealevelchangeOldWaterColumnEnum
+syn keyword cConstant SealevelchangeOldBottomPressureEnum
 syn keyword cConstant SealevelBarystaticMaskEnum
 syn keyword cConstant SealevelBarystaticIceMaskEnum
 syn keyword cConstant SealevelBarystaticIceWeightsEnum
@@ -1077,6 +1101,7 @@ syn keyword cConstant SealevelBarystaticIceAreaEnum
 syn keyword cConstant SealevelBarystaticIceLatbarEnum
 syn keyword cConstant SealevelBarystaticIceLongbarEnum
 syn keyword cConstant SealevelBarystaticIceLoadEnum
+syn keyword cConstant SealevelBarystaticOceanMigrationLoadEnum
 syn keyword cConstant SealevelBarystaticHydroMaskEnum
 syn keyword cConstant SealevelBarystaticHydroWeightsEnum
 syn keyword cConstant SealevelBarystaticHydroAreaEnum
@@ -1377,6 +1402,7 @@ syn keyword cConstant ThicknessAlongGradientEnum
 syn keyword cConstant ThicknessEnum
 syn keyword cConstant ThicknessOldEnum
 syn keyword cConstant ThicknessPositiveEnum
+syn keyword cConstant ThicknessPreviousNudgingStepEnum
 syn keyword cConstant ThicknessResidualEnum
 syn keyword cConstant TransientAccumulatedDeltaIceThicknessEnum
 syn keyword cConstant VelEnum
@@ -3534,6 +3560,7 @@ syn keyword cConstant FixedTimesteppingEnum
 syn keyword cConstant FloatingAreaEnum
 syn keyword cConstant FloatingAreaScaledEnum
 syn keyword cConstant FloatingMeltRateEnum
+syn keyword cConstant FluxDivergenceEnum
 syn keyword cConstant FreeEnum
 syn keyword cConstant FreeSurfaceBaseAnalysisEnum
 syn keyword cConstant FreeSurfaceTopAnalysisEnum
@@ -3942,6 +3969,7 @@ syn keyword cType Observation
 syn keyword cType Observations
 syn keyword cType Option
 syn keyword cType Options
+syn keyword cType OptionUtilities
 syn keyword cType Param
 syn keyword cType Parameters
 syn keyword cType Pengrid

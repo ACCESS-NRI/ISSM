@@ -16,7 +16,6 @@ from issmscpout import issmscpout
 from issmssh import issmssh
 from pairoptions import pairoptions
 
-
 class generic(object):
     """generic cluster class definition
 
@@ -87,7 +86,7 @@ class generic(object):
         return md
     # }}}
 
-    def BuildQueueScript(self, md, filename):  # {{{
+    def BuildQueueScript(self, md, filename, executable):  # {{{
 
         # Unpack fields used below
         dirname         = md.private.runtimename

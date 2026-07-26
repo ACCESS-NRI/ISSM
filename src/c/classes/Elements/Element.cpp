@@ -25,26 +25,6 @@
 /*}}}*/
 #define MAXVERTICES 6 /*Maximum number of vertices per element, currently Penta, to avoid dynamic mem allocation*/
 
-#ifdef _HAVE_SEMIC_
-/* SEMIC prototype {{{*/
-extern "C" void run_semic_(IssmDouble *sf_in, IssmDouble *rf_in, IssmDouble *swd_in, IssmDouble *lwd_in, IssmDouble *wind_in, IssmDouble *sp_in, IssmDouble *rhoa_in,
-			IssmDouble *qq_in, IssmDouble *tt_in, IssmDouble *tsurf_out, IssmDouble *smb_out, IssmDouble *saccu_out, IssmDouble *smelt_out);
-
-extern "C" void run_semic_transient_(int *nx, int *ntime, int *nloop, 
-			IssmDouble *sf_in, IssmDouble *rf_in, IssmDouble *swd_in, 
-			IssmDouble *lwd_in, IssmDouble *wind_in, IssmDouble *sp_in, IssmDouble *rhoa_in,
-			IssmDouble *qq_in, IssmDouble *tt_in, IssmDouble *tsurf_in, IssmDouble *qmr_in,
-			IssmDouble *tstic,
-			IssmDouble *hcrit, IssmDouble *rcrit,
-			IssmDouble *mask, IssmDouble *hice, IssmDouble *hsnow,
-			IssmDouble *albedo_in, IssmDouble *albedo_snow_in,
-			int *alb_scheme, IssmDouble *alb_smax, IssmDouble *alb_smin, IssmDouble *albi, IssmDouble *albl,
-			IssmDouble *Tamp, 
-			IssmDouble *tmin, IssmDouble *tmax, IssmDouble *tmid, IssmDouble *mcrit, IssmDouble *wcrit, IssmDouble *tau_a, IssmDouble* tau_f, IssmDouble *afac, bool *verbose,
-			IssmDouble *tsurf_out, IssmDouble *smb_out, IssmDouble *smbi_out, IssmDouble *smbs_out, IssmDouble *saccu_out, IssmDouble *smelt_out, IssmDouble *refr_out, IssmDouble *albedo_out, IssmDouble *albedo_snow_out, IssmDouble *hsnow_out, IssmDouble *hice_out, IssmDouble *qmr_out, IssmDouble *runoff_out, IssmDouble *subl_out);
-#endif
-// _HAVE_SEMIC_
-/*}}}*/
 /*Constructors/destructor/copy*/
 Element::Element(){/*{{{*/
 	this->id  = -1;
@@ -1548,7 +1528,7 @@ int        Element::GetNodeIndex(Node* node){/*{{{*/
 	int numnodes = this->GetNumberOfNodes(this->element_type);
 
 	for(int i=0;i<numnodes;i++){
-		if(node==nodes[i]) return i;
+		if(node==this->nodes[i]) return i;
 	}
 	_error_("Node provided not found among element nodes");
 
@@ -1643,6 +1623,27 @@ void       Element::GetSolutionFromInputsOneDof(Vector<IssmDouble>* solution, in
 	delete gauss;
 }
 /*}}}*/
+void       Element::GetVectorFromInputs(IssmDouble* vector,int input_enum,int type){/*{{{*/
+
+	switch(type){
+		case VertexLIdEnum:{
+         int        doflist[MAXVERTICES];
+         IssmDouble values[MAXVERTICES];
+			const int  NUM_VERTICES = this->GetNumberOfVertices();
+
+			/*Fill in values*/
+			this->GetVerticesLidList(&doflist[0]);
+			this->GetInputListOnVertices(&values[0],input_enum);
+			for(int i=0;i<NUM_VERTICES;i++){
+				vector[doflist[i]] = values[i];
+			}
+         }
+			break;
+		default:
+			_error_("type " << type << " (" << EnumToStringx(type) << ") not implemented yet");
+	}
+
+}/*}}}*/
 void       Element::GetVectorFromInputs(Vector<IssmDouble>* vector,int input_enum,int type){/*{{{*/
 
 	switch(type){
@@ -2096,6 +2097,164 @@ void       Element::InputCreate(IssmDouble* vector,Inputs* inputs,IoModel* iomod
 	}
 }
 /*}}}*/
+void       Element::InputCreateLocal(IssmDouble* vector,Inputs* inputs,IoModel* iomodel,int M,int N,int vector_type,int vector_enum,int code){/*{{{*/
+
+	/*Branch on type of vector: nodal or elementary: */
+	if(vector_type==1){ //nodal vector
+
+		const int NUM_VERTICES = this->GetNumberOfVertices();
+
+		int        vertexids[MAXVERTICES];
+		int        vertexlids[MAXVERTICES];
+		IssmDouble values[MAXVERTICES];
+
+		/*Recover vertices ids needed to initialize inputs*/
+		_assert_(iomodel->elements);
+		for(int i=0;i<NUM_VERTICES;i++){
+			int vid = iomodel->elements[NUM_VERTICES*this->sid+i]-1;
+			vertexids[i] =reCast<int>(iomodel->elements_local[NUM_VERTICES*this->lid+i]);
+			vertexlids[i]=iomodel->my_vertices_lids[vid];
+		}
+
+		/*Are we in transient or static? */
+		if(M==1){
+			if(N!=1) _error_("Size of Input "<<EnumToStringx(vector_enum)<<" "<<M<<"x"<<N<<" not supported");
+			_assert_(N==1);
+			this->SetElementInput(inputs,vector_enum,vector[0]);
+		}
+
+		else if(M==iomodel->numberofvertices){
+			if(N!=1) _error_("Size of Input "<<EnumToStringx(vector_enum)<<" "<<M<<"x"<<N<<" not supported");
+			for(int i=0;i<NUM_VERTICES;i++) values[i]=vector[vertexids[i]];
+			this->SetElementInput(inputs,NUM_VERTICES,vertexlids,values,vector_enum);
+		}
+		else if(M==iomodel->numberofvertices+1){
+			/*create transient input: */
+			IssmDouble* times = xNew<IssmDouble>(N);
+			for(int t=0;t<N;t++) times[t] = vector[iomodel->numberofvertices_local*N+t];
+			inputs->SetTransientInput(vector_enum,times,N);
+			TransientInput* transientinput = inputs->GetTransientInput(vector_enum);
+			for(int t=0;t<N;t++){
+				for(int i=0;i<NUM_VERTICES;i++) values[i]=vector[N*vertexids[i]+t];
+				switch(this->ObjectEnum()){
+					case TriaEnum:  transientinput->AddTriaTimeInput( t,NUM_VERTICES,vertexlids,&values[0],P1Enum); break;
+					case PentaEnum: transientinput->AddPentaTimeInput(t,NUM_VERTICES,vertexlids,&values[0],P1Enum); break;
+					default: _error_("Not implemented yet");
+				}
+			}
+			xDelete<IssmDouble>(times);
+		}
+		else if(M==iomodel->numberofelements){
+			_error_("TO BE ADDED 2");
+
+			/*This is a Patch!*/
+			IssmDouble* evalues = xNew<IssmDouble>(N);
+			for(int j=0;j<N;j++) evalues[j]=vector[this->lid*N+j];
+
+			if (N==this->GetNumberOfNodes(P1Enum)){
+				this->SetElementInput(inputs,NUM_VERTICES,vertexlids,evalues,vector_enum);
+			}
+			else if(N==this->GetNumberOfNodes(P0Enum)){
+				this->SetElementInput(inputs,vector_enum,evalues[0]);
+			}
+			else if(N==this->GetNumberOfNodes(P1xP2Enum)){ _assert_(this->ObjectEnum()==PentaEnum);
+				inputs->SetPentaInput(vector_enum,P1xP2Enum,this->lid,N,evalues);
+			}
+			else if(N==this->GetNumberOfNodes(P1xP3Enum)){ _assert_(this->ObjectEnum()==PentaEnum);
+				inputs->SetPentaInput(vector_enum,P1xP3Enum,this->lid,N,evalues);
+			}
+			else{
+				_error_("Size of Input "<<EnumToStringx(vector_enum)<<" "<<M<<"x"<<N<<" not supported");
+			}
+			xDelete<IssmDouble>(evalues);
+
+		}
+		else{
+			_error_("Size of Input "<<EnumToStringx(vector_enum)<<" "<<M<<"x"<<N<<" not supported");
+		}
+	}
+	else if(vector_type==2){ //element vector
+
+		/*Are we in transient or static? */
+		if(M==1){
+			if(N!=1) _error_("Size of Input "<<EnumToStringx(vector_enum)<<" "<<M<<"x"<<N<<" not supported");
+			this->SetElementInput(inputs,vector_enum,vector[0]);
+		}
+		else if(M==2){
+			_error_("TO BE ADDED 4");
+			/*create transient input: */
+			IssmDouble* times = xNew<IssmDouble>(N);
+			for(int t=0;t<N;t++) times[t] = vector[(M-1)*N+t];
+
+			inputs->SetTransientInput(vector_enum,times,N);
+			TransientInput* transientinput = inputs->GetTransientInput(vector_enum);
+
+			for(int t=0;t<N;t++){
+				IssmDouble value=vector[t]; //values are on the first line, times are on the second line
+				switch(this->ObjectEnum()){
+					case TriaEnum:  transientinput->AddTriaTimeInput( t,1,&(this->lid),&value,P0Enum); break;
+					case PentaEnum: transientinput->AddPentaTimeInput(t,1,&(this->lid),&value,P0Enum); break;
+					default: _error_("Not implemented yet");
+				}
+			}
+			xDelete<IssmDouble>(times);
+		}
+		else if(M==iomodel->numberofelements){
+			if(N!=1) _error_("Size of Input "<<EnumToStringx(vector_enum)<<" "<<M<<"x"<<N<<" not supported");
+			if (code==5){ //boolean
+				_error_("Is This ever used??");
+				this->SetBoolInput(inputs,vector_enum,reCast<bool>(vector[this->Sid()]));
+			}
+			else if (code==6){ //integer
+				_error_("Is This ever used??");
+				this->SetIntInput(inputs,vector_enum,reCast<int>(vector[this->Sid()]));
+			}
+			else if (code==7){ //IssmDouble
+				this->SetElementInput(inputs,vector_enum,vector[this->lid]);
+			}
+			else _error_("could not recognize nature of vector from code " << code);
+		}
+		else if(M==iomodel->numberofelements+1){
+			_error_("TO BE ADDED");
+			/*create transient input: */
+			IssmDouble* times = xNew<IssmDouble>(N);
+			for(int t=0;t<N;t++) times[t] = vector[(M-1)*N+t];
+			inputs->SetTransientInput(vector_enum,times,N);
+			TransientInput* transientinput = inputs->GetTransientInput(vector_enum);
+			for(int t=0;t<N;t++){
+				IssmDouble value=vector[N*this->Sid()+t];
+				switch(this->ObjectEnum()){
+					case TriaEnum:  transientinput->AddTriaTimeInput( t,1,&(this->lid),&value,P0Enum); break;
+					case PentaEnum: transientinput->AddPentaTimeInput(t,1,&(this->lid),&value,P0Enum); break;
+					default: _error_("Not implemented yet");
+				}
+			}
+			xDelete<IssmDouble>(times);
+		}
+
+		else{
+			_error_("Size of Input "<<EnumToStringx(vector_enum)<<" "<<M<<"x"<<N<<" not supported");
+		}
+	}
+	else if(vector_type==3){ //Double array matrix
+		_error_("TO BE ADDED");
+
+		/*For right now we are static */
+		if(M==iomodel->numberofelements){
+			IssmDouble* layers = xNewZeroInit<IssmDouble>(N);
+			for(int t=0;t<N;t++) layers[t] = vector[N*this->Sid()+t];
+			inputs->SetArrayInput(vector_enum,this->lid,layers,N);
+			xDelete<IssmDouble>(layers);
+		}
+		else{
+			_error_("Size of Input "<<EnumToStringx(vector_enum)<<" "<<M<<"x"<<N<<" not supported");
+		}
+	}
+	else{
+		_error_("Cannot add input for vector type " << vector_type << " (not supported)");
+	}
+}
+/*}}}*/
 void       Element::InputCreateP1FromConstant(Inputs* inputs,IoModel* iomodel,IssmDouble value_in,int vector_enum){/*{{{*/
 
 	const int NUM_VERTICES = this->GetNumberOfVertices();
@@ -2391,6 +2550,17 @@ bool       Element::IsAllGrounded(){/*{{{*/
 		return true;
 	}
 }/*}}}*/
+bool       Element::IsFloating(){/*{{{*/
+	/*At least ONE node is floating (partially floating returns true)*/
+
+	Input* input=this->GetInput(MaskOceanLevelsetEnum); _assert_(input);
+	if(input->GetInputMin() < 0.){
+		return true;
+	}
+	else{
+		return false;
+	}
+}/*}}}*/
 bool       Element::IsGrounded(){/*{{{*/
 	/*At least ONE node is grounded (partially grounded returns true)*/
 
@@ -2509,7 +2679,7 @@ void       Element::Ismip7FloatingiceMeltingRate(){/*{{{*/
 
 	int         basinid,num_basins,M,N;
 	IssmDouble  delta_t_basin;
-	IssmDouble* xyz_list;
+	IssmDouble* xyz_list = NULL;
 	
 	IssmDouble  tf,gamma0;
 	IssmDouble  salinity; /*local salinity [psu]*/
@@ -2570,6 +2740,7 @@ void       Element::Ismip7FloatingiceMeltingRate(){/*{{{*/
 	delete gauss;
 	xDelete<IssmDouble>(depths);
 	xDelete<IssmDouble>(delta_t);
+	xDelete<IssmDouble>(xyz_list);
 }/*}}}*/
 void       Element::LapseRateBasinSMB(int numelevbins, IssmDouble* lapserates, IssmDouble* elevbins,IssmDouble* refelevation){/*{{{*/
 
@@ -4908,7 +5079,6 @@ void       Element::SetwiseNodeConnectivity(int* pd_nz,int* po_nz,Node* node,boo
 	*po_nz=o_nz;
 }
 /*}}}*/
-#ifdef _HAVE_SEMIC_
 void       Element::SmbSemic(){/*{{{*/
 
 	/*only compute SMB at the surface: */
@@ -5003,10 +5173,10 @@ void       Element::SmbSemic(){/*{{{*/
 	}
 
 	for (int iv = 0; iv<NUM_VERTICES; iv++){
-		/* call semic */
-		run_semic_(&dailysnowfall[iv*365], &dailyrainfall[iv*365], &dailydsradiation[iv*365], &dailydlradiation[iv*365],
-					&dailywindspeed[iv*365], &dailypressure[iv*365], &dailyairdensity[iv*365], &dailyairhumidity[iv*365], &dailytemperature[iv*365],
-					&tsurf_out[iv], &smb_out[iv], &saccu_out[iv], &smelt_out[iv]);
+		/* call semic (C++ implementation) */
+		RunSemic(&dailysnowfall[iv*365], &dailyrainfall[iv*365], &dailydsradiation[iv*365], &dailydlradiation[iv*365],
+		         &dailywindspeed[iv*365], &dailypressure[iv*365], &dailyairdensity[iv*365], &dailyairhumidity[iv*365], &dailytemperature[iv*365],
+		         tsurf_out[iv], smb_out[iv], saccu_out[iv], smelt_out[iv]);
 	}
 
 	switch(this->ObjectEnum()){
@@ -5267,20 +5437,21 @@ void       Element::SmbSemicTransient(){/*{{{*/
 		_printf0_("smb core: assign qmr             :" << qmr_in[0]  << "\n");
 	}
 
-	if(isverbose && this->Sid()==0)_printf0_("smb core: call run_semic_transient module.\n");
-	/* call semic */
+	if(isverbose && this->Sid()==0)_printf0_("smb core: call RunSemicTransient (C++).\n");
+	/* call semic (C++ implementation) */
 	int nx=NUM_VERTICES, ntime=1, nloop=1;
 	bool semic_verbose=false; //VerboseSmb();
-	run_semic_transient_(&nx, &ntime, &nloop,
+	RunSemicTransient(nx, ntime, nloop,
 			dailysnowfall,  dailyrainfall, dailydsradiation, dailydlradiation,
-			dailywindspeed, dailypressure, dailyairdensity,  dailyairhumidity, dailytemperature, tsurf_in, qmr_in, 
-			&dt,
-			&hcrit, &rcrit, 
-			mask_in, hice_in, hsnow_in, 
+			dailywindspeed, dailypressure, dailyairdensity,  dailyairhumidity, dailytemperature, tsurf_in, qmr_in,
+			dt,
+			hcrit, rcrit,
+			mask_in, hice_in, hsnow_in,
 			albedo_in, albedo_snow_in,
-			&alb_scheme, &alb_smax, &alb_smin, &albi, &albl,
+			alb_scheme, alb_smax, alb_smin, albi, albl,
 			Tamp_in,
-			&tmin, &tmax, &tmid, &mcrit, &wcrit, &tau_a, &tau_f, &afac, &semic_verbose,
+			tmin, tmax, tmid, mcrit, wcrit, tau_a, tau_f, afac,
+			semic_verbose,
 			tsurf_out, smb_out, smbi_out, smbs_out, saccu_out, smelt_out, refr_out, albedo_out, albedo_snow_out, hsnow_out, hice_out, qmr_out, runoff_out, subl_out);
 
 	for (int iv = 0; iv<NUM_VERTICES; iv++){
@@ -5383,7 +5554,6 @@ void       Element::SmbSemicTransient(){/*{{{*/
 	/*}}}*/
 }
 /*}}}*/
-#endif // _HAVE_SEMIC_
 int        Element::Sid(){/*{{{*/
 
 	return this->sid;
@@ -5630,7 +5800,7 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 
 				IssmDouble* lat_mappingpoint=NULL;
 				IssmDouble* lon_mappingpoint=NULL;
-				int* mappedforcingneighbors=NULL;
+				IssmDouble* mappedforcingneighbors=NULL;
 
 				if (ismappingneighborxy) {
 					parameters->FindParam(&lon_mappingpoint,&N,SmbXMappedforcingEnum);
@@ -5640,7 +5810,7 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 					parameters->FindParam(&lat_mappingpoint,&N,SmbLatMappedforcingEnum);
 				}
 
-				this->inputs->GetIntArray(SmbMappedforcingneighborsEnum,this->lid,&mappedforcingneighbors,&N2); _assert_(N2==3);
+				this->inputs->GetArray(SmbMappedforcingneighborsEnum,this->lid,&mappedforcingneighbors,&N2); _assert_(N2==3);
 
 				Qinterp = xNew<int>(4);
 				IssmDouble* xinterp = xNew<IssmDouble>(4);
@@ -5666,9 +5836,9 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 					neighbor3 = Mappedpoint;
 				}
 				else{
-					neighbor1 = mappedforcingneighbors[0];
-					neighbor2 = mappedforcingneighbors[1];
-					neighbor3 = mappedforcingneighbors[2];
+					neighbor1 = reCast<int>(mappedforcingneighbors[0]);
+					neighbor2 = reCast<int>(mappedforcingneighbors[1]);
+					neighbor3 = reCast<int>(mappedforcingneighbors[2]);
 				}
 
 				mappedforcingpoints[0]=Mappedpoint;
@@ -5697,7 +5867,7 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 					int latlon = 0;
 					int signlat = 1;
 					if (yinterp[0]<0) signlat = -1;
-					latlon = Xy2llx(latelem, lonelem, xelem, yelem, 1, signlat); _assert_(latlon>0);
+					latlon = Xy2llx(latelem, lonelem, xelem, yelem, 1, signlat);
 					lat = latelem[0];
 					lon = lonelem[0];
 					if(lon>180) lon=lon-360;
@@ -5748,7 +5918,7 @@ void       Element::SmbGemb(IssmDouble timeinputs, int count, int steps){/*{{{*/
 				xDelete<double>(lonelem);
 				xDelete<IssmDouble>(lat_mappingpoint);
 				xDelete<IssmDouble>(lon_mappingpoint);
-				xDelete<int>(mappedforcingneighbors);
+				xDelete<IssmDouble>(mappedforcingneighbors);
 
 			} else {
 				// Get Qinterp for this element, set Q12, Q21, Q11, Q22 locally
