@@ -220,7 +220,7 @@ ElementMatrix* HydrologyGlaDSAnalysis::CreateKMatrix(Element* element){/*{{{*/
 	/*Intermediaries */
 	IssmDouble  Jdet,dphi[3],h,k;
 	IssmDouble  h_r;
-	IssmDouble  A,B,n,phi_old,phi,phi_0,H,b,v1;
+	IssmDouble  A,B,n,phi,phi_0,H,b,v1;
 	IssmDouble* xyz_list = NULL;
 
 	/*Fetch number of nodes and dof for this finite element*/
@@ -349,7 +349,7 @@ ElementVector* HydrologyGlaDSAnalysis::CreatePVector(Element* element){/*{{{*/
 	/*Intermediaries */
 	int         meltflag;
 	IssmDouble  Jdet,w,v2,vx,vy,ub,h,h_r;
-	IssmDouble  G,m,melt,RO,frictionheat,alpha2;
+	IssmDouble  G,m,melt,frictionheat,alpha2;
 	IssmDouble  A,B,n,phi_old,phi,phi_0;
 	IssmDouble  H,b;
 	IssmDouble* xyz_list = NULL;
@@ -381,7 +381,6 @@ ElementVector* HydrologyGlaDSAnalysis::CreatePVector(Element* element){/*{{{*/
 	Input* b_input      = element->GetInput(BedEnum);                                _assert_(b_input);
 	Input* G_input      = element->GetInput(BasalforcingsGeothermalfluxEnum);        _assert_(G_input);
 	Input* melt_input   = element->GetInput(BasalforcingsGroundediceMeltingRateEnum);_assert_(melt_input);
-	Input* RO_input     = NULL;
 	Input* B_input      = element->GetInput(HydrologyRheologyBBaseEnum);             _assert_(B_input);
 	Input* n_input      = element->GetInput(MaterialsRheologyNEnum);                 _assert_(n_input);
 	Input* phiold_input = element->GetInput(HydraulicPotentialOldEnum);              _assert_(phiold_input);
@@ -430,7 +429,7 @@ ElementVector* HydrologyGlaDSAnalysis::CreatePVector(Element* element){/*{{{*/
 		else{
 			Input* RO_input = element->GetInput(SmbRunoffEnum);_assert_(RO_input);
 			RO_input->GetInputValue(&melt,gauss);
-			m = melt + RO;
+			m = melt;
 		}
 
 		/*Compute closing rate*/
@@ -669,7 +668,6 @@ void HydrologyGlaDSAnalysis::UpdateSheetThickness(Element* element){/*{{{*/
 	/*Retrieve all inputs and parameters*/
 	bool isincludesheetthickness;
 	bool creep_open_flag;
-	bool ishydrologyslope;
 	element->FindParam(&isincludesheetthickness,HydrologyIsIncludeSheetThicknessEnum);
 	element->FindParam(&creep_open_flag,HydrologyCreepOpenFlagEnum);
 	IssmDouble  dt       = element->FindParam(TimesteppingTimeStepEnum);

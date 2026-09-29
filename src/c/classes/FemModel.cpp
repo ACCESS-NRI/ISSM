@@ -179,7 +179,6 @@ FemModel::FemModel(char* rootpath, char* inputfilename, char* outputfilename, ch
 FemModel::~FemModel(){/*{{{*/
 
 	/*Intermediary*/
-	FILE *output_fid;
 	char *outbinfilename = NULL;
 	char *lockfilename   = NULL;
 
@@ -862,7 +861,7 @@ void FemModel::SolutionAnalysesList(int** panalyses,int* pnumanalyses,IoModel* i
 
 		case TransientSolutionEnum:{
 			/*We have multiple analyses here, process one by one*/
-			bool isSIA,isFS,isthermal,isenthalpy,ismasstransport,ismmemasstransport,isoceantransport,isgroundingline,isstressbalance,ismovingfront,ishydrology,isdamage,issmb,isslc,isesa,isdebris,issampling,isfreesurface;
+			bool isthermal,ismasstransport,ismmemasstransport,isoceantransport,isgroundingline,isstressbalance,ismovingfront,ishydrology,isdamage,issmb,isslc,isesa,isdebris,issampling,isfreesurface;
 			iomodel->FindConstant(&isthermal,"md.transient.isthermal");
 			iomodel->FindConstant(&ismovingfront,"md.transient.ismovingfront");
 			iomodel->FindConstant(&ismasstransport,"md.transient.ismasstransport");
@@ -1084,7 +1083,6 @@ void FemModel::BalancethicknessMisfitx(IssmDouble* presponse){/*{{{*/
 	IssmDouble  weight,vx,vy,H,dvx[2],dvy[2],dH[2];
 	IssmDouble  temp,Jdet,dhdt,groundedice_melting,surface_mass_balance;
 	IssmDouble* xyz_list = NULL;
-	IssmDouble  dp[3];
 
 	/*Compute Misfit: */
 	for(Object* & object : this->elements->objects){
@@ -1482,7 +1480,6 @@ void FemModel::SyncLocalVectorWithClonesVertices(IssmDouble* local_vector){/*{{{
 
 	/*Get communication properties:*/
 	ISSM_MPI_Status status;
-	int my_rank   = IssmComm::GetRank();
 	int num_procs = IssmComm::GetSize();
 
 	/*Now send and receive vector for vertices on partition edge*/
@@ -1528,7 +1525,6 @@ void FemModel::SyncLocalVectorWithClonesVerticesAdd(IssmDouble* local_vector){/*
 
 	/*recover my_rank:*/
 	ISSM_MPI_Status status;
-	int my_rank   = IssmComm::GetRank();
 	int num_procs = IssmComm::GetSize();
 
 	/*Now send and receive vector for vertices on partition edge*/
@@ -1609,7 +1605,6 @@ void FemModel::GetLocalVectorWithClonesNodes(IssmDouble** plocal_vector,Vector<I
 
 	/*recover my_rank:*/
 	ISSM_MPI_Status status;
-	int my_rank   = IssmComm::GetRank();
 	int num_procs = IssmComm::GetSize();
 
 	/*retrieve vertex info*/
@@ -1852,7 +1847,7 @@ void FemModel::InputToP0(int inputenum,int outputenum){/*{{{*/
 }/*}}}*/
 void FemModel::MassFluxx(IssmDouble* pmass_flux){/*{{{*/
 
-	int          i,j;
+	int          i;
 	Element     *element       = NULL;
 	int          element_id;
 	bool         ispresent     = false;
@@ -1910,7 +1905,6 @@ void FemModel::MassFluxx(IssmDouble* pmass_flux){/*{{{*/
 }/*}}}*/
 void FemModel::MaxAbsVxx(IssmDouble* pmaxabsvx){/*{{{*/
 
-	int i;
 	IssmDouble maxabsvx;
 	IssmDouble node_maxabsvx;
 	IssmDouble element_maxabsvx;
@@ -1935,7 +1929,6 @@ void FemModel::MaxAbsVxx(IssmDouble* pmaxabsvx){/*{{{*/
 }/*}}}*/
 void FemModel::MaxAbsVyx(IssmDouble* pmaxabsvy){/*{{{*/
 
-	int i;
 	IssmDouble maxabsvy;
 	IssmDouble node_maxabsvy;
 	IssmDouble element_maxabsvy;
@@ -1960,7 +1953,6 @@ void FemModel::MaxAbsVyx(IssmDouble* pmaxabsvy){/*{{{*/
 }/*}}}*/
 void FemModel::MaxAbsVzx(IssmDouble* pmaxabsvz){/*{{{*/
 
-	int i;
 	IssmDouble maxabsvz;
 	IssmDouble node_maxabsvz;
 	IssmDouble element_maxabsvz;
@@ -2004,7 +1996,6 @@ void FemModel::MaxDivergencex(IssmDouble* pdiv){/*{{{*/
 }/*}}}*/
 void FemModel::MaxVelx(IssmDouble* pmaxvel){/*{{{*/
 
-	int i;
 	IssmDouble maxvel;
 	IssmDouble node_maxvel;
 	IssmDouble element_maxvel;
@@ -2029,7 +2020,6 @@ void FemModel::MaxVelx(IssmDouble* pmaxvel){/*{{{*/
 }/*}}}*/
 void FemModel::MaxVxx(IssmDouble* pmaxvx){/*{{{*/
 
-	int i;
 	IssmDouble maxvx;
 	IssmDouble node_maxvx;
 	IssmDouble element_maxvx;
@@ -2054,7 +2044,6 @@ void FemModel::MaxVxx(IssmDouble* pmaxvx){/*{{{*/
 }/*}}}*/
 void FemModel::MaxVyx(IssmDouble* pmaxvy){/*{{{*/
 
-	int i;
 	IssmDouble maxvy;
 	IssmDouble node_maxvy;
 	IssmDouble element_maxvy;
@@ -2079,7 +2068,6 @@ void FemModel::MaxVyx(IssmDouble* pmaxvy){/*{{{*/
 }/*}}}*/
 void FemModel::MaxVzx(IssmDouble* pmaxvz){/*{{{*/
 
-	int i;
 	IssmDouble maxvz;
 	IssmDouble node_maxvz;
 	IssmDouble element_maxvz;
@@ -2104,7 +2092,6 @@ void FemModel::MaxVzx(IssmDouble* pmaxvz){/*{{{*/
 }/*}}}*/
 void FemModel::MinVelx(IssmDouble* pminvel){/*{{{*/
 
-	int i;
 	IssmDouble minvel;
 	IssmDouble node_minvel;
 	IssmDouble element_minvel;
@@ -2129,7 +2116,6 @@ void FemModel::MinVelx(IssmDouble* pminvel){/*{{{*/
 }/*}}}*/
 void FemModel::MinVxx(IssmDouble* pminvx){/*{{{*/
 
-	int i;
 	IssmDouble minvx;
 	IssmDouble node_minvx;
 	IssmDouble element_minvx;
@@ -2154,7 +2140,6 @@ void FemModel::MinVxx(IssmDouble* pminvx){/*{{{*/
 }/*}}}*/
 void FemModel::MinVyx(IssmDouble* pminvy){/*{{{*/
 
-	int i;
 	IssmDouble minvy;
 	IssmDouble node_minvy;
 	IssmDouble element_minvy;
@@ -2179,7 +2164,6 @@ void FemModel::MinVyx(IssmDouble* pminvy){/*{{{*/
 }/*}}}*/
 void FemModel::MinVzx(IssmDouble* pminvz){/*{{{*/
 
-	int i;
 	IssmDouble minvz;
 	IssmDouble node_minvz;
 	IssmDouble element_minvz;
@@ -2213,7 +2197,7 @@ void FemModel::OmegaAbsGradientx( IssmDouble* pJ){/*{{{*/
 	IssmDouble J=0.;
 	IssmDouble J_sum;
 
-	IssmDouble  omega,weight;
+	IssmDouble  weight;
 	IssmDouble  Jdet;
 	IssmDouble* xyz_list = NULL;
 	IssmDouble  dp[3];
@@ -2268,7 +2252,7 @@ void FemModel::EtaDiffx( IssmDouble* pJ){/*{{{*/
 	IssmDouble J=0.;
 	IssmDouble J_sum;
 
-	IssmDouble  omega,weight;
+	IssmDouble  weight;
 	IssmDouble  Jdet;
 	IssmDouble* xyz_list = NULL;
 	IssmDouble  p,p0;
@@ -2317,65 +2301,6 @@ void FemModel::EtaDiffx( IssmDouble* pJ){/*{{{*/
 
 	/*Assign output pointers: */
 	*pJ=J;
-}
-/*}}}*/
-void FemModel::OutputControlsx(Results **presults){/*{{{*/
-
-	/*parameters: */
-	int         num_controls,step;
-	IssmDouble  time;
-	int        *control_type   = NULL;
-	int        *control_interp = NULL;
-	int        *M = NULL;
-	int        *N = NULL;
-
-	/*recover results*/
-	Results* results = *presults;
-	if(!results) results = new Results();
-
-	/*Get list of Controls*/
-	this->parameters->FindParam(&num_controls,InversionNumControlParametersEnum);
-	this->parameters->FindParam(&control_type,NULL,InversionControlParametersEnum);
-	this->parameters->FindParam(&M,NULL,ControlInputSizeMEnum);
-	this->parameters->FindParam(&N,NULL,ControlInputSizeNEnum);
-	this->parameters->FindParam(&control_interp,NULL,ControlInputInterpolationEnum);
-	this->parameters->FindParam(&step,StepEnum);
-	this->parameters->FindParam(&time,TimeEnum);
-
-	for(int i=0;i<num_controls;i++){
-
-		int control_enum = control_type[i];
-		int gradient_enum;
-
-		switch(i){
-			case 0: gradient_enum = Gradient1Enum; break;
-			case 1: gradient_enum = Gradient2Enum; break;
-			case 2: gradient_enum = Gradient3Enum; break;
-			case 3: gradient_enum = Gradient4Enum; break;
-			default: _error_("more than 4 controls not implemented yet");
-		}
-
-		/*Allocate vector*/
-		Vector<IssmPDouble> *vector_control  = new Vector<IssmPDouble>(M[i]*N[i]);
-		Vector<IssmPDouble> *vector_gradient = new Vector<IssmPDouble>(M[i]*N[i]);
-
-		/*Fill in vector*/
-		for(Object* & object : this->elements->objects){
-			Element* element = xDynamicCast<Element*>(object);
-			element->ControlToVectors(vector_control,vector_gradient,control_enum,control_interp[i]);
-		}
-		vector_control->Assemble();
-		vector_gradient->Assemble();
-
-		results->AddResult(new GenericExternalResult<Vector<IssmPDouble>*>(results->Size()+1,control_enum,vector_control ,step,time));
-		results->AddResult(new GenericExternalResult<Vector<IssmPDouble>*>(results->Size()+1,gradient_enum,vector_gradient,step,time));
-	}
-
-	/*Clean up and return*/
-	xDelete<int>(control_type);
-	xDelete<int>(control_interp);
-	xDelete<int>(M);
-	xDelete<int>(N);
 }
 /*}}}*/
 void FemModel::RequestedDependentsx(void){/*{{{*/
@@ -2534,6 +2459,11 @@ void FemModel::RequestedOutputsx(Results **presults,char** requested_outputs, in
 					case ChannelAreaEnum:
 					case ChannelDischargeEnum:{
 
+							if(this->analysis_type_list[this->analysis_counter] != HydrologyGlaDSAnalysisEnum){
+								_printf0_("WARNING: you requested channel information outside of hydrology analysis. Hydrology requested outputs should only be prescribed in md.hydrology.requested_outputs\n");
+								continue;
+							}
+
 							/*Get Number of Channels*/
 							int numchannels_local=0,numchannels;
 							for(int j=0;j<this->loads->Size();j++){
@@ -2565,7 +2495,9 @@ void FemModel::RequestedOutputsx(Results **presults,char** requested_outputs, in
 							ISSM_MPI_Allreduce((void*)values,(void*)allvalues,numchannels,ISSM_MPI_PDOUBLE,ISSM_MPI_SUM,IssmComm::GetComm());
 							xDelete<IssmPDouble>(values);
 
-							if(save_results)results->AddResult(new GenericExternalResult<IssmPDouble*>(results->Size()+1,output_enum,allvalues,numchannels,1,step,time));
+							if(save_results){
+								results->AddResult(new GenericExternalResult<IssmPDouble*>(results->Size()+1,output_enum,allvalues,numchannels,1,step,time));
+							}
 							xDelete<IssmPDouble>(allvalues);
 
 							isvec = true;
@@ -2900,7 +2832,7 @@ void FemModel::ThicknessAbsGradientx( IssmDouble* pJ){/*{{{*/
 	IssmDouble J=0.;
 	IssmDouble J_sum;
 
-	IssmDouble  thickness,weight;
+	IssmDouble  weight;
 	IssmDouble  Jdet;
 	IssmDouble* xyz_list = NULL;
 	IssmDouble  dp[3];
@@ -3017,7 +2949,7 @@ void FemModel::ThicknessPositivex(IssmDouble* pJ){/*{{{*/
 	IssmDouble J=0.;
 	IssmDouble J_sum;
 
-	IssmDouble  thickness,weight;
+	IssmDouble  weight;
 	IssmDouble  Jdet;
 	IssmDouble* xyz_list = NULL;
 	IssmDouble  H;
@@ -3092,11 +3024,6 @@ void FemModel::FluxDivergencex(IssmDouble* pJ){/*{{{*/
 		Input* H_input  = element->GetInput(ThicknessEnum); _assert_(H_input);
 		Input* vx_input = element->GetInput(VxEnum);        _assert_(vx_input);
 		Input* vy_input = element->GetInput(VyEnum);        _assert_(vy_input);
-
-		/**DEBUGGING*/
-		Input* vxobs_input = element->GetInput(InversionVxObsEnum);	_assert_(vxobs_input);
-		Input* vyobs_input = element->GetInput(InversionVyObsEnum);	_assert_(vyobs_input);
-		IssmDouble vxobs, vyobs;
 
 		/* Start  looping on the number of gaussian points: */
 		Gauss* gauss=element->NewGauss(2);
@@ -3802,7 +3729,6 @@ void FemModel::InterpolateInputs(Vertices* newfemmodel_vertices,Elements* newfem
 	int* P1input_enums  			= NULL;
 	int* P1input_interp 			= NULL;
 	IssmDouble* values			= NULL;
-   IssmDouble* vector      	= NULL;
 	IssmDouble* x					= NULL;//global, entire old mesh
 	IssmDouble* y					= NULL;//global, entire old mesh
 	int* elementslist				= NULL;//global, entire old mesh
@@ -4020,7 +3946,6 @@ void FemModel::GetMesh(Vertices* femmodel_vertices, Elements* femmodel_elements,
 	if(!femmodel_vertices) _error_("GetMesh: vertices are NULL.");
 	if(!femmodel_elements) _error_("GetMesh: elements are NULL.");
 
-	int numberofvertices = femmodel_vertices->NumberOfVertices();
 	int numberofelements = femmodel_elements->NumberOfElements();
 	int elementswidth		= this->GetElementsWidth(); // just 2D mesh in this version (just tria elements)
 	IssmDouble* x			= NULL;
@@ -5263,7 +5188,6 @@ void FemModel::StackTransientInputx(int* input_enum,int* transientinput_enum,Iss
 /*}}}*/
 void FemModel::StackTransientInputonBasex(int* input_enum,int* transientinput_enum,IssmDouble subtime,int numoutputs){ /*{{{*/
 
-	Element*   basalelement=NULL;
 	int      domaintype;
 	this->parameters->FindParam(&domaintype,DomainTypeEnum);
 
@@ -5659,10 +5583,9 @@ void FemModel::GethmaxVerticesFromEstimators(IssmDouble* hmaxvertices,int errore
 	IssmDouble* x								= NULL;
 	IssmDouble* y								= NULL;
 	int* index									= NULL;
-	IssmDouble maxerror,threshold,groupthreshold,resolution,length;
+	IssmDouble maxerror,threshold,groupthreshold,resolution;
 	IssmDouble L1,L2,L3;
 	int vid,v1,v2,v3;
-	bool refine;
 
 	/*Fill variables*/
 	switch(errorestimator_type){
