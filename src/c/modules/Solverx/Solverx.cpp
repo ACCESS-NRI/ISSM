@@ -39,6 +39,16 @@ void	Solverx(Vector<IssmDouble>** puf, Matrix<IssmDouble>* Kff, Vector<IssmDoubl
 		uf=solver->Solve();
 
 		if(!checkconvergence(Kff,pf,uf,parameters)) _error_("Recovery solver failed...");
+
+		/*Back to this analysis' own toolkit for the next solve. Otherwise the recovery options stay
+		 * in the PETSc database for the rest of the core (every later nonlinear iteration), since
+		 * they are only reset by the next SetCurrentConfiguration. One hard solve, e.g. a first Picard
+		 * iteration from a poor initial guess, would then pin an iterative toolkit to the recovery
+		 * (direct) solver.*/
+		int analysis_type;
+		parameters->FindParam(&analysis_type,AnalysisTypeEnum);
+		ToolkitsOptionsFromAnalysis(parameters,analysis_type);
+		_printf0_("WARNING: Recovery Mode succeeded, back to " << EnumToStringx(analysis_type) << " toolkit options\n");
 	}
 
 	/*clean up and assign output pointers:*/
