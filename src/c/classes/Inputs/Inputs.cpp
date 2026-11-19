@@ -173,6 +173,31 @@ void Inputs::Marshall(MarshallHandle* marshallhandle){/*{{{*/
 				input->Marshall(marshallhandle);
 				this->inputs[index]=input;
 			}
+			else if(object_enum==IntArrayInputEnum){
+				IntArrayInput* input=new IntArrayInput();
+				input->Marshall(marshallhandle);
+				this->inputs[index]=input;
+			}
+			else if(object_enum==Int16ArrayInputEnum){
+				Int16ArrayInput* input=new Int16ArrayInput();
+				input->Marshall(marshallhandle);
+				this->inputs[index]=input;
+			}
+			else if(object_enum==UInt8ArrayInputEnum){
+				UInt8ArrayInput* input=new UInt8ArrayInput();
+				input->Marshall(marshallhandle);
+				this->inputs[index]=input;
+			}
+			else if(object_enum==UInt16ArrayInputEnum){
+				UInt16ArrayInput* input=new UInt16ArrayInput();
+				input->Marshall(marshallhandle);
+				this->inputs[index]=input;
+			}
+			else if(object_enum==UInt32ArrayInputEnum){
+				UInt32ArrayInput* input=new UInt32ArrayInput();
+				input->Marshall(marshallhandle);
+				this->inputs[index]=input;
+			}
 			else{
 				_error_("input "<<EnumToStringx(object_enum)<<" not supported");
 			}
@@ -572,21 +597,21 @@ void Inputs::GetArrayPtr(int enum_in,int row,IssmDouble** pvalues,int* pN){/*{{{
 	ArrayInput* input = xDynamicCast<ArrayInput*>(this->inputs[id]);
 	input->GetArrayPtr(row,pvalues,pN);
 }/*}}}*/
-void Inputs::GetIntArrayPtr(int enum_in,int row,int** pvalues,int* pN){/*{{{*/
+template<typename T> void Inputs::GetIntArrayPtr(int enum_in,int row,T** pvalues,int* pN){/*{{{*/
 
 	/*Get input id*/
 	int id = EnumToIndex(enum_in);
 
 	/*Create it if necessary*/
 	if(this->inputs[id]){
-		if(this->inputs[id]->ObjectEnum()!=IntArrayInputEnum) _error_(EnumToStringx(this->inputs[id]->ObjectEnum())<<" cannot return an int array");
+		if(!dynamic_cast<TIntArrayInput<T>*>(this->inputs[id])) _error_(EnumToStringx(this->inputs[id]->ObjectEnum())<<" cannot return an int array");
 	}
 	else{
 		_error_("Input "<<EnumToStringx(enum_in)<<" not found");
 	}
 
 	/*Set input*/
-	IntArrayInput* input = xDynamicCast<IntArrayInput*>(this->inputs[id]);
+	TIntArrayInput<T>* input = xDynamicCast<TIntArrayInput<T>*>(this->inputs[id]);
 	input->GetArrayPtr(row,pvalues,pN);
 }/*}}}*/
 void Inputs::GetArray(int enum_in,int row,IssmDouble** pvalues,int* pN){/*{{{*/
@@ -606,21 +631,21 @@ void Inputs::GetArray(int enum_in,int row,IssmDouble** pvalues,int* pN){/*{{{*/
 	ArrayInput* input = xDynamicCast<ArrayInput*>(this->inputs[id]);
 	input->GetArray(row,pvalues,pN);
 }/*}}}*/
-void Inputs::GetIntArray(int enum_in,int row,int** pvalues,int* pN){/*{{{*/
+template<typename T> void Inputs::GetIntArray(int enum_in,int row,T** pvalues,int* pN){/*{{{*/
 
 	/*Get input id*/
 	int id = EnumToIndex(enum_in);
 
 	/*Create it if necessary*/
 	if(this->inputs[id]){
-		if(this->inputs[id]->ObjectEnum()!=IntArrayInputEnum) _error_(EnumToStringx(this->inputs[id]->ObjectEnum())<<" cannot return an int array");
+		if(!dynamic_cast<TIntArrayInput<T>*>(this->inputs[id])) _error_(EnumToStringx(this->inputs[id]->ObjectEnum())<<" cannot return an int array");
 	}
 	else{
 		_error_("Input "<<EnumToStringx(enum_in)<<" not found");
 	}
 
 	/*Set input*/
-	IntArrayInput* input = xDynamicCast<IntArrayInput*>(this->inputs[id]);
+	TIntArrayInput<T>* input = xDynamicCast<TIntArrayInput<T>*>(this->inputs[id]);
 	input->GetArray(row,pvalues,pN);
 }/*}}}*/
 void Inputs::GetInputValue(bool* pvalue,int enum_in,int index){/*{{{*/
@@ -781,7 +806,7 @@ void Inputs::SetArrayInput(int enum_in,int row,IssmDouble* values,int numlayers)
 	ArrayInput* input = xDynamicCast<ArrayInput*>(this->inputs[id]);
 	input->SetInput(row,numlayers,values);
 }/*}}}*/
-void Inputs::SetIntArrayInput(int enum_in,int row,int* values,int numlayers){/*{{{*/
+template<typename T> void Inputs::SetIntArrayInput(int enum_in,int row,T* values,int numlayers){/*{{{*/
 
 	bool recreate = false;
 
@@ -790,7 +815,7 @@ void Inputs::SetIntArrayInput(int enum_in,int row,int* values,int numlayers){/*{
 
 	/*Create it if necessary*/
 	if(this->inputs[id]){
-		if(this->inputs[id]->ObjectEnum()!=IntArrayInputEnum){
+		if(!dynamic_cast<TIntArrayInput<T>*>(this->inputs[id])){
 			delete this->inputs[id];
 			recreate = true;
 		}
@@ -800,11 +825,11 @@ void Inputs::SetIntArrayInput(int enum_in,int row,int* values,int numlayers){/*{
 	}
 
 	if(recreate){
-		this->inputs[id] = new IntArrayInput(this->numberofelements_local);
+		this->inputs[id] = new TIntArrayInput<T>(this->numberofelements_local);
 	}
 
 	/*Set input*/
-	IntArrayInput* input = xDynamicCast<IntArrayInput*>(this->inputs[id]);
+	TIntArrayInput<T>* input = xDynamicCast<TIntArrayInput<T>*>(this->inputs[id]);
 	input->SetInput(row,numlayers,values);
 }/*}}}*/
 TransientInput* Inputs::SetDatasetTransientInput(int enum_in,int dataset_id,IssmDouble* times,int numtimes){/*{{{*/
@@ -1056,3 +1081,21 @@ void Inputs::SetPentaInput(int enum_in,int interpolation,int row,int numindices,
 	PentaInput* input = xDynamicCast<PentaInput*>(this->inputs[id]);
 	input->SetInput(interpolation,row,numindices,values);
 }/*}}}*/
+
+/*Explicit instantiations of the integer-array accessors (add new integer types here,
+ *together with an ObjectEnum specialization and a TIntArrayInput instantiation)*/
+template void Inputs::GetIntArray<int>(int enum_in,int row,int** pvalues,int* pN);
+template void Inputs::GetIntArrayPtr<int>(int enum_in,int row,int** pvalues,int* pN);
+template void Inputs::SetIntArrayInput<int>(int enum_in,int row,int* values,int numlayers);
+template void Inputs::GetIntArray<int16_t>(int enum_in,int row,int16_t** pvalues,int* pN);
+template void Inputs::GetIntArrayPtr<int16_t>(int enum_in,int row,int16_t** pvalues,int* pN);
+template void Inputs::SetIntArrayInput<int16_t>(int enum_in,int row,int16_t* values,int numlayers);
+template void Inputs::GetIntArray<uint8_t>(int enum_in,int row,uint8_t** pvalues,int* pN);
+template void Inputs::GetIntArrayPtr<uint8_t>(int enum_in,int row,uint8_t** pvalues,int* pN);
+template void Inputs::SetIntArrayInput<uint8_t>(int enum_in,int row,uint8_t* values,int numlayers);
+template void Inputs::GetIntArray<uint16_t>(int enum_in,int row,uint16_t** pvalues,int* pN);
+template void Inputs::GetIntArrayPtr<uint16_t>(int enum_in,int row,uint16_t** pvalues,int* pN);
+template void Inputs::SetIntArrayInput<uint16_t>(int enum_in,int row,uint16_t* values,int numlayers);
+template void Inputs::GetIntArray<uint32_t>(int enum_in,int row,uint32_t** pvalues,int* pN);
+template void Inputs::GetIntArrayPtr<uint32_t>(int enum_in,int row,uint32_t** pvalues,int* pN);
+template void Inputs::SetIntArrayInput<uint32_t>(int enum_in,int row,uint32_t* values,int numlayers);

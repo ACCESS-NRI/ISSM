@@ -68,10 +68,9 @@ class pairoptions(object):
         """
 
         if isinstance(field, str):
-            if field in self.list:
-                print(("WARNING: field '{}' with value={} exists and will be overwritten with value={}.".format(field, str(self.list[field]), str(value))))
-            else:
-                self.used = np.append(self.used,[False])
+            #if field in self.list:
+            #    print(("WARNING: field '{}' with value={} exists and will be overwritten with value={}.".format(field, str(self.list[field]), str(value))))
+            self.used = np.append(self.used,[False])
             self.list[field] = value
     # }}}
 
@@ -203,7 +202,7 @@ class pairoptions(object):
 
             #remove duplicates from the options list
             del self.list[field]
-            self.used = self.used[pos]
+            self.used = self.used[np.where(pos)[0]]
 
             #warn user if requested
             if warn:

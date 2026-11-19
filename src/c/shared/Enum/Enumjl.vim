@@ -518,6 +518,7 @@ syn keyword juliaConstC SealevelchangeViscousPolarMotionEnum
 syn keyword juliaConstC SealevelchangeRunCountEnum
 syn keyword juliaConstC SealevelchangeTransitionsEnum
 syn keyword juliaConstC SealevelchangeRequestedOutputsEnum
+syn keyword juliaConstC SurfaceHydrologyTypeEnum
 syn keyword juliaConstC RotationalAngularVelocityEnum
 syn keyword juliaConstC RotationalEquatorialMoiEnum
 syn keyword juliaConstC RotationalPolarMoiEnum
@@ -550,6 +551,7 @@ syn keyword juliaConstC SolidearthSettingsGRDEnum
 syn keyword juliaConstC SolidearthSettingsRunFrequencyEnum
 syn keyword juliaConstC SolidearthSettingsTimeAccEnum
 syn keyword juliaConstC SolidearthSettingsHorizEnum
+syn keyword juliaConstC SolidearthSettingsLowmemEnum
 syn keyword juliaConstC SolidearthSettingsMaxiterEnum
 syn keyword juliaConstC SolidearthSettingsGrdOceanEnum
 syn keyword juliaConstC SolidearthSettingsOceanAreaScalingEnum
@@ -795,6 +797,8 @@ syn keyword juliaConstC ZzeEnum
 syn keyword juliaConstC AreaeEnum
 syn keyword juliaConstC WorldCommEnum
 syn keyword juliaConstC FrictionEmulatorEnum
+syn keyword juliaConstC FrictionNNWeightsEnum
+syn keyword juliaConstC FrictionNNNormalizationEnum
 syn keyword juliaConstC SmbEmulatorEnum
 syn keyword juliaConstC StressbalanceEmulatorEnum
 syn keyword juliaConstC ParametersENDEnum
@@ -978,6 +982,7 @@ syn keyword juliaConstC UGiaEnum
 syn keyword juliaConstC UGiaRateEnum
 syn keyword juliaConstC GradientEnum
 syn keyword juliaConstC GroundinglineHeightEnum
+syn keyword juliaConstC HurstEnum
 syn keyword juliaConstC HydraulicPotentialEnum
 syn keyword juliaConstC HydraulicPotentialOldEnum
 syn keyword juliaConstC HydrologyBasalFluxEnum
@@ -1054,6 +1059,7 @@ syn keyword juliaConstC InversionVelObsEnum
 syn keyword juliaConstC InversionVxObsEnum
 syn keyword juliaConstC InversionVyObsEnum
 syn keyword juliaConstC LambdaSEnum
+syn keyword juliaConstC LakeDepthEnum
 syn keyword juliaConstC LevelsetfunctionSlopeXEnum
 syn keyword juliaConstC LevelsetfunctionSlopeYEnum
 syn keyword juliaConstC LevelsetObservationEnum
@@ -1076,6 +1082,7 @@ syn keyword juliaConstC MaterialsRheologyEcbarEnum
 syn keyword juliaConstC MaterialsRheologyEsEnum
 syn keyword juliaConstC MaterialsRheologyEsbarEnum
 syn keyword juliaConstC MaterialsRheologyNEnum
+syn keyword juliaConstC MeltSupplyEnum
 syn keyword juliaConstC MeshScaleFactorEnum
 syn keyword juliaConstC MeshVertexonbaseEnum
 syn keyword juliaConstC MeshVertexonboundaryEnum
@@ -1185,6 +1192,7 @@ syn keyword juliaConstC SedimentHeadSubstepEnum
 syn keyword juliaConstC SedimentHeadTransientEnum
 syn keyword juliaConstC SedimentHeadResidualEnum
 syn keyword juliaConstC SedimentHeadStackedEnum
+syn keyword juliaConstC SigmaEnum
 syn keyword juliaConstC SigmaNNEnum
 syn keyword juliaConstC SigmaVMEnum
 syn keyword juliaConstC SmbAblationEnum
@@ -1454,6 +1462,7 @@ syn keyword juliaConstC VzMeshEnum
 syn keyword juliaConstC VzSSAEnum
 syn keyword juliaConstC WaterColumnOldEnum
 syn keyword juliaConstC WatercolumnEnum
+syn keyword juliaConstC WaterDepthEnum
 syn keyword juliaConstC WaterfractionDrainageEnum
 syn keyword juliaConstC WaterfractionDrainageIntegratedEnum
 syn keyword juliaConstC WaterfractionEnum
@@ -3558,6 +3567,10 @@ syn keyword juliaConstC Domain3DsurfaceEnum
 syn keyword juliaConstC DoubleArrayInputEnum
 syn keyword juliaConstC ArrayInputEnum
 syn keyword juliaConstC IntArrayInputEnum
+syn keyword juliaConstC Int16ArrayInputEnum
+syn keyword juliaConstC UInt8ArrayInputEnum
+syn keyword juliaConstC UInt16ArrayInputEnum
+syn keyword juliaConstC UInt32ArrayInputEnum
 syn keyword juliaConstC DoubleExternalResultEnum
 syn keyword juliaConstC DoubleMatArrayParamEnum
 syn keyword juliaConstC DoubleMatExternalResultEnum
@@ -3800,6 +3813,7 @@ syn keyword juliaConstC SMBpddGCMEnum
 syn keyword juliaConstC SMBpddFastEnum
 syn keyword juliaConstC SMBsemicEnum
 syn keyword juliaConstC SMBmariaEnum
+syn keyword juliaConstC SMBunetEnum
 syn keyword juliaConstC SSAApproximationEnum
 syn keyword juliaConstC SSAFSApproximationEnum
 syn keyword juliaConstC SSAHOApproximationEnum

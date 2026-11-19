@@ -1,6 +1,8 @@
 import os
 
 import numpy as np
+import warnings
+from collections import OrderedDict
 
 from expread import expread
 #from InterpFromMesh2d import InterpFromMesh2d
@@ -17,15 +19,26 @@ def SectionValues(md, data, infile, resolution):
     [horizontal_resolution, vertical_resolution]
 
     Usage:
-        [elements, x, y, z, s, data] = SectionValues(md, data, filename, resolution)
-        [elements, x, y, z, s, data] = SectionValues(md, data, profile_structure, resolution)
+        elements, x, y, z, s, data = SectionValues(md, data, filename, resolution)
+        elements, x, y, z, s, data = SectionValues(md, data, profile_structure, resolution)
     """
 
-    if os.path.isfile(infile):
+    if isinstance(infile,str):
+        if not os.path.isfile(infile):
+            raise Exception('Error: We cannot find file: %s'%(infile))
         profile = expread(infile)[0]
         nods = profile['nods']
         x = profile['x']
         y = profile['y']
+    elif isinstance(infile,list):
+        warnings.warn('Warning: We only load first section value')
+        nods=infile[0]['nods']
+        x=infile[0]['x']
+        y=infile[0]['y']
+    elif isinstance(infile,OrderedDict):
+        nods=infile['nods']
+        x=infile['x']
+        y=infile['y']
     else:
         raise IOError('file %s not found' % infile)
 
@@ -64,7 +77,7 @@ def SectionValues(md, data, infile, resolution):
         for j in range(int(portion)):
             x_segment[j] = x_start + (j) * (x_end - x_start) / portion
             y_segment[j] = y_start + (j) * (y_end - y_start) / portion
-            s_segment[j] = s_start + j * length_segment / portion
+            s_segment[j] = s_start + (j+1) * length_segment / float(portion)
 
     #plug into X and Y
         X = np.append(X, x_segment)
@@ -96,9 +109,11 @@ def SectionValues(md, data, infile, resolution):
         #Get base and surface for each 2d point, offset to make sure that it is inside the glacier system
         offset = 1.e-3
         base = InterpFromMeshToMesh2d(md.mesh.elements2d, md.mesh.x2d, md.mesh.y2d, project2d(md, md.geometry.base, 1), X, Y) + offset
-        base = base.reshape(-1, )
         surface = InterpFromMeshToMesh2d(md.mesh.elements2d, md.mesh.x2d, md.mesh.y2d, project2d(md, md.geometry.surface, 1), X, Y) - offset
-        surface = surface.reshape(-1, )
+
+        #Coerce array to 1-D vector
+        base = np.ravel(base)
+        surface = np.ravel(surface)
 
     #Some useful parameters
         layers = int(np.ceil(np.mean(md.geometry.thickness) / res_v))
@@ -121,8 +136,11 @@ def SectionValues(md, data, infile, resolution):
             Z3[i - 1::layers] = base + (i - 1) * (surface - base) / (layers - 1)
             S3[i - 1::layers] = S
 
-            if i < layers - 1:  #Build index3 with quads
-                ids = np.vstack((np.arange(i, nodestot - layers, layers), np.arange(i + 1, nodestot - layers, layers), np.arange(i + layers + 1, nodestot, layers), np.arange(i + layers, nodestot, layers))).T
+            if i < layers:  #Build index3 with quads
+                ids = np.vstack((np.arange(i, nodestot - layers+1, layers), \
+                        np.arange(i + 1, nodestot - layers+1, layers), \
+                        np.arange(i + layers + 1, nodestot+1, layers), \
+                        np.arange(i + layers, nodestot+1, layers))).T
                 index3[(i - 1) * elementsperlayer:i * elementsperlayer, :] = ids
 
     #Interpolation of data on specified points
@@ -134,6 +152,8 @@ def SectionValues(md, data, infile, resolution):
         Z = Z3
         S = S3
 
-        index = index3
+        # Coerce array with integer
+        index = np.asarray(index3,dtype=int)
+        data_interp = data_interp[0]
 
     return index, X, Y, Z, S, data_interp
