@@ -1,0 +1,74 @@
+#!/bin/bash
+#PBS -N matrix_lab
+#PBS -P au88
+#PBS -q dgxa100
+#PBS -l ncpus=16
+#PBS -l ngpus=1
+#PBS -l mem=250GB
+#PBS -l walltime=03:00:00
+#PBS -l storage=gdata/au88
+#PBS -o /g/data/au88/jh7060/ISSM/test/matrix_lab/matrix_lab.o
+#PBS -e /g/data/au88/jh7060/ISSM/test/matrix_lab/matrix_lab.e
+
+# Try preconditioners on a linear system dumped from ISSM (ACCESS-AIS3 config/solver_gamg_cpu_test.py,
+# case D), outside ISSM. Default system: the first Picard SSA solve of the continental AIS3 model
+# (2.95M DOFs), on which every GAMG setting failed inside ISSM.
+#   qsub [-v DUMP=<dir with A.bin b.bin x.bin [coords.bin]>] run_matrix_lab_a100.pbs
+# Each run's full output goes to logs_<jobid>/<name>.log; matrix_lab.o keeps the RESULT lines.
+
+module purge
+module load openmpi/4.1.3
+module load cuda/12.3.2
+
+LAB=/g/data/au88/jh7060/ISSM/test/matrix_lab
+P=/g/data/au88/jh7060/ISSM/externalpackages/petsc/install-gpu-hypre
+export LD_LIBRARY_PATH="${P}/lib:${LD_LIBRARY_PATH:-}"   # libpetsc's own rpath points at the defunct /g/data1b
+DUMP=${DUMP:-/g/data/au88/jh7060/ACCESS-AIS3/execution_gpu_test/matrix_dump_ssa_picard1}
+LOGS=${LAB}/logs_${PBS_JOBID%%.*}
+mkdir "${LOGS}"
+exec > >(tee "${LOGS}/summary.txt") 2>&1   # matrix_lab.o is a fixed path; keep this run's copy too
+
+IO="-f ${DUMP}/A.bin -rhs ${DUMP}/b.bin -ref ${DUMP}/x.bin"
+COORDS="-coords ${DUMP}/coords.bin"
+# Right preconditioning: rtol then applies to the true residual, which ISSM's
+# solver_residue_threshold (1e-3 in the AIS3 SSA track, 1e-6 default) checks.
+KRYLOV="-ksp_type gmres -ksp_gmres_restart 100 -ksp_pc_side right -ksp_rtol 1e-8 -ksp_max_it 2000 -ksp_converged_reason"
+MUMPS="-ksp_type preonly -pc_type lu -pc_factor_mat_solver_type mumps"
+GAMG="-pc_type gamg -pc_gamg_agg_nsmooths 1 -pc_gamg_threshold 0.08 -pc_gamg_coarse_eq_limit 2000"
+HYPRE="-pc_type hypre -pc_hypre_type boomeramg"
+CPU="-mat_type aij"
+GPU="-mat_type aijcusparse"     # vectors follow the matrix type (MatCreateVecs)
+HOSTPTAP="-matptap_backend_cpu true -matmatmult_backend_cpu true -mat_product_algorithm_backend_cpu true"
+
+run() {
+    local name=$1 np=$2
+    shift 2
+    echo "=== ${name} (np=${np}): $*"
+    timeout 1200 mpiexec -n "${np}" "${LAB}/solve_dumped" ${IO} "$@" > "${LOGS}/${name}.log" 2>&1
+    local rc=$?
+    grep -E "^loaded|^RESULT|Linear solve|ERROR|Error" "${LOGS}/${name}.log" | head -6
+    [ ${rc} -ne 0 ] && echo "    exit ${rc}$([ ${rc} -eq 124 ] && echo ' (timeout 1200 s)')"
+}
+
+echo "Host $(hostname)  $(date)  DUMP=${DUMP}"
+nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
+ls -la "${DUMP}"
+
+# CPU, 16 ranks (production SSA uses 48-rank MUMPS: ~6 s per solve)
+run mumps_cpu16          16 ${CPU} ${MUMPS}
+run gamg_cpu16           16 ${CPU} ${KRYLOV} ${GAMG}      # ISSM case G settings
+# (no CPU BoomerAMG: this Hypre is built device-only, "HYPRE_MEMORY_DEVICE expects a device vector")
+if [ -f "${DUMP}/coords.bin" ]; then
+    run gamg_rbm_cpu16   16 ${CPU} ${KRYLOV} ${GAMG} ${COORDS}
+    run gamg_rbm_thr0_cpu16 16 ${CPU} ${KRYLOV} ${GAMG} ${COORDS} -pc_gamg_threshold 0.0
+fi
+
+# One A100
+run gamg_gpu1            1 ${GPU} ${KRYLOV} ${GAMG} ${HOSTPTAP}
+run hypre_gpu1           1 ${GPU} ${KRYLOV} ${HYPRE} -pc_hypre_boomeramg_strong_threshold 0.25
+run hypre_gpu1_thr05     1 ${GPU} ${KRYLOV} ${HYPRE} -pc_hypre_boomeramg_strong_threshold 0.5
+if [ -f "${DUMP}/coords.bin" ]; then
+    run gamg_rbm_gpu1    1 ${GPU} ${KRYLOV} ${GAMG} ${COORDS} ${HOSTPTAP}
+fi
+
+echo "Done $(date)"

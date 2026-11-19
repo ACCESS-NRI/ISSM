@@ -1,0 +1,63 @@
+#!/bin/bash
+#PBS -N issm_build_hypre
+#PBS -P au88
+#PBS -q dgxa100
+#PBS -l ncpus=16
+#PBS -l ngpus=1
+#PBS -l mem=120GB
+#PBS -l walltime=02:00:00
+#PBS -l storage=gdata/au88
+#PBS -o /g/data/au88/jh7060/ISSM/build_gpu_hypre_gdata.o
+#PBS -e /g/data/au88/jh7060/ISSM/build_gpu_hypre_gdata.e
+
+# Reconfigure + rebuild the GPU ISSM fork against the CUDA + Hypre PETSc (install-gpu-hypre), with
+# /g/data paths. The previous build (configure.sh gpu) was configured under /g/data1b, which no longer
+# exists, so its issm.exe/libs could not resolve their libraries any more. Same configure options as
+# `configure.sh gpu` otherwise. Pre-rebuild bin/ and lib/ are kept in bin_pre_gdata_rebuild/ and
+# lib_pre_gdata_rebuild/.
+#   qsub build_gpu_hypre_gdata.pbs
+# Run time needs LD_LIBRARY_PATH to include ${PETSC}/lib: libpetsc's own RUNPATH still says /g/data1b.
+
+set -eo pipefail
+module purge
+module load openmpi/4.1.3
+module load netcdf/4.8.0p
+module load hdf5/1.10.7p
+module load cuda/12.3.2
+
+export ISSM_DIR=/g/data/au88/jh7060/ISSM
+PETSC=${ISSM_DIR}/externalpackages/petsc/install-gpu-hypre
+export LD_LIBRARY_PATH="${PETSC}/lib:${LD_LIBRARY_PATH:-}"
+export CC=mpicc CXX=mpicxx FC=mpif90
+cd "${ISSM_DIR}"
+source etc/environment.sh
+
+echo "Host $(hostname)  $(date)"
+./configure \
+    --without-Love --without-kml --without-Sealevelchange \
+    --with-fortran-lib="-L/opt/nci/bin -lgfortran" \
+    --prefix="${ISSM_DIR}" \
+    --with-triangle-dir="${ISSM_DIR}/externalpackages/triangle/install" \
+    --with-mpi-include="${OPENMPI_BASE}/include" \
+    --with-petsc-dir="${PETSC}" \
+    --with-metis-dir="${PETSC}" \
+    --with-mumps-dir="${PETSC}" \
+    --with-scalapack-lib="-L${PETSC}/lib -lscalapack" \
+    --with-blas-lapack-dir="${PETSC}" \
+    --with-m1qn3-dir="${ISSM_DIR}/externalpackages/m1qn3/install" \
+    --with-python=/apps/intel-python3/2020.4.912/intelpython3/bin/python3 \
+    --enable-development \
+    --enable-shared \
+    --without-kriging \
+    --with-numthreads=12 \
+    CC=mpicc CXX=mpicxx FC=mpif90 F77=mpif90 > configure_gdata_hypre.out 2>&1
+echo "configure done $(date)"
+make clean > /dev/null 2>&1 || true
+make -j 16 > make_gdata_hypre.out 2>&1
+echo "make done $(date)"
+make install > make_install_gdata_hypre.out 2>&1
+echo "install done $(date)"
+
+ls -la bin/issm.exe
+ldd bin/issm.exe | grep -E "petsc|HYPRE|ISSM|mpi.so|not found"
+echo "Done $(date)"

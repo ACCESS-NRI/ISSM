@@ -1,0 +1,52 @@
+#!/bin/bash
+#PBS -N matrix_lab_ranks
+#PBS -P au88
+#PBS -q dgxa100
+#PBS -l ncpus=16
+#PBS -l ngpus=1
+#PBS -l mem=250GB
+#PBS -l walltime=01:00:00
+#PBS -l storage=gdata/au88
+#PBS -o /g/data/au88/jh7060/ISSM/test/matrix_lab/matrix_lab_ranks.o
+#PBS -e /g/data/au88/jh7060/ISSM/test/matrix_lab/matrix_lab_ranks.e
+
+# Can several MPI ranks share one A100 for Hypre BoomerAMG? Inside ISSM, assembly and everything
+# else outside the linear solve scales with ranks, so a GPU run wants many ranks on one GPU.
+# Same BoomerAMG settings as hypre_gpu1 in run_matrix_lab_a100.pbs, at np = 1, 2, 4, 8, 16.
+#   qsub [-v DUMP=<dir>,MPS=1] run_matrix_lab_ranks_a100.pbs   (default: the converged-viscosity D2 dump)
+# Without MPS, np>=2 made the solve 10-20x slower (logs_181547397). MPS=1 starts a CUDA MPS daemon
+# for the job, so the ranks' kernels can share the GPU concurrently instead of time-slicing.
+
+module purge
+module load openmpi/4.1.3
+module load cuda/12.3.2
+
+LAB=/g/data/au88/jh7060/ISSM/test/matrix_lab
+P=/g/data/au88/jh7060/ISSM/externalpackages/petsc/install-gpu-hypre
+export LD_LIBRARY_PATH="${P}/lib:${LD_LIBRARY_PATH:-}"   # libpetsc's own rpath points at the defunct /g/data1b
+DUMP=${DUMP:-/g/data/au88/jh7060/ACCESS-AIS3/execution_gpu_test/matrix_dump_ssa_picardlast}
+LOGS=${LAB}/logs_${PBS_JOBID%%.*}
+mkdir "${LOGS}"
+exec > >(tee "${LOGS}/summary.txt") 2>&1   # matrix_lab_ranks.o is a fixed path; keep this run's copy too
+
+IO="-f ${DUMP}/A.bin -rhs ${DUMP}/b.bin -ref ${DUMP}/x.bin"
+KRYLOV="-ksp_type gmres -ksp_gmres_restart 100 -ksp_pc_side right -ksp_rtol 1e-8 -ksp_max_it 2000 -ksp_converged_reason"
+HYPRE="-pc_type hypre -pc_hypre_type boomeramg -pc_hypre_boomeramg_strong_threshold 0.25"
+GPU="-mat_type aijcusparse"
+
+if [ "${MPS:-0}" = 1 ]; then
+    export CUDA_MPS_PIPE_DIRECTORY=${PBS_JOBFS}/mps_pipe CUDA_MPS_LOG_DIRECTORY=${PBS_JOBFS}/mps_log
+    mkdir -p "${CUDA_MPS_PIPE_DIRECTORY}" "${CUDA_MPS_LOG_DIRECTORY}"
+    nvidia-cuda-mps-control -d && echo "MPS daemon started" || echo "MPS daemon FAILED to start"
+fi
+echo "Host $(hostname)  $(date)  DUMP=${DUMP}  MPS=${MPS:-0}"
+nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
+for np in 1 2 4 8 16; do
+    echo "=== hypre_gpu np=${np}"
+    timeout 600 mpiexec -n ${np} "${LAB}/solve_dumped" ${IO} ${GPU} ${KRYLOV} ${HYPRE} > "${LOGS}/hypre_np${np}.log" 2>&1
+    rc=$?
+    grep -E "^RESULT|Linear solve|ERROR|Error" "${LOGS}/hypre_np${np}.log" | head -4
+    [ ${rc} -ne 0 ] && echo "    exit ${rc}$([ ${rc} -eq 124 ] && echo ' (timeout 600 s)')"
+done
+[ "${MPS:-0}" = 1 ] && echo quit | nvidia-cuda-mps-control
+echo "Done $(date)"
